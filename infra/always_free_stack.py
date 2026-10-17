@@ -1,24 +1,24 @@
 """The always-free stack (MODE-2): it stays deployed in both runtime modes.
 
 Week 1 contents: the three DynamoDB tables, the one SQS queue with its
-dead-letter queue, the WhatsApp webhook behind API Gateway, and the budget
-alerts. EventBridge Scheduler arrives in week 2 and the DLQ alarm in week 3.
+dead-letter queue, the SNS alert topic, and the budget alerts. There is no
+inbound HTTP endpoint (CHT-2). EventBridge Scheduler arrives in week 2 and the
+DLQ alarm in week 3.
 """
 
 from pathlib import Path
 
 from aws_cdk import (
-    CfnOutput,
     CustomResource,
     Duration,
     RemovalPolicy,
     Stack,
-    aws_apigatewayv2 as apigwv2,
-    aws_apigatewayv2_integrations as integrations,
     aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_lambda as lambda_,
     aws_logs as logs,
+    aws_sns as sns,
+    aws_sns_subscriptions as subscriptions,
     aws_sqs as sqs,
 )
 from constructs import Construct
@@ -26,7 +26,6 @@ from constructs import Construct
 from infra import config
 
 SRC = Path(__file__).resolve().parents[1] / "src"
-WEBHOOK_SRC = SRC / "webhook"
 BUDGETS_SRC = SRC / "budgets"
 
 TTL_ATTRIBUTE = "expires_at"
@@ -41,7 +40,7 @@ class AlwaysFreeStack(Stack):
 
         self._tables()
         self._queues()
-        self._webhook()
+        self._alerts(alert_email)
         self._budgets(alert_email)
 
     def _tables(self) -> None:
@@ -96,70 +95,46 @@ class AlwaysFreeStack(Stack):
             ),
         )
 
-    def _webhook(self) -> None:
-        log_group = logs.LogGroup(
-            self,
-            "WebhookLogGroup",
-            retention=LOG_RETENTION,
-            removal_policy=RemovalPolicy.DESTROY,
-        )
+    def _alerts(self, owner_email: str) -> None:
+        # ALR-3: alerts reach only the owner, through the topic's single email
+        # subscription. `notify_owner` publishes here and takes no recipient.
+        self.alert_topic = sns.Topic(self, "AlertTopic", display_name="Inbox agent")
+        self.alert_topic.add_subscription(subscriptions.EmailSubscription(owner_email))
 
-        # A hand-built role instead of AWSLambdaBasicExecutionRole: write to its
-        # own log group and read its own SSM parameters, nothing else.
-        role = iam.Role(
-            self,
-            "WebhookRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            description="WhatsApp webhook: own log group and own SSM parameters only",
-        )
-        log_group.grant_write(role)
-        role.add_to_policy(
+        # Until the agent's role exists (week 3), only this account's principals
+        # may publish, so the owner's `aws login` session can send the week 1
+        # test alert. Week 3 narrows the Allow to the agent's role.
+        topic_arn = [self.alert_topic.topic_arn]
+        self.alert_topic.add_to_resource_policy(
             iam.PolicyStatement(
-                actions=["ssm:GetParameters"],
-                resources=[
-                    self.format_arn(service="ssm", resource="parameter", resource_name=name.lstrip("/"))
-                    for name in config.WEBHOOK_PARAMETERS
-                ],
+                sid="AllowPublishFromThisAccount",
+                actions=["sns:Publish"],
+                principals=[iam.AccountRootPrincipal()],
+                resources=topic_arn,
             )
         )
-
-        self.webhook_function = lambda_.Function(
-            self,
-            "WebhookFunction",
-            runtime=lambda_.Runtime.PYTHON_3_13,
-            architecture=lambda_.Architecture.ARM_64,
-            handler="whatsapp_webhook.handler",
-            code=lambda_.Code.from_asset(str(WEBHOOK_SRC)),
-            role=role,
-            log_group=log_group,
-            memory_size=128,
-            timeout=Duration.seconds(10),
-            environment={
-                "SSM_META_VERIFY_TOKEN": config.SSM_META_VERIFY_TOKEN,
-                "SSM_META_ACCESS_TOKEN": config.SSM_META_ACCESS_TOKEN,
-                "SSM_META_APP_SECRET": config.SSM_META_APP_SECRET,
-                "SSM_META_PHONE_NUMBER_ID": config.SSM_META_PHONE_NUMBER_ID,
-                "SSM_OWNER_WHATSAPP_NUMBER": config.SSM_OWNER_WHATSAPP_NUMBER,
-            },
+        # Explicit denies use Principal "*" with a condition: that is how a
+        # resource policy names "everyone else". No action or resource wildcards.
+        self.alert_topic.add_to_resource_policy(
+            iam.PolicyStatement(
+                sid="DenyPublishFromOtherAccounts",
+                effect=iam.Effect.DENY,
+                actions=["sns:Publish"],
+                principals=[iam.AnyPrincipal()],
+                resources=topic_arn,
+                conditions={"StringNotEquals": {"aws:PrincipalAccount": self.account}},
+            )
         )
-
-        # Stage throttling caps the cost if the public URL is flooded (§17).
-        api = apigwv2.HttpApi(self, "WebhookApi", create_default_stage=False)
-        apigwv2.HttpStage(
-            self,
-            "WebhookApiStage",
-            http_api=api,
-            stage_name="$default",
-            auto_deploy=True,
-            throttle=apigwv2.ThrottleSettings(rate_limit=10, burst_limit=20),
+        self.alert_topic.add_to_resource_policy(
+            iam.PolicyStatement(
+                sid="DenyPublishWithoutTls",
+                effect=iam.Effect.DENY,
+                actions=["sns:Publish"],
+                principals=[iam.AnyPrincipal()],
+                resources=topic_arn,
+                conditions={"Bool": {"aws:SecureTransport": "false"}},
+            )
         )
-        api.add_routes(
-            path="/whatsapp",
-            methods=[apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
-            integration=integrations.HttpLambdaIntegration("WebhookIntegration", self.webhook_function),
-        )
-
-        CfnOutput(self, "WebhookUrl", value=f"{api.api_endpoint}/whatsapp")
 
     def _budgets(self, alert_email: str) -> None:
         # NFR-COST-1. AWS::Budgets::Budget doesn't exist in eu-north-1, so a

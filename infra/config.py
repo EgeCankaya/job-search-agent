@@ -1,7 +1,7 @@
 """Settings shared by the CDK app and its tests.
 
-Nothing personal lives here. The budget alert email comes from CDK context or
-the environment, and every secret lives in SSM Parameter Store.
+Nothing personal lives here. The owner's email address comes from CDK context
+or the environment at synth time.
 """
 
 import os
@@ -18,24 +18,6 @@ AGENT_MODES = ("cloud", "local")
 BUDGET_LIMITS_USD = (1, 5, 10)
 BUDGET_NAME_PREFIX = "inbox-agent"
 
-# SecureString parameters the webhook reads (NFR-SEC-3, ALR-3). CloudFormation
-# cannot create SecureStrings, so CDK only references these names; their values
-# are put in place by hand with `aws ssm put-parameter --type SecureString`.
-SSM_PREFIX = "/inbox-agent"
-SSM_META_VERIFY_TOKEN = f"{SSM_PREFIX}/meta/verify-token"
-SSM_META_ACCESS_TOKEN = f"{SSM_PREFIX}/meta/access-token"
-SSM_META_APP_SECRET = f"{SSM_PREFIX}/meta/app-secret"
-SSM_META_PHONE_NUMBER_ID = f"{SSM_PREFIX}/meta/phone-number-id"
-SSM_OWNER_WHATSAPP_NUMBER = f"{SSM_PREFIX}/owner/whatsapp-number"
-
-WEBHOOK_PARAMETERS = (
-    SSM_META_VERIFY_TOKEN,
-    SSM_META_ACCESS_TOKEN,
-    SSM_META_APP_SECRET,
-    SSM_META_PHONE_NUMBER_ID,
-    SSM_OWNER_WHATSAPP_NUMBER,
-)
-
 
 def _setting(scope: Construct, key: str, env_var: str) -> str | None:
     value = scope.node.try_get_context(key) or os.environ.get(env_var)
@@ -51,11 +33,14 @@ def agent_mode(scope: Construct) -> str:
 
 
 def alert_email(scope: Construct) -> str:
-    """Address for AWS Budgets alerts. Supplied at synth time, never committed."""
+    """The owner's address, for budget alerts and the SNS alert subscription (ALR-3).
+
+    Supplied at synth time, never committed.
+    """
     email = _setting(scope, "alert_email", "ALERT_EMAIL")
     if not email or "@" not in email:
         raise ValueError(
-            "Set the budget alert address: `cdk synth -c alert_email=you@example.com` "
+            "Set the owner's alert address: `cdk synth -c alert_email=you@example.com` "
             "or the ALERT_EMAIL environment variable."
         )
     return email

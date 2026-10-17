@@ -1,9 +1,9 @@
 # Job Search Inbox Agent
 
 A personal agent that watches Gmail for job-search email, keeps an applications
-tracker current, alerts me on WhatsApp only for interview invites, assessments
-and offers, and saves follow-ups as Gmail drafts only after I tap Approve. It
-never sends email.
+tracker current, emails me only for interview invites, assessments and offers,
+and saves follow-ups as Gmail drafts only after I click Approve in a local Mac
+app. It never sends or forwards email from Gmail.
 
 AWS serverless plus Amazon Bedrock AgentCore, defined in AWS CDK (Python), in
 eu-north-1 (Stockholm), the home Region AWS assigned to this account. Requirements live in the PRD; architecture lives in the design doc.
@@ -12,7 +12,7 @@ eu-north-1 (Stockholm), the home Region AWS assigned to this account. Requiremen
 
 | Stack | Contents |
 |---|---|
-| `InboxAgentAlwaysFree` | DynamoDB tables (applications tracker; processed-email log and pending drafts, both with 30-day TTL), one SQS queue (14-day retention) with a dead-letter queue after 3 receives, the WhatsApp webhook Lambda behind API Gateway, AWS Budgets alerts at $1, $5 and $10 |
+| `InboxAgentAlwaysFree` | DynamoDB tables (applications tracker; processed-email log and pending drafts, both with 30-day TTL), one SQS queue (14-day retention) with a dead-letter queue after 3 receives, an SNS alert topic with one email subscription (mine), AWS Budgets alerts at $1, $5 and $10 |
 | `InboxAgentAgentCore` | Empty until week 3. Deployed only when `AGENT_MODE=cloud` |
 
 The account is on the AWS Free plan: credits pay for all usage and nothing is
@@ -22,17 +22,18 @@ Lambda creates them through the Budgets API. The Free plan closes the account 6 
 credits run out, whichever comes first.
 
 Day-one guardrails in code: every resource tagged `project=inbox-agent`, 7-day
-log retention, no VPC/NAT/load balancer/OpenSearch Serverless/SES inbound, and
-a webhook IAM role scoped to its own log group and SSM parameters.
+log retention, no VPC/NAT/load balancer/OpenSearch Serverless/SES inbound, no
+public endpoint (no API Gateway, no Lambda function URL), and hand-built IAM
+roles with no wildcards. The alert topic's policy lets only this account's principals
+publish, over TLS; week 3 narrows it to the agent's role.
 
 ## Layout
 
 ```
 app.py                       CDK entry point
 infra/                       stacks and settings
-src/webhook/                 WhatsApp webhook Lambda (stdlib only)
 src/budgets/                 deploy-time custom resource that creates the budgets
-tests/unit/                  handler tests
+tests/unit/                  custom-resource handler tests
 tests/infra/                 CDK assertion tests
 ```
 
@@ -48,21 +49,15 @@ Settings, as CDK context (`-c key=value`) or environment variables:
 
 | Context | Env var | Values |
 |---|---|---|
-| `alert_email` | `ALERT_EMAIL` | Address for budget alerts. Required; never committed |
+| `alert_email` | `ALERT_EMAIL` | My address, for budget alerts and the agent's alert emails. Required; never committed |
 | `agent_mode` | `AGENT_MODE` | `cloud` (default) or `local`. `local` leaves out the AgentCore stack |
 
-## Secrets
+## Alerts
 
-CloudFormation cannot create SecureString parameters, so the stack only
-references these names. Put the values in place yourself:
-
-| Parameter | Value |
-|---|---|
-| `/inbox-agent/meta/verify-token` | A random string you choose, also entered in the Meta webhook settings |
-| `/inbox-agent/meta/access-token` | Meta System User token |
-| `/inbox-agent/meta/app-secret` | Meta app secret (used by the week 3 signature check) |
-| `/inbox-agent/meta/phone-number-id` | Phone number ID of the agent's WhatsApp sender |
-| `/inbox-agent/owner/whatsapp-number` | Your own number, digits with country code |
+After a deploy, AWS emails a subscription confirmation to `alert_email`.
+Confirm it, or no alert arrives. Alerts come from
+`no-reply@sns.amazonaws.com`; the agent's Gmail query (week 2) excludes that
+sender (ING-1).
 
 Never commit application CSVs, `.env` files or `cdk.out/`; `.gitignore`
 excludes them.

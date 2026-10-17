@@ -39,18 +39,17 @@ gitignored and must stay out of the repo.
 ## Stack and layout
 
 AWS CDK in Python, region **eu-north-1 (Stockholm)**, Python 3.13, managed with **uv**.
-The layout below is the M1 code, which still has the WhatsApp webhook; see the
-interface section for what replaces it.
+The layout below is the M1 code after the OQ-40 change: no inbound endpoint,
+email alerts through SNS.
 
 ```
 app.py                       CDK entry point (calls infra.app.build)
-infra/config.py              settings: tag, region, AGENT_MODE, alert email, SSM names
+infra/config.py              settings: tag, region, AGENT_MODE, alert email
 infra/app.py                 builds the stacks for the configured mode
-infra/always_free_stack.py   tables, queues, webhook, budgets
+infra/always_free_stack.py   tables, queues, alert topic, budgets
 infra/agentcore_stack.py     empty until week 3
-src/webhook/whatsapp_webhook.py   webhook Lambda (stdlib + boto3 only)
 src/budgets/budgets_resource.py   deploy-time custom resource that creates the budgets
-tests/unit/                  Lambda handler tests
+tests/unit/                  custom-resource handler tests
 tests/infra/                 CDK assertion tests
 ```
 
@@ -70,8 +69,8 @@ about Node 26 (it works; Node 24 LTS is the supported line).
 
 | Context | Env var | Notes |
 |---|---|---|
-| `alert_email` | `ALERT_EMAIL` | Budget alert address. Required. Never commit it |
-| `agent_mode` | `AGENT_MODE` | `cloud` (default) or `local`. `local` leaves out the AgentCore stack (MODE-1, MODE-2) and warns that the MacBook-mode function-URL webhook isn't built yet |
+| `alert_email` | `ALERT_EMAIL` | Address for the budget alerts and the SNS alert topic's one subscription. Required. Never commit it |
+| `agent_mode` | `AGENT_MODE` | `cloud` (default) or `local`. `local` leaves out the AgentCore stack (MODE-1, MODE-2) and warns that the MacBook-mode local worker isn't built yet |
 
 `cdk.out/` and `cdk.context.json` are gitignored, because they can hold the
 account ID and the alert email.
@@ -86,12 +85,9 @@ account ID and the alert email.
   
   TTL values (30 days, NFR-PRIV-4) are set by application code later. Table keys are provisional until data lands in week 2.
 - SQS agent queue with 14-day retention, plus a dead-letter queue (`maxReceiveCount` 3, 14 days). Both SSE-SQS and HTTPS-only. The DLQ alarm is week 3.
-- Webhook Lambda (Python 3.13, arm64, 128 MB, 10 s) behind an HTTP API at `GET`/`POST /whatsapp`, stage throttle 10 rps, burst 20.
-  - It answers Meta's verify-token handshake (constant-time compare).
-  - It replies "pong" to "ping" from the owner's number only, sending to the number from SSM, never to the sender (ALR-3).
-  - It drops non-owner messages and logs only counts (CHT-2 item 3, NFR-PRIV-3).
-  - It returns 200 for anything well-formed, because Meta retries non-200 responses.
-  - Graph API version is `v23.0`.
+- SNS alert topic (ALR-3) with exactly one email subscription, to the `alert_email` address. `notify_owner` will publish here in week 2; it takes no recipient.
+  - Topic policy (owner's pick, 2026-10-17): Allow `sns:Publish` to this account's principals only (`arn:aws:iam::<account>:root`, from `AWS::AccountId`), so the owner's `aws login` session can send the week 1 test alert. It also denies `sns:Publish` from other accounts (`aws:PrincipalAccount`) and without TLS. Week 3 narrows the Allow to the agent's role.
+- No inbound HTTP endpoint (CHT-2): no API Gateway API and no Lambda function URL in any stack. The OQ-40 change removed the M1 WhatsApp webhook, its HTTP API and the five Meta and owner SSM parameter names.
 - 3 AWS Budgets ($1, $5, $10, monthly, email), with `IncludeCredit: false` (see the Free plan section), created by the custom resource described under Gotchas.
 
 **`InboxAgentAgentCore`**: empty, deployed only in cloud mode.
@@ -100,21 +96,19 @@ account ID and the alert email.
 - `project=inbox-agent` tag on everything;
 - 7-day retention on every log group;
 - no EC2/VPC, ELB, OpenSearch Serverless or SES resources;
-- the webhook role is hand-built: no managed policies, no wildcards. It allows only `logs:CreateLogStream`/`PutLogEvents` on its own log group and `ssm:GetParameters` on its 5 parameter ARNs.
+- no API Gateway API or Lambda function URL, in either mode;
+- every role is hand-built: no managed policies, no wildcards. The budgets role is the only one so far.
+- resource policies use `Principal: "*"` only on a Deny with a condition (the topic policy), never on an Allow.
 
 ### Gotchas learned
 
 - **`AWS::Budgets::Budget` doesn't exist in eu-north-1.** CDK's built-in validator fails the synth once credentials are present. The budgets are made by a deploy-time custom resource instead: `src/budgets/budgets_resource.py`, `Custom::InboxAgentBudgets`. It calls the global Budgets API, replaces the budgets on Create and Update, and deletes them on Delete. Its role has only `budgets:ModifyBudget` and `budgets:TagResource` on the 3 budget ARNs. The `project` tag is passed as a property, because `Tags.of()` can't reach API-made budgets.
 - **`cdk synth` only validates against the Region once the CLI is signed in.** Always run it after changes, not just pytest.
-- **CloudFormation can't create SecureString parameters.** CDK only references the names in `infra/config.py`. The owner sets the values with `aws ssm put-parameter --type SecureString`:
-  - `/inbox-agent/meta/verify-token`
-  - `/inbox-agent/meta/access-token`
-  - `/inbox-agent/meta/app-secret` (used by the week 3 signature check)
-  - `/inbox-agent/meta/phone-number-id`
-  - `/inbox-agent/owner/whatsapp-number`
+- **CloudFormation can't create SecureString parameters.** A secret added later is only referenced by name in `infra/config.py`; the owner sets the values with `aws ssm put-parameter --type SecureString`.
 - **Use an explicit `logs.LogGroup` passed to the Function, not `log_retention`.** `log_retention` adds a custom-resource Lambda with its own log group. A test checks that every function has `LoggingConfig.LogGroup`.
 - **The `aws/ssm` managed KMS key allows decryption via SSM** for principals in the account, so no `kms:Decrypt` grant is needed.
 - **`cdk.json` carries the recommended feature flags** from `cdk init`.
+- **Check before an AWS service publishes to the alert topic** (for example the week 3 DLQ alarm). The `DenyPublishFromOtherAccounts` statement keys on `aws:PrincipalAccount`, which a service-principal call may not carry, so that publish could be denied. Test it, and add a `aws:SourceAccount`-scoped exception if needed.
 
 ## AWS Free plan (decided 2026-10-17)
 
@@ -141,19 +135,19 @@ The owner doesn't want a Meta account. OQ-40 (all items, (a) to (e)) replaced Wh
 - **Email alerts** through an SNS topic with one confirmed subscription (the owner's address, supplied at deploy time, never committed). The tool `send_whatsapp` is now `notify_owner`, with no recipient input. The Gmail query excludes the alert sender (`-from:no-reply@sns.amazonaws.com`).
 - **A local Python Streamlit app on 127.0.0.1** with three pages: Dashboard (DASH-1, P2), Ask (CHT-1) and Follow-ups (APR-2/3). It uses the owner's `aws login` session; CHT-2 is now owner-only access. The app starts in week 3.
 
-There is no public endpoint in the accepted design. **The code still has the WhatsApp webhook, API Gateway and the Meta SSM parameter names.** Removing them and adding the SNS alert topic (with tests) is the next task, then the owner redeploys and confirms a test alert email (the new week 1 exit). The deployed webhook is harmless meanwhile: it returns 500 without the SSM values.
+There is no public endpoint. **The code now matches:** the WhatsApp webhook, its HTTP API and the Meta SSM parameter names are removed, and the SNS alert topic is in (see What M1 built). The deployed stack still has the old webhook until the owner redeploys; it is harmless meanwhile, because it returns 500 without the SSM values. After the redeploy, the owner confirms the subscription and checks that a test alert email arrives (the new week 1 exit).
 
 ## Current state (2026-10-17)
 
 - **Commit `e723332` on `main`:** the M1 code plus the PRD, the design PDF and the OQ-32 edits.
 - **Commit `73a4f03` on `main`:** the move to eu-north-1, the budgets custom resource and its tests, the README notes, the OQ-39 and OQ-40 proposals.
-- **Uncommitted:** PRD v0.4.0, the design PDF from revision 90, the decisions recorded in both OQ files, and this file.
+- **Commit `4796d6a` on `main`:** PRD v0.4.0, the design PDF from revision 90, the decisions in both OQ files, and this file.
+- **The commit after it on `main`:** the OQ-40 code change (webhook removed, SNS alert topic added, tests, README, this file).
 - **The owner's CLI login works** (`aws login`, eu-north-1).
 - **Deployed 2026-10-17 by the owner:**
   - `cdk bootstrap` and `cdk deploy --all` in eu-north-1. Both stacks are `CREATE_COMPLETE`.
   - The 3 budgets exist with `IncludeCredit: false`, and 15 resources carry the project tag.
-  - The webhook returns 500 until the SSM values exist.
-  - Keep the webhook URL out of the repo; it is unauthenticated until the week 3 signature check.
+  - That deploy still has the M1 webhook. It returns 500 (no SSM values), and its URL stays out of the repo. The next `cdk deploy --all` removes it and adds the alert topic.
 - **Nova quota requests filed 2026-10-17:**
   - Service Quotas `L-DC7FF66C` and `L-7C42E72A` at 500,000, both pending.
   - A support case (category "General") for the tokens-per-day and per-minute quotas.
@@ -164,7 +158,7 @@ There is no public endpoint in the accepted design. **The code still has the Wha
 - **Blocker for week 2:** the Nova quotas. The account is held at 0, while the AWS defaults are 400k cross-Region tokens per minute and 5.76B tokens per day. Service Quotas rejects requests at or below the default, so the owner files **one support case** to lift them. After that, use route 1 if its call succeeds, otherwise route 2 (OQ-39 (b)), and record the choice in the PRD.
 - **Week 1 items the owner does by hand:**
   - MFA in AWS Settings;
-  - after the code change: confirm the SNS subscription email and check that a test alert arrives;
+  - redeploy (`cdk deploy --all` with the real `alert_email`), confirm the SNS subscription email, and check that a test alert arrives;
   - a calendar reminder at sign-up + 5 months (OQ-39 (c));
   - the AgentCore test runtime for OQ-1;
   - the time-log baseline for M7.

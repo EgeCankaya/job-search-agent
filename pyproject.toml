@@ -14,4 +14,4 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = [".", "src/webhook", "src/budgets"]
+pythonpath = [".", "src/budgets"]

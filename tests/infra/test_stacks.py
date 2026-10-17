@@ -3,7 +3,7 @@ import re
 
 import pytest
 from aws_cdk import App
-from aws_cdk.assertions import Match, Template
+from aws_cdk.assertions import Template
 
 from infra.app import AGENTCORE_STACK, ALWAYS_FREE_STACK, build
 
@@ -17,8 +17,7 @@ TAGGABLE = [
     "AWS::Lambda::Function",
     "AWS::IAM::Role",
     "AWS::Logs::LogGroup",
-    "AWS::ApiGatewayV2::Api",
-    "AWS::ApiGatewayV2::Stage",
+    "AWS::SNS::Topic",
 ]
 
 FORBIDDEN_PREFIXES = (
@@ -55,7 +54,7 @@ def resources(template, type_=None):
 
 
 def has_project_tag(tags):
-    if isinstance(tags, dict):  # ApiGatewayV2 uses a key-value map
+    if isinstance(tags, dict):  # the budgets custom resource passes a key-value map
         return tags.get("project") == "inbox-agent"
     return {"Key": "project", "Value": "inbox-agent"} in (tags or [])
 
@@ -182,6 +181,72 @@ def test_alert_email_is_required():
         build(App(context={"agent_mode": "cloud"}))
 
 
+# Alerts (ALR-3)
+
+
+def test_alert_topic_has_one_email_subscription_to_the_owner(templates):
+    subscriptions = [r for t in templates.values() for r in resources(t, "AWS::SNS::Subscription").values()]
+    [subscription] = subscriptions
+    [topic_id] = resources(templates[ALWAYS_FREE_STACK], "AWS::SNS::Topic")
+    assert subscription["Properties"]["Protocol"] == "email"
+    assert subscription["Properties"]["Endpoint"] == TEST_EMAIL
+    assert subscription["Properties"]["TopicArn"] == {"Ref": topic_id}
+
+
+def test_alert_topic_policy_lets_only_this_account_publish(free):
+    [topic_id] = resources(free, "AWS::SNS::Topic")
+    [policy] = resources(free, "AWS::SNS::TopicPolicy").values()
+    assert policy["Properties"]["Topics"] == [{"Ref": topic_id}]
+    statements = {s["Sid"]: s for s in policy["Properties"]["PolicyDocument"]["Statement"]}
+    assert set(statements) == {
+        "AllowPublishFromThisAccount",
+        "DenyPublishFromOtherAccounts",
+        "DenyPublishWithoutTls",
+    }
+    for statement in statements.values():
+        assert statement["Action"] == "sns:Publish"
+        assert statement["Resource"] == {"Ref": topic_id}
+
+    allow = statements["AllowPublishFromThisAccount"]
+    assert allow["Effect"] == "Allow"
+    assert ":root" in json.dumps(allow["Principal"]["AWS"])
+    assert {"Ref": "AWS::AccountId"} in allow["Principal"]["AWS"]["Fn::Join"][1]
+    assert "Condition" not in allow
+
+    other_accounts = statements["DenyPublishFromOtherAccounts"]
+    assert other_accounts["Effect"] == "Deny"
+    assert other_accounts["Condition"] == {"StringNotEquals": {"aws:PrincipalAccount": {"Ref": "AWS::AccountId"}}}
+
+    no_tls = statements["DenyPublishWithoutTls"]
+    assert no_tls["Effect"] == "Deny"
+    assert no_tls["Condition"] == {"Bool": {"aws:SecureTransport": "false"}}
+
+
+def test_resource_policies_open_to_anyone_only_deny(templates):
+    # Principal "*" is allowed only on a conditional Deny ("everyone else").
+    for template in templates.values():
+        for logical_id, policy in resources(template, "AWS::SNS::TopicPolicy").items():
+            for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
+                if statement["Principal"] in ("*", {"AWS": "*"}):
+                    assert statement["Effect"] == "Deny" and statement.get("Condition"), logical_id
+
+
+# No inbound HTTP endpoint (CHT-2, UAC-CHT-2)
+
+INBOUND_ENDPOINT_PREFIXES = (
+    "AWS::ApiGateway::",  # REST APIs
+    "AWS::ApiGatewayV2::",  # HTTP and WebSocket APIs
+    "AWS::Lambda::Url",
+)
+
+
+@pytest.mark.parametrize("mode", ["cloud", "local"])
+def test_no_api_gateway_or_function_url_in_any_stack(mode):
+    for name, template in synth(mode).items():
+        for logical_id, resource in resources(template).items():
+            assert not resource["Type"].startswith(INBOUND_ENDPOINT_PREFIXES), f"{name}/{logical_id}"
+
+
 # No always-on networking (NFR-COST-4)
 
 
@@ -209,51 +274,13 @@ def test_no_wildcard_actions_or_resources(free):
             assert statement["Resource"] != "*", logical_id
 
 
-def test_webhook_reads_only_its_ssm_parameters(free):
-    free.has_resource_properties(
-        "AWS::IAM::Policy",
-        {
-            "PolicyDocument": {
-                "Statement": Match.array_with(
-                    [Match.object_like({"Action": "ssm:GetParameters", "Effect": "Allow"})]
-                )
-            }
-        },
-    )
-    statements = [
-        s
-        for p in resources(free, "AWS::IAM::Policy").values()
-        for s in p["Properties"]["PolicyDocument"]["Statement"]
-        if s["Action"] == "ssm:GetParameters"
-    ]
-    [statement] = statements
-    assert len(statement["Resource"]) == 5
-    assert all("parameter/inbox-agent/" in str(arn) for arn in statement["Resource"])
-
-
-# Webhook
+# Functions
 
 
 def test_functions_use_python_313_arm64(free):
     for logical_id, fn in resources(free, "AWS::Lambda::Function").items():
         assert fn["Properties"]["Runtime"] == "python3.13", logical_id
         assert fn["Properties"]["Architectures"] == ["arm64"], logical_id
-
-
-def test_webhook_function_runtime(free):
-    free.has_resource_properties(
-        "AWS::Lambda::Function",
-        {"Runtime": "python3.13", "Handler": "whatsapp_webhook.handler", "Architectures": ["arm64"]},
-    )
-
-
-def test_webhook_routes_and_throttling(free):
-    routes = sorted(r["Properties"]["RouteKey"] for r in resources(free, "AWS::ApiGatewayV2::Route").values())
-    assert routes == ["GET /whatsapp", "POST /whatsapp"]
-    free.has_resource_properties(
-        "AWS::ApiGatewayV2::Stage",
-        {"StageName": "$default", "DefaultRouteSettings": Match.object_like({"ThrottlingRateLimit": 10})},
-    )
 
 
 # Runtime mode (MODE-1, MODE-2)

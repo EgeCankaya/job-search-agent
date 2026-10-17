@@ -26,7 +26,7 @@ def build(app: App) -> dict[str, Stack]:
     else:
         Annotations.of(stacks[ALWAYS_FREE_STACK]).add_warning_v2(
             "inbox-agent:local-mode-incomplete",
-            "AGENT_MODE=local: the MacBook-mode webhook (Lambda function URL) is not built yet. "
+            "AGENT_MODE=local: the MacBook-mode local worker that replaces AgentCore Runtime is not built yet. "
             f"An already deployed {AGENTCORE_STACK} is only removed by `cdk destroy {AGENTCORE_STACK}`.",
         )
 
