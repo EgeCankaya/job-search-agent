@@ -135,19 +135,24 @@ The owner doesn't want a Meta account. OQ-40 (all items, (a) to (e)) replaced Wh
 - **Email alerts** through an SNS topic with one confirmed subscription (the owner's address, supplied at deploy time, never committed). The tool `send_whatsapp` is now `notify_owner`, with no recipient input. The Gmail query excludes the alert sender (`-from:no-reply@sns.amazonaws.com`).
 - **A local Python Streamlit app on 127.0.0.1** with three pages: Dashboard (DASH-1, P2), Ask (CHT-1) and Follow-ups (APR-2/3). It uses the owner's `aws login` session; CHT-2 is now owner-only access. The app starts in week 3.
 
-There is no public endpoint. **The code now matches:** the WhatsApp webhook, its HTTP API and the Meta SSM parameter names are removed, and the SNS alert topic is in (see What M1 built). The deployed stack still has the old webhook until the owner redeploys; it is harmless meanwhile, because it returns 500 without the SSM values. After the redeploy, the owner confirms the subscription and checks that a test alert email arrives (the new week 1 exit).
+There is no public endpoint. **The code now matches:** the WhatsApp webhook, its HTTP API and the Meta SSM parameter names are removed, and the SNS alert topic is in (see What M1 built). The owner redeployed on 2026-10-18, so the deployed stack matches too: the webhook is gone, and a test alert email arrived (the new week 1 exit).
 
 ## Current state (2026-10-17)
 
 - **Commit `e723332` on `main`:** the M1 code plus the PRD, the design PDF and the OQ-32 edits.
 - **Commit `73a4f03` on `main`:** the move to eu-north-1, the budgets custom resource and its tests, the README notes, the OQ-39 and OQ-40 proposals.
 - **Commit `4796d6a` on `main`:** PRD v0.4.0, the design PDF from revision 90, the decisions in both OQ files, and this file.
-- **The commit after it on `main`:** the OQ-40 code change (webhook removed, SNS alert topic added, tests, README, this file).
+- **Commit `6b66431` on `main`:** the OQ-40 code change (webhook removed, SNS alert topic added, tests, README, this file).
+- **GitHub:** private repo `EgeCankaya/job-search-agent`, pushed 2026-10-18 (`origin/main`).
 - **The owner's CLI login works** (`aws login`, eu-north-1).
 - **Deployed 2026-10-17 by the owner:**
   - `cdk bootstrap` and `cdk deploy --all` in eu-north-1. Both stacks are `CREATE_COMPLETE`.
   - The 3 budgets exist with `IncludeCredit: false`, and 15 resources carry the project tag.
-  - That deploy still has the M1 webhook. It returns 500 (no SSM values), and its URL stays out of the repo. The next `cdk deploy --all` removes it and adds the alert topic.
+- **Redeployed 2026-10-18 by the owner** (`cdk deploy --all` with the real `alert_email`):
+  - The webhook and its HTTP API are gone (`aws apigatewayv2 get-apis` returns `[]`).
+  - The alert topic has one confirmed email subscription, and the 3 budgets email the owner.
+  - A leftover unconfirmed subscription to `you@example.com`, from a first deploy with the placeholder, can't be deleted; SNS removes it after about 3 days.
+  - **Week 1 exit met:** a test alert published with `aws sns publish` arrived by email.
 - **Nova quota requests filed 2026-10-17:**
   - Service Quotas `L-DC7FF66C` and `L-7C42E72A` at 500,000, both pending.
   - A support case (category "General") for the tokens-per-day and per-minute quotas.
@@ -158,7 +163,6 @@ There is no public endpoint. **The code now matches:** the WhatsApp webhook, its
 - **Blocker for week 2:** the Nova quotas. The account is held at 0, while the AWS defaults are 400k cross-Region tokens per minute and 5.76B tokens per day. Service Quotas rejects requests at or below the default, so the owner files **one support case** to lift them. After that, use route 1 if its call succeeds, otherwise route 2 (OQ-39 (b)), and record the choice in the PRD.
 - **Week 1 items the owner does by hand:**
   - MFA in AWS Settings;
-  - redeploy (`cdk deploy --all` with the real `alert_email`), confirm the SNS subscription email, and check that a test alert arrives;
   - a calendar reminder at sign-up + 5 months (OQ-39 (c));
   - the AgentCore test runtime for OQ-1;
   - the time-log baseline for M7.
