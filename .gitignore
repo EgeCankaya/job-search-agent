@@ -1,0 +1,24 @@
+# Personal data: application imports (TRK-3) and any other exported tables
+*.csv
+data/
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+
+# CDK output and lookup cache (can hold the account ID and the alert email)
+cdk.out/
+cdk.context.json
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Working notes kept out of the public repo
+Job search inbox agent PRD review.md
