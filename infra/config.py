@@ -9,11 +9,14 @@ import os
 from constructs import Construct
 
 PROJECT_TAG = ("project", "inbox-agent")
-REGION = "eu-central-1"
+# The account uses AWS's new sign-up experience, which pins every project to
+# a home Region picked from the contact country: Turkey -> Stockholm (OQ-39 f).
+REGION = "eu-north-1"
 
 AGENT_MODES = ("cloud", "local")
 
 BUDGET_LIMITS_USD = (1, 5, 10)
+BUDGET_NAME_PREFIX = "inbox-agent"
 
 # SecureString parameters the webhook reads (NFR-SEC-3, ALR-3). CloudFormation
 # cannot create SecureStrings, so CDK only references these names; their values

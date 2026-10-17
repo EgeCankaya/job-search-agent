@@ -6,7 +6,7 @@ and offers, and saves follow-ups as Gmail drafts only after I tap Approve. It
 never sends email.
 
 AWS serverless plus Amazon Bedrock AgentCore, defined in AWS CDK (Python), in
-eu-central-1. Requirements live in the PRD; architecture lives in the design doc.
+eu-north-1 (Stockholm), the home Region AWS assigned to this account. Requirements live in the PRD; architecture lives in the design doc.
 
 ## Status: milestone M1 (week 1), skeleton
 
@@ -14,6 +14,12 @@ eu-central-1. Requirements live in the PRD; architecture lives in the design doc
 |---|---|
 | `InboxAgentAlwaysFree` | DynamoDB tables (applications tracker; processed-email log and pending drafts, both with 30-day TTL), one SQS queue (14-day retention) with a dead-letter queue after 3 receives, the WhatsApp webhook Lambda behind API Gateway, AWS Budgets alerts at $1, $5 and $10 |
 | `InboxAgentAgentCore` | Empty until week 3. Deployed only when `AGENT_MODE=cloud` |
+
+The account is on the AWS Free plan: credits pay for all usage and nothing is
+ever charged, so the budgets exclude credits and alert on how fast credits are
+used. CloudFormation has no budget resource in eu-north-1, so a deploy-time
+Lambda creates them through the Budgets API. The Free plan closes the account 6 months after sign-up or when the
+credits run out, whichever comes first.
 
 Day-one guardrails in code: every resource tagged `project=inbox-agent`, 7-day
 log retention, no VPC/NAT/load balancer/OpenSearch Serverless/SES inbound, and
@@ -25,6 +31,7 @@ a webhook IAM role scoped to its own log group and SSM parameters.
 app.py                       CDK entry point
 infra/                       stacks and settings
 src/webhook/                 WhatsApp webhook Lambda (stdlib only)
+src/budgets/                 deploy-time custom resource that creates the budgets
 tests/unit/                  handler tests
 tests/infra/                 CDK assertion tests
 ```

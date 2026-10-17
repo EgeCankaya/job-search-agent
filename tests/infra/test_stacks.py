@@ -1,3 +1,6 @@
+import json
+import re
+
 import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Match, Template
@@ -68,10 +71,10 @@ def test_every_taggable_resource_has_project_tag(free, type_):
         assert has_project_tag(resource["Properties"].get("Tags")), logical_id
 
 
-def test_budgets_have_project_tag(free):
-    for logical_id, resource in resources(free, "AWS::Budgets::Budget").items():
-        tags = resource["Properties"].get("ResourceTags")
-        assert has_project_tag(tags), logical_id
+def test_budgets_get_project_tag(free):
+    # Budgets are made through the API, so the tag travels as a property.
+    [budgets] = resources(free, "Custom::InboxAgentBudgets").values()
+    assert has_project_tag(budgets["Properties"]["Tags"])
 
 
 def test_no_untagged_resource_with_tags_property(templates):
@@ -150,15 +153,28 @@ def test_tracker_has_no_ttl_and_is_retained(free):
 
 
 def test_three_budgets_with_email_alerts(free):
-    budgets = resources(free, "AWS::Budgets::Budget")
-    limits = sorted(b["Properties"]["Budget"]["BudgetLimit"]["Amount"] for b in budgets.values())
-    assert limits == [1, 5, 10]
-    for budget in budgets.values():
-        props = budget["Properties"]
-        assert props["Budget"]["BudgetLimit"]["Unit"] == "USD"
-        assert props["Budget"]["TimeUnit"] == "MONTHLY"
-        [subscription] = props["NotificationsWithSubscribers"]
-        assert subscription["Subscribers"] == [{"SubscriptionType": "EMAIL", "Address": TEST_EMAIL}]
+    [budgets] = resources(free, "Custom::InboxAgentBudgets").values()
+    props = budgets["Properties"]
+    assert props["Limits"] == ["1", "5", "10"]
+    assert props["Email"] == TEST_EMAIL
+    assert props["NamePrefix"] == "inbox-agent"
+
+
+def test_no_cloudformation_budget_resources(free):
+    # AWS::Budgets::Budget doesn't exist in eu-north-1; a deploy would fail.
+    assert not resources(free, "AWS::Budgets::Budget")
+
+
+def test_budgets_role_reaches_only_project_budgets(free):
+    [statement] = [
+        s
+        for p in resources(free, "AWS::IAM::Policy").values()
+        for s in p["Properties"]["PolicyDocument"]["Statement"]
+        if any(a.startswith("budgets:") for a in (s["Action"] if isinstance(s["Action"], list) else [s["Action"]]))
+    ]
+    assert sorted(statement["Action"]) == ["budgets:ModifyBudget", "budgets:TagResource"]
+    names = [re.search(r"budget/([a-z0-9-]+)", json.dumps(arn)).group(1) for arn in statement["Resource"]]
+    assert sorted(names) == ["inbox-agent-1-usd", "inbox-agent-10-usd", "inbox-agent-5-usd"]
 
 
 def test_alert_email_is_required():
@@ -180,7 +196,7 @@ def test_no_vpc_or_always_on_resources(templates):
 # Least-privilege IAM
 
 
-def test_webhook_role_has_no_managed_policies(free):
+def test_roles_have_no_managed_policies(free):
     for role in resources(free, "AWS::IAM::Role").values():
         assert not role["Properties"].get("ManagedPolicyArns")
 
@@ -218,6 +234,12 @@ def test_webhook_reads_only_its_ssm_parameters(free):
 # Webhook
 
 
+def test_functions_use_python_313_arm64(free):
+    for logical_id, fn in resources(free, "AWS::Lambda::Function").items():
+        assert fn["Properties"]["Runtime"] == "python3.13", logical_id
+        assert fn["Properties"]["Architectures"] == ["arm64"], logical_id
+
+
 def test_webhook_function_runtime(free):
     free.has_resource_properties(
         "AWS::Lambda::Function",
@@ -250,7 +272,7 @@ def test_unknown_mode_is_rejected():
         build(App(context={"alert_email": TEST_EMAIL, "agent_mode": "hybrid"}))
 
 
-def test_stacks_target_frankfurt():
+def test_stacks_target_home_region():
     app = App(context={"alert_email": TEST_EMAIL})
     for stack in build(app).values():
-        assert stack.region == "eu-central-1"
+        assert stack.region == "eu-north-1"

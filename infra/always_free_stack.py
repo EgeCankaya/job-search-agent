@@ -9,12 +9,12 @@ from pathlib import Path
 
 from aws_cdk import (
     CfnOutput,
+    CustomResource,
     Duration,
     RemovalPolicy,
     Stack,
     aws_apigatewayv2 as apigwv2,
     aws_apigatewayv2_integrations as integrations,
-    aws_budgets as budgets,
     aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_lambda as lambda_,
@@ -25,7 +25,9 @@ from constructs import Construct
 
 from infra import config
 
-WEBHOOK_SRC = Path(__file__).resolve().parents[1] / "src" / "webhook"
+SRC = Path(__file__).resolve().parents[1] / "src"
+WEBHOOK_SRC = SRC / "webhook"
+BUDGETS_SRC = SRC / "budgets"
 
 TTL_ATTRIBUTE = "expires_at"
 QUEUE_RETENTION = Duration.days(14)  # NFR-REL-2 and ING-3
@@ -160,33 +162,58 @@ class AlwaysFreeStack(Stack):
         CfnOutput(self, "WebhookUrl", value=f"{api.api_endpoint}/whatsapp")
 
     def _budgets(self, alert_email: str) -> None:
-        # NFR-COST-1. Defaults count credits and taxes, so these fire on real
-        # charges to the card, including KDV (NFR-COST-6, PRD §15).
-        for limit in config.BUDGET_LIMITS_USD:
-            budgets.CfnBudget(
-                self,
-                f"Budget{limit}Usd",
-                budget=budgets.CfnBudget.BudgetDataProperty(
-                    budget_name=f"inbox-agent-{limit}-usd",
-                    budget_type="COST",
-                    time_unit="MONTHLY",
-                    budget_limit=budgets.CfnBudget.SpendProperty(amount=limit, unit="USD"),
-                ),
-                notifications_with_subscribers=[
-                    budgets.CfnBudget.NotificationWithSubscribersProperty(
-                        notification=budgets.CfnBudget.NotificationProperty(
-                            notification_type="ACTUAL",
-                            comparison_operator="GREATER_THAN",
-                            threshold=100,
-                            threshold_type="PERCENTAGE",
-                        ),
-                        subscribers=[
-                            budgets.CfnBudget.SubscriberProperty(
-                                subscription_type="EMAIL", address=alert_email
-                            )
-                        ],
-                    )
+        # NFR-COST-1. AWS::Budgets::Budget doesn't exist in eu-north-1, so a
+        # deploy-time Lambda creates the budgets through the global Budgets
+        # API (src/budgets). They exclude credits, because on the Free plan
+        # credits cover everything and a net budget would never fire (OQ-39).
+        names = [f"{config.BUDGET_NAME_PREFIX}-{limit}-usd" for limit in config.BUDGET_LIMITS_USD]
+
+        log_group = logs.LogGroup(
+            self,
+            "BudgetsLogGroup",
+            retention=LOG_RETENTION,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        role = iam.Role(
+            self,
+            "BudgetsRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            description="Budgets custom resource: own log group and the project's budgets only",
+        )
+        log_group.grant_write(role)
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["budgets:ModifyBudget", "budgets:TagResource"],
+                resources=[
+                    self.format_arn(service="budgets", region="", resource="budget", resource_name=name)
+                    for name in names
                 ],
-                # Tags.of() does not reach CfnBudget, so tag it here (NFR-COST-3).
-                resource_tags=[budgets.CfnBudget.ResourceTagProperty(key=config.PROJECT_TAG[0], value=config.PROJECT_TAG[1])],
             )
+        )
+
+        function = lambda_.Function(
+            self,
+            "BudgetsFunction",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            architecture=lambda_.Architecture.ARM_64,
+            handler="budgets_resource.handler",
+            code=lambda_.Code.from_asset(str(BUDGETS_SRC)),
+            role=role,
+            log_group=log_group,
+            memory_size=128,
+            timeout=Duration.seconds(60),
+        )
+
+        CustomResource(
+            self,
+            "Budgets",
+            service_token=function.function_arn,
+            resource_type="Custom::InboxAgentBudgets",
+            properties={
+                "NamePrefix": config.BUDGET_NAME_PREFIX,
+                "Limits": [str(limit) for limit in config.BUDGET_LIMITS_USD],
+                "Email": alert_email,
+                # Tags.of() can't reach budgets made through the API (NFR-COST-3).
+                "Tags": {config.PROJECT_TAG[0]: config.PROJECT_TAG[1]},
+            },
+        )
