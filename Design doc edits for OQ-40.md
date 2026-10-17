@@ -2,7 +2,7 @@
 
 **For:** the PRD v0.3.2 and the design doc (Claude Doc, revision 51)
 **Decision that triggered it:** on 2026-10-17 I chose not to create a Meta account. WhatsApp is replaced by a local Python app on my Mac, plus email alerts.
-**Status:** proposed. Accept or reject each item (PRD §13). Nothing is applied yet, and the code still has the WhatsApp webhook.
+**Status:** **all five items accepted on 2026-10-17, and applied the same day** to the PRD (v0.4.0) and the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51 → 90, together with OQ-39). Each edit was checked by reading the doc back, and the flow diagram was redrawn. The PDF in this folder was re-exported from revision 90. **The code still has the WhatsApp webhook**; the code change below is a separate task.
 **Depends on:** OQ-39 (Free plan, Stockholm).
 
 ## The new interface in one paragraph
@@ -75,8 +75,8 @@ Overview bullets 2 to 4, the "WhatsApp setup" section (it becomes "Interface: Ma
 
 | Item | Accept / Reject | Date | Note |
 |---|---|---|---|
-| (a) Interface and scope | | | |
-| (b) Alerts by email | | | |
-| (c) Chat, approvals, dashboard | | | |
-| (d) NFRs, milestones, risks | | | |
-| (e) Design doc | | | |
+| (a) Interface and scope | Accept | 2026-10-17 | |
+| (b) Alerts by email | Accept | 2026-10-17 | |
+| (c) Chat, approvals, dashboard | Accept | 2026-10-17 | |
+| (d) NFRs, milestones, risks | Accept | 2026-10-17 | |
+| (e) Design doc | Accept | 2026-10-17 | |

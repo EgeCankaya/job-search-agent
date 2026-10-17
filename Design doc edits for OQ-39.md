@@ -2,7 +2,9 @@
 
 **For:** "Job search inbox agent design" (Claude Doc, revision 51; PDF, 14 pages) and the PRD v0.3.2
 **Decision that triggered it:** on 2026-10-17 I chose to stay on the AWS Free plan, not the Paid plan.
-**Status:** proposed. Accept or reject each item below (PRD §13). Nothing has been applied to the design doc or the PRD yet.
+**Status:** **all six items accepted on 2026-10-17, and applied the same day** to the PRD (v0.4.0) and the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51 → 90, together with OQ-40). Each edit was checked by reading the doc back. The PDF in this folder was re-exported from revision 90 (14 pages).
+**How (b) was applied:** the owner left the route open, so the design doc and the PRD describe both routes instead of the route 2 text in b1 to b3. b4 applies on both routes. The PRD's §16a marks the Nova quotas as a blocker.
+**f2 and b4** named the same guardrail bullet; by the owner's ruling, b4's text was used.
 **Code already changed:** items (d), the budgets, and (f), the Region.
 
 ## What the research found (2026-10-17)
@@ -119,9 +121,9 @@ The account's new sign-up experience pins all resources to eu-north-1 (see the r
 
 | Item | Accept / Reject | Date | Note |
 |---|---|---|---|
-| (a) Free plan instead of Paid | | | |
-| (b) Model routes | | | Blocked until the Nova quotas are raised; then pick route 1 or 2 |
-| (c) 6-month horizon | | | Put the account's sign-up date + 5 months in the calendar |
-| (d) Budgets count credit usage | | | Already in the code |
-| (e) No KDV on the Free plan | | | |
-| (f) Home Region: Stockholm | | | Already in the code; AgentCore verified in Stockholm; durable functions checked in week 4 |
+| (a) Free plan instead of Paid | Accept | 2026-10-17 | |
+| (b) Model routes | Accept | 2026-10-17 | Blocked until the Nova quotas are raised; then pick route 1 or 2 |
+| (c) 6-month horizon | Accept | 2026-10-17 | Put the account's sign-up date + 5 months in the calendar |
+| (d) Budgets count credit usage | Accept | 2026-10-17 | Already in the code |
+| (e) No KDV on the Free plan | Accept | 2026-10-17 | |
+| (f) Home Region: Stockholm | Accept | 2026-10-17 | Already in the code; AgentCore verified in Stockholm; durable functions checked in week 4 |

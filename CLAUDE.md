@@ -1,23 +1,25 @@
 # CLAUDE.md
 
 A personal Job Search Inbox Agent. It watches Gmail for job-search email, keeps
-an applications tracker current, alerts the owner on WhatsApp only for interview
-invites, assessments and offers, and saves follow-ups as Gmail drafts only after
-an Approve tap. **It never sends email.** The owner is the sole builder and sole
-user. The repo is **public**.
+an applications tracker current, emails the owner (through SNS) only for
+interview invites, assessments and offers, and saves follow-ups as Gmail drafts
+only after the owner clicks Approve in a local Mac app. **It never sends or
+forwards email from Gmail.** The owner is the sole builder and sole user. The
+repo is **public**.
 
 ## Source of truth and order of authority (PRD §13)
 
 1. **Design doc** owns architecture: services, models, modes, data flow. The
    live version is the Claude Doc https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9
-   (revision 51). `Job search inbox agent design.pdf` is an export of revision 51.
-2. **`Job search inbox agent PRD.md`** (v0.3.2) owns requirements and targets:
+   (revision 90). `Job search inbox agent design.pdf` is an export of revision 90.
+2. **`Job search inbox agent PRD.md`** (v0.4.0) owns requirements and targets:
    FRs §9, NFRs §10, metrics §11, CI gates §12, milestones §14, dependencies §16a.
 3. **The code follows both.** Never add tools, tool inputs, endpoints or
    capabilities beyond PRD §9, or architecture beyond the design doc.
 4. **Changes to the design doc go through an OQ-style item** that the owner
-   accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`
-   (all accepted and applied) and `Design doc edits for OQ-39.md` (proposed).
+   accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`,
+   `Design doc edits for OQ-39.md` and `Design doc edits for OQ-40.md`, all
+   accepted and applied to the PRD and the design doc.
 
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
 scope.**
@@ -28,16 +30,17 @@ gitignored and must stay out of the repo.
 ## Working rules from the owner
 
 - **Ask before installing anything** (Homebrew, npm, uv packages beyond the project).
-- **Never deploy** and never create AWS or Meta accounts or enter credentials. The owner does these.
+- **Never deploy** and never create accounts or enter credentials. The owner does these.
 - **Never commit secrets, emails, phone numbers or personal data.** Tests use fictional values (`example.com`, `90555…`).
 - Commit only when asked. Commit messages end with the co-author line.
-- Stay inside the current milestone. Week 2+ items (Gmail, Bedrock, LangGraph, AgentCore resources, webhook signature check, GitHub Actions) wait for their week.
+- Stay inside the current milestone. Week 2+ items (Gmail, Bedrock, LangGraph, AgentCore resources, the Mac app, GitHub Actions) wait for their week.
 - Research notes go to `/Users/egemencankaya/Vault/OpenCode Research/` (from `~/AGENTS.md`).
 
 ## Stack and layout
 
-AWS CDK in Python, region **eu-north-1 (Stockholm)**, Python 3.13, managed with **uv**. The
-docs still say eu-central-1; see the account section and OQ-39 (f).
+AWS CDK in Python, region **eu-north-1 (Stockholm)**, Python 3.13, managed with **uv**.
+The layout below is the M1 code, which still has the WhatsApp webhook; see the
+interface section for what replaces it.
 
 ```
 app.py                       CDK entry point (calls infra.app.build)
@@ -116,8 +119,8 @@ account ID and the alert email.
 ## AWS Free plan (decided 2026-10-17)
 
 The owner is on the **AWS Free plan and will stay on it**. Research findings:
-- AWS's current docs list Bedrock and AgentCore as available on the Free plan. That contradicts the design doc's "Paid plan exclusive".
-- **No cross-Region features on the Free plan**, so the design's `eu.` Nova inference profile is unavailable. Models must be called in-Region: Stockholm if Nova runs on demand there, otherwise Frankfurt. Bedrock allows calls that create no resources in any default Region.
+- AWS's current docs list Bedrock and AgentCore as available on the Free plan.
+- **No cross-Region features on the Free plan**, so the design's `eu.` Nova inference profile may be blocked. Measurements leave two routes (OQ-39 (b)): route 1, the `eu.` profile from Stockholm (Nova Micro + Nova Lite, design unchanged); route 2, Nova Lite in-Region in Stockholm for everything. Frankfurt adds nothing, because it has no in-Region Nova Micro either. **The route is not chosen yet**; it waits on the quotas (see Current state).
 - **The account closes 6 months after sign-up, or when the credits run out**, with no extension. Data can be recovered only by upgrading within 90 days. You can't downgrade from Paid back to Free.
 - Nothing is ever charged, so no KDV.
 
@@ -128,22 +131,23 @@ The owner is on the **AWS Free plan and will stay on it**. Research findings:
 - **CLI access:** `aws login` (CLI region set to `eu-north-1`). It yields an assumed `AccountFullAccessRole` session. A CLI region of `eu-central-1` made the login fail.
 - **Never write the account ID into the repo.** CDK reads it from `CDK_DEFAULT_ACCOUNT`.
 
-**Changes so far:**
+**OQ-39, accepted 2026-10-17 (all items, (a) to (f)):**
 - **Code:** the budgets exclude credits so they track credit burn, and `REGION` is `eu-north-1`.
-- **Docs:** everything else is proposed in `Design doc edits for OQ-39.md`, items (a) to (e): Free plan, in-Region model calls, the 6-month horizon, the budgets and no KDV, plus (f) the home Region. **Nothing has been applied to the PRD or the design doc yet.** Apply them only after the owner accepts each item (`prd-engine:prd-revise` fits the PRD cascade).
+- **Docs:** applied to PRD v0.4.0 and design-doc revision 90: Free plan, both model routes, the 6-month horizon (by month 5: export the tracker, then upgrade or end), budgets that count usage before credits, no KDV on the Free plan, and the home Region. The PRD's §16a lists the Nova quotas as a blocker.
 
-## Interface change (proposed 2026-10-17, OQ-40)
+## Interface (accepted 2026-10-17, OQ-40)
 
-The owner doesn't want a Meta account. `Design doc edits for OQ-40.md` proposes replacing WhatsApp with two things:
-- **Email alerts** through an SNS topic. The tool `send_whatsapp` becomes `notify_owner`.
-- **A local Python Streamlit app on 127.0.0.1** with three pages: Dashboard (new DASH-1), Ask (CHT-1) and Follow-ups (APR-2/3).
+The owner doesn't want a Meta account. OQ-40 (all items, (a) to (e)) replaced WhatsApp with two things, applied to PRD v0.4.0 and design-doc revision 90:
+- **Email alerts** through an SNS topic with one confirmed subscription (the owner's address, supplied at deploy time, never committed). The tool `send_whatsapp` is now `notify_owner`, with no recipient input. The Gmail query excludes the alert sender (`-from:no-reply@sns.amazonaws.com`).
+- **A local Python Streamlit app on 127.0.0.1** with three pages: Dashboard (DASH-1, P2), Ask (CHT-1) and Follow-ups (APR-2/3). It uses the owner's `aws login` session; CHT-2 is now owner-only access. The app starts in week 3.
 
-The webhook, API Gateway and Meta SSM parameters would then be removed, leaving no public endpoint. **Not accepted yet. Don't build the UI or remove the webhook until the owner accepts OQ-40.** The deployed webhook is harmless meanwhile: it returns 500 without the SSM values.
+There is no public endpoint in the accepted design. **The code still has the WhatsApp webhook, API Gateway and the Meta SSM parameter names.** Removing them and adding the SNS alert topic (with tests) is the next task, then the owner redeploys and confirms a test alert email (the new week 1 exit). The deployed webhook is harmless meanwhile: it returns 500 without the SSM values.
 
 ## Current state (2026-10-17)
 
 - **Commit `e723332` on `main`:** the M1 code plus the PRD, the design PDF and the OQ-32 edits.
-- **Uncommitted:** the move to eu-north-1, the budgets custom resource (`src/budgets/`) and its tests, the README notes, `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md`, and this file.
+- **Commit `73a4f03` on `main`:** the move to eu-north-1, the budgets custom resource and its tests, the README notes, the OQ-39 and OQ-40 proposals.
+- **Uncommitted:** PRD v0.4.0, the design PDF from revision 90, the decisions recorded in both OQ files, and this file.
 - **The owner's CLI login works** (`aws login`, eu-north-1).
 - **Deployed 2026-10-17 by the owner:**
   - `cdk bootstrap` and `cdk deploy --all` in eu-north-1. Both stacks are `CREATE_COMPLETE`.
@@ -157,9 +161,10 @@ The webhook, API Gateway and Meta SSM parameters would then be removed, leaving 
   - Nova Micro is profile-only in both eu-north-1 and eu-central-1; Nova Lite runs on demand in eu-north-1.
   - The `eu.` profiles are `ACTIVE`, but calls get throttled because **every Nova inference quota is 0**.
   - AgentCore's control plane (Runtime, Gateway, Memory, Identity, Policy, Evaluations) responds in eu-north-1.
-- **Blocker for week 2:** the Nova quotas. The account is held at 0, while the AWS defaults are 400k cross-Region tokens per minute and 5.76B tokens per day. Service Quotas rejects requests at or below the default, so the owner files **one support case** to lift them. After that, pick OQ-39 (b) route 1 (`eu.` profile, design unchanged) or route 2 (Nova Lite in-Region for everything).
+- **Blocker for week 2:** the Nova quotas. The account is held at 0, while the AWS defaults are 400k cross-Region tokens per minute and 5.76B tokens per day. Service Quotas rejects requests at or below the default, so the owner files **one support case** to lift them. After that, use route 1 if its call succeeds, otherwise route 2 (OQ-39 (b)), and record the choice in the PRD.
 - **Week 1 items the owner does by hand:**
   - MFA in AWS Settings;
-  - (on hold until OQ-40 is decided) Meta app, templates, SSM values, webhook registration;
+  - after the code change: confirm the SNS subscription email and check that a test alert arrives;
+  - a calendar reminder at sign-up + 5 months (OQ-39 (c));
   - the AgentCore test runtime for OQ-1;
   - the time-log baseline for M7.
