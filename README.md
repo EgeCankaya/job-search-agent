@@ -32,8 +32,10 @@ publish, over TLS; week 3 narrows it to the agent's role.
 ```
 app.py                       CDK entry point
 infra/                       stacks and settings
+import_applications.py       one-off import of current applications (TRK-3)
 src/budgets/                 deploy-time custom resource that creates the budgets
-tests/unit/                  custom-resource handler tests
+src/inbox_agent/             runtime code: Gmail poll, query builder, tracker matching, classifier
+tests/unit/                  unit tests with in-memory fakes for Gmail, the model, DynamoDB and SQS
 tests/infra/                 CDK assertion tests
 ```
 

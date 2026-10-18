@@ -1,14 +1,15 @@
 """The always-free stack (MODE-2): it stays deployed in both runtime modes.
 
-Week 1 contents: the three DynamoDB tables, the one SQS queue with its
-dead-letter queue, the SNS alert topic, and the budget alerts. There is no
-inbound HTTP endpoint (CHT-2). EventBridge Scheduler arrives in week 2 and the
-DLQ alarm in week 3.
+Contents: the three DynamoDB tables, the one SQS queue with its dead-letter
+queue, the SNS alert topic, the budget alerts, and the Gmail poll Lambda with
+its 30-minute EventBridge Scheduler schedule. There is no inbound HTTP
+endpoint (CHT-2). The DLQ alarm arrives in week 3.
 """
 
 from pathlib import Path
 
 from aws_cdk import (
+    CfnOutput,
     CustomResource,
     Duration,
     RemovalPolicy,
@@ -17,6 +18,7 @@ from aws_cdk import (
     aws_iam as iam,
     aws_lambda as lambda_,
     aws_logs as logs,
+    aws_scheduler as scheduler,
     aws_sns as sns,
     aws_sns_subscriptions as subscriptions,
     aws_sqs as sqs,
@@ -27,11 +29,15 @@ from infra import config
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 BUDGETS_SRC = SRC / "budgets"
+AGENT_PACKAGE = "inbox_agent"
 
 TTL_ATTRIBUTE = "expires_at"
 QUEUE_RETENTION = Duration.days(14)  # NFR-REL-2 and ING-3
 MAX_RECEIVE_COUNT = 3  # ING-3
 LOG_RETENTION = logs.RetentionDays.ONE_WEEK  # NFR-PRIV-4
+POLL_RATE = "rate(30 minutes)"  # ING-1
+# Off until the Gmail client exists (ING-4): until then every poll would fail.
+POLL_SCHEDULE_STATE = "DISABLED"
 
 
 class AlwaysFreeStack(Stack):
@@ -42,6 +48,7 @@ class AlwaysFreeStack(Stack):
         self._queues()
         self._alerts(alert_email)
         self._budgets(alert_email)
+        self._poller()
 
     def _tables(self) -> None:
         # Tracker rows are kept until the project ends (NFR-PRIV-4), so the
@@ -54,6 +61,8 @@ class AlwaysFreeStack(Stack):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             removal_policy=RemovalPolicy.RETAIN,
         )
+        # The TRK-3 import script takes this name as --table.
+        CfnOutput(self, "ApplicationsTableName", value=self.applications_table.table_name)
 
         # ING-2. Entries expire 30 days after processing (NFR-PRIV-4).
         self.processed_emails_table = dynamodb.Table(
@@ -192,3 +201,84 @@ class AlwaysFreeStack(Stack):
                 "Tags": {config.PROJECT_TAG[0]: config.PROJECT_TAG[1]},
             },
         )
+
+    def _poller(self) -> None:
+        # ING-1 to ING-3. The schedule lives here, not in the AgentCore stack,
+        # so it is the same in both modes (MODE-2).
+        log_group = logs.LogGroup(
+            self,
+            "PollLogGroup",
+            retention=LOG_RETENTION,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        role = iam.Role(
+            self,
+            "PollRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            description="Gmail poll: read the tracker, read and write the processed-email log, send to the agent queue",
+        )
+        log_group.grant_write(role)
+        role.add_to_policy(
+            iam.PolicyStatement(actions=["dynamodb:Scan"], resources=[self.applications_table.table_arn])
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:GetItem", "dynamodb:PutItem"],
+                resources=[self.processed_emails_table.table_arn],
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(actions=["sqs:SendMessage"], resources=[self.agent_queue.queue_arn])
+        )
+
+        self.poll_function = lambda_.Function(
+            self,
+            "PollFunction",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            architecture=lambda_.Architecture.ARM_64,
+            handler=f"{AGENT_PACKAGE}.poll.handler",
+            code=lambda_.Code.from_asset(str(SRC), exclude=["*", f"!{AGENT_PACKAGE}", f"!{AGENT_PACKAGE}/*.py"]),
+            role=role,
+            log_group=log_group,
+            memory_size=256,
+            timeout=Duration.seconds(60),
+            # A failed poll isn't retried: the next one covers the same window.
+            retry_attempts=0,
+            environment={
+                "TRACKER_TABLE_NAME": self.applications_table.table_name,
+                "PROCESSED_EMAILS_TABLE_NAME": self.processed_emails_table.table_name,
+                "AGENT_QUEUE_URL": self.agent_queue.queue_url,
+            },
+        )
+
+        # Schedules can't carry tags; their group can (NFR-COST-3).
+        group = scheduler.CfnScheduleGroup(self, "ScheduleGroup", name="inbox-agent")
+        schedule_role = iam.Role(
+            self,
+            "PollScheduleRole",
+            assumed_by=iam.ServicePrincipal(
+                "scheduler.amazonaws.com",
+                conditions={"StringEquals": {"aws:SourceAccount": self.account}},
+            ),
+            description="EventBridge Scheduler: invoke the Gmail poll function only",
+        )
+        schedule_role.add_to_policy(
+            iam.PolicyStatement(actions=["lambda:InvokeFunction"], resources=[self.poll_function.function_arn])
+        )
+        schedule = scheduler.CfnSchedule(
+            self,
+            "PollSchedule",
+            description="Gmail poll every 30 minutes (ING-1)",
+            group_name=group.name,
+            schedule_expression=POLL_RATE,
+            flexible_time_window=scheduler.CfnSchedule.FlexibleTimeWindowProperty(mode="OFF"),
+            state=POLL_SCHEDULE_STATE,
+            target=scheduler.CfnSchedule.TargetProperty(
+                arn=self.poll_function.function_arn,
+                role_arn=schedule_role.role_arn,
+                retry_policy=scheduler.CfnSchedule.RetryPolicyProperty(
+                    maximum_event_age_in_seconds=30 * 60, maximum_retry_attempts=2
+                ),
+            ),
+        )
+        schedule.add_resource_dependency(group)

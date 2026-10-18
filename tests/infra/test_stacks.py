@@ -18,6 +18,7 @@ TAGGABLE = [
     "AWS::IAM::Role",
     "AWS::Logs::LogGroup",
     "AWS::SNS::Topic",
+    "AWS::Scheduler::ScheduleGroup",
 ]
 
 FORBIDDEN_PREFIXES = (
@@ -303,3 +304,128 @@ def test_stacks_target_home_region():
     app = App(context={"alert_email": TEST_EMAIL})
     for stack in build(app).values():
         assert stack.region == "eu-north-1"
+
+
+# Tracker import (TRK-3)
+
+
+def test_tracker_table_name_is_a_stack_output(free):
+    [tracker_id] = [
+        lid
+        for lid, r in resources(free, "AWS::DynamoDB::Table").items()
+        if r["Properties"]["KeySchema"][0]["AttributeName"] == "company_key"
+    ]
+    assert free.to_json()["Outputs"]["ApplicationsTableName"]["Value"] == {"Ref": tracker_id}
+
+
+# Gmail poll (ING-1, ING-2, ING-3, MODE-2)
+
+
+def poll_function(template):
+    [(logical_id, fn)] = [
+        (lid, r)
+        for lid, r in resources(template, "AWS::Lambda::Function").items()
+        if r["Properties"]["Handler"] == "inbox_agent.poll.handler"
+    ]
+    return logical_id, fn
+
+
+def logical_id_by_key(template, key):
+    [logical_id] = [
+        lid
+        for lid, r in resources(template, "AWS::DynamoDB::Table").items()
+        if r["Properties"]["KeySchema"][0]["AttributeName"] == key
+    ]
+    return logical_id
+
+
+def test_poll_function_gets_tables_and_queue_from_the_stack(free):
+    _, fn = poll_function(free)
+    queue_id = [lid for lid, r in resources(free, "AWS::SQS::Queue").items() if "RedrivePolicy" in r["Properties"]][0]
+    assert fn["Properties"]["Environment"]["Variables"] == {
+        "TRACKER_TABLE_NAME": {"Ref": logical_id_by_key(free, "company_key")},
+        "PROCESSED_EMAILS_TABLE_NAME": {"Ref": logical_id_by_key(free, "message_id")},
+        "AGENT_QUEUE_URL": {"Ref": queue_id},
+    }
+
+
+def test_failed_polls_are_not_retried(free):
+    poll_id, _ = poll_function(free)
+    [config] = resources(free, "AWS::Lambda::EventInvokeConfig").values()
+    assert config["Properties"]["FunctionName"] == {"Ref": poll_id}
+    assert config["Properties"]["MaximumRetryAttempts"] == 0
+
+
+def policy_statements(template, role_id):
+    return [
+        s
+        for p in resources(template, "AWS::IAM::Policy").values()
+        if {"Ref": role_id} in p["Properties"]["Roles"]
+        for s in p["Properties"]["PolicyDocument"]["Statement"]
+    ]
+
+
+def as_list(value):
+    return value if isinstance(value, list) else [value]
+
+
+def test_poll_role_is_least_privilege(free):
+    _, fn = poll_function(free)
+    role_id = fn["Properties"]["Role"]["Fn::GetAtt"][0]
+    statements = policy_statements(free, role_id)
+    granted = {action: s["Resource"] for s in statements for action in as_list(s["Action"])}
+    tracker_arn = {"Fn::GetAtt": [logical_id_by_key(free, "company_key"), "Arn"]}
+    log_arn = {"Fn::GetAtt": [logical_id_by_key(free, "message_id"), "Arn"]}
+    queue_id = [lid for lid, r in resources(free, "AWS::SQS::Queue").items() if "RedrivePolicy" in r["Properties"]][0]
+    log_group_id = fn["Properties"]["LoggingConfig"]["LogGroup"]["Ref"]
+    assert granted == {
+        "dynamodb:Scan": tracker_arn,
+        "dynamodb:GetItem": log_arn,
+        "dynamodb:PutItem": log_arn,
+        "sqs:SendMessage": {"Fn::GetAtt": [queue_id, "Arn"]},
+        "logs:CreateLogStream": {"Fn::GetAtt": [log_group_id, "Arn"]},
+        "logs:PutLogEvents": {"Fn::GetAtt": [log_group_id, "Arn"]},
+    }
+
+
+def schedule(template):
+    [schedule] = resources(template, "AWS::Scheduler::Schedule").values()
+    return schedule["Properties"]
+
+
+def test_poll_runs_every_30_minutes(free):
+    poll_id, _ = poll_function(free)
+    props = schedule(free)
+    assert props["ScheduleExpression"] == "rate(30 minutes)"
+    assert props["FlexibleTimeWindow"] == {"Mode": "OFF"}
+    assert props["Target"]["Arn"] == {"Fn::GetAtt": [poll_id, "Arn"]}
+    assert props["Target"]["RetryPolicy"] == {"MaximumEventAgeInSeconds": 1800, "MaximumRetryAttempts": 2}
+
+
+def test_poll_schedule_is_off_until_the_gmail_client_exists(free):
+    assert schedule(free)["State"] == "DISABLED"
+
+
+def test_schedule_sits_in_the_tagged_group(free):
+    [group] = resources(free, "AWS::Scheduler::ScheduleGroup").values()
+    assert schedule(free)["GroupName"] == group["Properties"]["Name"] == "inbox-agent"
+
+
+def test_scheduler_role_may_only_invoke_the_poll_function(free):
+    poll_id, _ = poll_function(free)
+    role_id = schedule(free)["Target"]["RoleArn"]["Fn::GetAtt"][0]
+    role = resources(free, "AWS::IAM::Role")[role_id]
+    [trust] = role["Properties"]["AssumeRolePolicyDocument"]["Statement"]
+    assert trust["Principal"] == {"Service": "scheduler.amazonaws.com"}
+    assert trust["Condition"] == {"StringEquals": {"aws:SourceAccount": {"Ref": "AWS::AccountId"}}}
+    [statement] = policy_statements(free, role_id)
+    assert statement["Action"] == "lambda:InvokeFunction"
+    assert statement["Resource"] == {"Fn::GetAtt": [poll_id, "Arn"]}
+
+
+def test_schedules_are_the_same_in_both_modes(templates):
+    # MODE-2: switching modes leaves the schedules unchanged.
+    local = synth("local")[ALWAYS_FREE_STACK]
+    assert resources(local, "AWS::Scheduler::Schedule") == resources(
+        templates[ALWAYS_FREE_STACK], "AWS::Scheduler::Schedule"
+    )

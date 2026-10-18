@@ -44,12 +44,23 @@ email alerts through SNS.
 
 ```
 app.py                       CDK entry point (calls infra.app.build)
+import_applications.py       TRK-3 import, run by the owner (wraps src/inbox_agent)
 infra/config.py              settings: tag, region, AGENT_MODE, alert email
 infra/app.py                 builds the stacks for the configured mode
-infra/always_free_stack.py   tables, queues, alert topic, budgets
+infra/always_free_stack.py   tables, queues, alert topic, budgets, poll Lambda + schedule
 infra/agentcore_stack.py     empty until week 3
 src/budgets/budgets_resource.py   deploy-time custom resource that creates the budgets
-tests/unit/                  custom-resource handler tests
+src/inbox_agent/             runtime code (packaged into the poll Lambda):
+  settings.py                ATS domains, subject keywords, alert sender, alias list
+  tracker.py, matching.py    tracker table; TRK-1 normalization and matching
+  import_applications.py     TRK-3 CSV import
+  query.py                   ING-1 query builder, local matcher, M8 coverage hook
+  gmail.py                   GmailClient interface (no real client until ING-4)
+  processed_log.py, poll.py  ING-2 log + last-poll time; the poll Lambda
+  trim.py, classify.py       CLS-3 trimming and prompt; CLS-1 classes and precedence
+  classes.py, model.py       the 6 classes; Model interface + Bedrock Converse adapter
+tests/fakes.py               in-memory DynamoDB table and SQS queue
+tests/unit/                  handler, import, query, poll, trim and classifier tests
 tests/infra/                 CDK assertion tests
 ```
 
@@ -60,7 +71,10 @@ uv sync
 uv run pytest
 cdk synth -c alert_email=alerts@example.com
 cdk synth -c alert_email=alerts@example.com -c agent_mode=local
+uv run python import_applications.py data/applications.csv --table <ApplicationsTableName>
 ```
+
+The import uses boto3 from the dev group and your `aws login` session.
 
 Set `JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1` to silence the jsii warning
 about Node 26 (it works; Node 24 LTS is the supported line).
@@ -109,6 +123,15 @@ account ID and the alert email.
 - **The `aws/ssm` managed KMS key allows decryption via SSM** for principals in the account, so no `kms:Decrypt` grant is needed.
 - **`cdk.json` carries the recommended feature flags** from `cdk init`.
 - **Check before an AWS service publishes to the alert topic** (for example the week 3 DLQ alarm). The `DenyPublishFromOtherAccounts` statement keys on `aws:PrincipalAccount`, which a service-principal call may not carry, so that publish could be denied. Test it, and add a `aws:SourceAccount`-scoped exception if needed.
+
+## Week 2 so far (2026-10-18, on main): no Gmail, no Bedrock
+
+Built behind interfaces with fakes, so Gmail and Nova plug in later:
+- **TRK-3 import** and the shared **TRK-1 matching** module. Imported rows use the applied date as `last_contact`, so the stale check can see them.
+- **ING-1 query builder**: four OR'd parts, `after:` (last successful poll - 1 h) as epoch seconds, and `-from:no-reply@sns.amazonaws.com`. Tracker domains and addresses must pass strict checks, or they are skipped, so a stored value can't widen the query. `query_coverage` is the M8 hook.
+- **ING-2/ING-3 poll Lambda** (`inbox_agent.poll.handler`). The processed-email log has a 30-day TTL. The last-poll time is the `#poll-state` item in the same table. A message is queued before it is logged, so it's never lost. Queue messages carry IDs and times only. The schedule is `rate(30 minutes)` in the `inbox-agent` schedule group, and stays **DISABLED** until the Gmail client exists. It is the same in both modes.
+- **CLS-1/CLS-3 classifier step**: trimming to 2,000 characters, a quoted-data prompt that the email can't break out of, precedence applied in code, and a yes/no question. `CLASSIFIER_MODEL_ID` has no default.
+- **boto3 is a dev dependency** (owner approved 2026-10-18), for the import script on the Mac. The Lambda runtime brings its own, and tests use fakes, never AWS.
 
 ## AWS Free plan (decided 2026-10-17)
 

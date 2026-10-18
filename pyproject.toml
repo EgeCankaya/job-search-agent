@@ -9,9 +9,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "boto3>=1.43.114",
     "pytest>=9.1.1",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = [".", "src/budgets"]
+pythonpath = [".", "src", "src/budgets"]
