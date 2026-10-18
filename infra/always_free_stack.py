@@ -45,11 +45,11 @@ READER_TIMEOUT = Duration.seconds(60)
 QUEUE_VISIBILITY = Duration.seconds(6 * 60)
 READER_BATCH_SIZE = 5
 READER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
-# Off until the owner turns it on, after a deploy and a dry run.
-QUEUE_READER_ON = False
-# Off until the owner turns it on: a live poll marks emails processed, so it
-# must wait until something reads the queue.
-POLL_SCHEDULE_ON = False
+# Turned on by the owner on 2026-10-18, after a deploy and a clean dry run.
+QUEUE_READER_ON = True
+# Turned on by the owner on 2026-10-18, with the queue reader: a live poll
+# marks emails processed, so it must never run without a reader.
+POLL_SCHEDULE_ON = True
 
 
 def poll_schedule_state(agent_mode: str) -> str:

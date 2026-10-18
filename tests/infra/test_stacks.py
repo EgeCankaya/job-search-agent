@@ -461,17 +461,24 @@ def test_poll_runs_every_30_minutes(free):
     assert props["Target"]["RetryPolicy"] == {"MaximumEventAgeInSeconds": 1800, "MaximumRetryAttempts": 2}
 
 
-def test_poll_schedule_is_off_until_the_owner_turns_it_on(free):
-    assert schedule(free)["State"] == "DISABLED"
-
-
 @pytest.mark.parametrize(("mode", "state"), [("cloud", "ENABLED"), ("local", "DISABLED")])
-def test_once_on_the_poll_schedule_runs_only_in_cloud_mode(monkeypatch, mode, state):
+def test_the_poll_schedule_runs_only_in_cloud_mode(mode, state):
     # OQ-41 (c): in MacBook mode the Mac worker polls, with the Keychain token.
+    assert schedule(synth(mode)[ALWAYS_FREE_STACK])["State"] == state
+
+
+def test_the_poll_schedule_is_off_while_the_owner_switch_is_off(monkeypatch):
     from infra import always_free_stack
 
-    monkeypatch.setattr(always_free_stack, "POLL_SCHEDULE_ON", True)
-    assert schedule(synth(mode)[ALWAYS_FREE_STACK])["State"] == state
+    monkeypatch.setattr(always_free_stack, "POLL_SCHEDULE_ON", False)
+    assert schedule(synth("cloud")[ALWAYS_FREE_STACK])["State"] == "DISABLED"
+
+
+def test_the_poll_never_runs_without_the_reader():
+    # A live poll marks emails processed; with no reader they would sit unread.
+    from infra import always_free_stack
+
+    assert not always_free_stack.POLL_SCHEDULE_ON or always_free_stack.QUEUE_READER_ON
 
 
 def test_schedule_sits_in_the_tagged_group(free):
@@ -628,16 +635,16 @@ def test_queue_visibility_outlasts_the_reader(free):
     assert queue["Properties"]["VisibilityTimeout"] >= 6 * fn["Properties"]["Timeout"]
 
 
-def test_reader_is_off_until_the_owner_turns_it_on(free):
-    assert event_source(free)["Enabled"] is False
-
-
 @pytest.mark.parametrize(("mode", "enabled"), [("cloud", True), ("local", False)])
-def test_once_on_the_reader_runs_only_in_cloud_mode(monkeypatch, mode, enabled):
+def test_the_reader_runs_only_in_cloud_mode(mode, enabled):
+    assert event_source(synth(mode)[ALWAYS_FREE_STACK])["Enabled"] is enabled
+
+
+def test_the_reader_is_off_while_the_owner_switch_is_off(monkeypatch):
     from infra import always_free_stack
 
-    monkeypatch.setattr(always_free_stack, "QUEUE_READER_ON", True)
-    assert event_source(synth(mode)[ALWAYS_FREE_STACK])["Enabled"] is enabled
+    monkeypatch.setattr(always_free_stack, "QUEUE_READER_ON", False)
+    assert event_source(synth("cloud")[ALWAYS_FREE_STACK])["Enabled"] is False
 
 
 def test_model_id_lives_in_config_only():
