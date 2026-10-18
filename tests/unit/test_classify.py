@@ -1,7 +1,7 @@
 """CLS-1 and CLS-3 with a fake model (UAC-CLS-1, UAC-CLS-3). Fictional emails only."""
 
 import itertools
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta, timezone
 
 import pytest
 
@@ -157,6 +157,62 @@ def test_candidates_are_kept_in_order_without_duplicates():
 def test_invalid_replies_raise_instead_of_guessing(reply):
     with pytest.raises(ClassifierOutputError):
         parse_response(reply)
+
+
+# Extraction (CLS-2)
+
+
+def test_prompt_asks_for_company_role_and_date():
+    prompt = build_prompt(email())
+    for field in ('"company"', '"role"', '"date"'):
+        assert field in prompt
+    assert "Never guess a date." in prompt
+    assert "not the job board, ATS or test platform" in prompt
+
+
+def test_extracted_fields_are_parsed():
+    result = parse_response(
+        '{"classes": ["interview_invite"], "asks_by_date": "yes", "company": " Kuzey  Yazılım ",'
+        ' "role": "Backend Engineer", "date": "2026-11-03T14:00+03:00"}'
+    )
+    assert result.company == "Kuzey Yazılım"
+    assert result.role == "Backend Engineer"
+    assert result.date == datetime(2026, 11, 3, 14, 0, tzinfo=timezone(timedelta(hours=3)))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ('"2026-11-03"', date(2026, 11, 3)),
+        ('"2026-11-03T14:00"', datetime(2026, 11, 3, 14, 0)),
+        ('"2026-11-03T11:00Z"', datetime(2026, 11, 3, 11, 0, tzinfo=UTC)),
+        ("null", None),
+        ('"next Monday"', None),
+        ('"3 Kasım 14:00"', None),
+        ('"2026-02-30"', None),
+        ("20261103", None),
+    ],
+)
+def test_a_date_is_iso_or_nothing(value, expected):
+    # CLS-2: an email with no usable date gets an empty date, never a guess.
+    reply = f'{{"classes": ["assessment"], "asks_by_date": "no", "date": {value}}}'
+    assert parse_response(reply).date == expected
+
+
+@pytest.mark.parametrize("value", ["null", '""', '"   "', '"unknown"', "42", '["Kuzey"]'])
+def test_a_missing_company_or_role_is_none(value):
+    result = parse_response(f'{{"classes": ["other"], "asks_by_date": "no", "company": {value}, "role": {value}}}')
+    assert result.company is None and result.role is None
+
+
+def test_long_names_are_cut():
+    result = parse_response('{"classes": ["other"], "asks_by_date": "no", "company": "' + "x" * 500 + '"}')
+    assert len(result.company) == 100
+
+
+def test_replies_without_extraction_still_parse():
+    result = parse_response('{"classes": ["offer"], "asks_by_date": "no"}')
+    assert (result.company, result.role, result.date) == (None, None, None)
 
 
 # Alert flags (CLS-1, ALR-1)

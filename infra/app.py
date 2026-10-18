@@ -18,7 +18,7 @@ def build(app: App) -> dict[str, Stack]:
 
     stacks: dict[str, Stack] = {
         ALWAYS_FREE_STACK: AlwaysFreeStack(
-            app, ALWAYS_FREE_STACK, env=env, alert_email=config.alert_email(app)
+            app, ALWAYS_FREE_STACK, env=env, alert_email=config.alert_email(app), agent_mode=mode
         )
     }
     if mode == "cloud":

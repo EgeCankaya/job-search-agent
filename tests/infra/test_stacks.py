@@ -194,33 +194,44 @@ def test_alert_topic_has_one_email_subscription_to_the_owner(templates):
     assert subscription["Properties"]["TopicArn"] == {"Ref": topic_id}
 
 
-def test_alert_topic_policy_lets_only_this_account_publish(free):
+def test_alert_topic_policy_lets_only_the_reader_role_publish(free):
+    # ALR-3, OQ-41 (e): in week 2 the temporary queue reader is the only publisher.
     [topic_id] = resources(free, "AWS::SNS::Topic")
     [policy] = resources(free, "AWS::SNS::TopicPolicy").values()
     assert policy["Properties"]["Topics"] == [{"Ref": topic_id}]
     statements = {s["Sid"]: s for s in policy["Properties"]["PolicyDocument"]["Statement"]}
     assert set(statements) == {
-        "AllowPublishFromThisAccount",
-        "DenyPublishFromOtherAccounts",
+        "AllowPublishFromThePublisher",
+        "DenyPublishFromOtherPrincipals",
         "DenyPublishWithoutTls",
     }
     for statement in statements.values():
         assert statement["Action"] == "sns:Publish"
         assert statement["Resource"] == {"Ref": topic_id}
 
-    allow = statements["AllowPublishFromThisAccount"]
+    reader_role = {"Fn::GetAtt": [reader_role_id(free), "Arn"]}
+    allow = statements["AllowPublishFromThePublisher"]
     assert allow["Effect"] == "Allow"
-    assert ":root" in json.dumps(allow["Principal"]["AWS"])
-    assert {"Ref": "AWS::AccountId"} in allow["Principal"]["AWS"]["Fn::Join"][1]
+    assert allow["Principal"] == {"AWS": reader_role}
     assert "Condition" not in allow
 
-    other_accounts = statements["DenyPublishFromOtherAccounts"]
-    assert other_accounts["Effect"] == "Deny"
-    assert other_accounts["Condition"] == {"StringNotEquals": {"aws:PrincipalAccount": {"Ref": "AWS::AccountId"}}}
+    others = statements["DenyPublishFromOtherPrincipals"]
+    assert others["Effect"] == "Deny"
+    assert others["Principal"] == {"AWS": "*"}
+    assert others["Condition"] == {"ArnNotEquals": {"aws:PrincipalArn": reader_role}}
 
     no_tls = statements["DenyPublishWithoutTls"]
     assert no_tls["Effect"] == "Deny"
     assert no_tls["Condition"] == {"Bool": {"aws:SecureTransport": "false"}}
+
+
+def test_no_other_role_may_publish(free):
+    publishers = {
+        role_id
+        for role_id in resources(free, "AWS::IAM::Role")
+        if any("sns:Publish" in as_list(s["Action"]) for s in policy_statements(free, role_id))
+    }
+    assert publishers == {reader_role_id(free)}
 
 
 def test_resource_policies_open_to_anyone_only_deny(templates):
@@ -450,8 +461,17 @@ def test_poll_runs_every_30_minutes(free):
     assert props["Target"]["RetryPolicy"] == {"MaximumEventAgeInSeconds": 1800, "MaximumRetryAttempts": 2}
 
 
-def test_poll_schedule_is_off_until_the_gmail_client_exists(free):
+def test_poll_schedule_is_off_until_the_owner_turns_it_on(free):
     assert schedule(free)["State"] == "DISABLED"
+
+
+@pytest.mark.parametrize(("mode", "state"), [("cloud", "ENABLED"), ("local", "DISABLED")])
+def test_once_on_the_poll_schedule_runs_only_in_cloud_mode(monkeypatch, mode, state):
+    # OQ-41 (c): in MacBook mode the Mac worker polls, with the Keychain token.
+    from infra import always_free_stack
+
+    monkeypatch.setattr(always_free_stack, "POLL_SCHEDULE_ON", True)
+    assert schedule(synth(mode)[ALWAYS_FREE_STACK])["State"] == state
 
 
 def test_schedule_sits_in_the_tagged_group(free):
@@ -471,9 +491,160 @@ def test_scheduler_role_may_only_invoke_the_poll_function(free):
     assert statement["Resource"] == {"Fn::GetAtt": [poll_id, "Arn"]}
 
 
-def test_schedules_are_the_same_in_both_modes(templates):
-    # MODE-2: switching modes leaves the schedules unchanged.
+def test_schedules_survive_a_mode_switch_and_only_the_state_changes(templates):
+    # MODE-2: switching modes keeps the schedules; only the poll's state follows the mode.
+    def without_state(template):
+        return {lid: {**r["Properties"], "State": None} for lid, r in resources(template, "AWS::Scheduler::Schedule").items()}
+
     local = synth("local")[ALWAYS_FREE_STACK]
-    assert resources(local, "AWS::Scheduler::Schedule") == resources(
-        templates[ALWAYS_FREE_STACK], "AWS::Scheduler::Schedule"
+    assert without_state(local) == without_state(templates[ALWAYS_FREE_STACK])
+
+
+# Temporary queue reader (OQ-41 e, ING-2, CLS-1, TOOL-3)
+
+
+def reader_function(template):
+    [(logical_id, fn)] = [
+        (lid, r)
+        for lid, r in resources(template, "AWS::Lambda::Function").items()
+        if r["Properties"]["Handler"] == "inbox_agent.reader.handler"
+    ]
+    return logical_id, fn
+
+
+def reader_role_id(template):
+    return reader_function(template)[1]["Properties"]["Role"]["Fn::GetAtt"][0]
+
+
+def agent_queue_id(template):
+    return [lid for lid, r in resources(template, "AWS::SQS::Queue").items() if "RedrivePolicy" in r["Properties"]][0]
+
+
+def test_reader_gets_tables_topic_and_model_from_config(free):
+    _, fn = reader_function(free)
+    [topic_id] = resources(free, "AWS::SNS::Topic")
+    assert fn["Properties"]["Environment"]["Variables"] == {
+        "TRACKER_TABLE_NAME": {"Ref": logical_id_by_key(free, "company_key")},
+        "PROCESSED_EMAILS_TABLE_NAME": {"Ref": logical_id_by_key(free, "message_id")},
+        "ALERT_TOPIC_ARN": {"Ref": topic_id},
+        "CLASSIFIER_MODEL_ID": "eu.amazon.nova-micro-v1:0",
+    }
+
+
+def test_reader_role_is_least_privilege(free):
+    _, fn = reader_function(free)
+    granted = {}
+    conditions = {}
+    for statement in policy_statements(free, reader_role_id(free)):
+        assert statement["Effect"] == "Allow"
+        for action in as_list(statement["Action"]):
+            granted.setdefault(action, []).extend(render_arn(r) for r in as_list(statement["Resource"]))
+            if "Condition" in statement:
+                conditions[action] = statement["Condition"]
+    granted = {action: sorted(arns) for action, arns in granted.items()}
+
+    tracker = f"<{logical_id_by_key(free, 'company_key')}>"
+    processed = f"<{logical_id_by_key(free, 'message_id')}>"
+    queue = f"<{agent_queue_id(free)}>"
+    [topic_id] = resources(free, "AWS::SNS::Topic")
+    log_group = f"<{fn['Properties']['LoggingConfig']['LogGroup']['Ref']}>"
+    agentcore = "arn:${Partition}:bedrock-agentcore:eu-north-1:${AccountId}"
+    directory = f"{agentcore}:workload-identity-directory/default"
+    workload = f"{directory}/workload-identity/inbox-agent-poller"
+    vault = f"{agentcore}:token-vault/default"
+    provider = f"{vault}/oauth2credentialprovider/inbox-agent-google"
+    secret = (
+        "arn:${Partition}:secretsmanager:eu-north-1:${AccountId}:secret:"
+        "bedrock-agentcore-identity!default/oauth2/inbox-agent-google-1ed2e5b8-NDkbRv"
     )
+    profile = "arn:${Partition}:bedrock:eu-north-1:${AccountId}:inference-profile/eu.amazon.nova-micro-v1:0"
+    models = [
+        f"arn:${{Partition}}:bedrock:{region}::foundation-model/amazon.nova-micro-v1:0"
+        for region in ("eu-central-1", "eu-north-1", "eu-west-1", "eu-west-3")
+    ]
+    assert granted == {
+        "dynamodb:Scan": [tracker],
+        "dynamodb:GetItem": sorted([tracker, processed]),
+        "dynamodb:PutItem": sorted([tracker, processed]),
+        "sqs:ReceiveMessage": [queue],
+        "sqs:ChangeMessageVisibility": [queue],
+        "sqs:GetQueueUrl": [queue],
+        "sqs:DeleteMessage": [queue],
+        "sqs:GetQueueAttributes": [queue],
+        "sns:Publish": [f"${{{topic_id}}}"],
+        "logs:CreateLogStream": [log_group],
+        "logs:PutLogEvents": [log_group],
+        "bedrock-agentcore:GetWorkloadAccessTokenForUserId": sorted([directory, workload]),
+        "bedrock-agentcore:GetResourceOauth2Token": sorted([directory, workload, vault, provider]),
+        "secretsmanager:GetSecretValue": [secret],
+        "bedrock:InvokeModel": sorted([profile, *models]),
+    }
+
+
+def test_reader_reaches_the_regional_models_only_through_the_profile(free):
+    statements = [
+        s for s in policy_statements(free, reader_role_id(free)) if "foundation-model" in json.dumps(s["Resource"])
+    ]
+    [statement] = statements
+    [(operator, values)] = statement["Condition"].items()
+    assert operator == "StringEquals"
+    assert render_arn(values["bedrock:InferenceProfileArn"]) == (
+        "arn:${Partition}:bedrock:eu-north-1:${AccountId}:inference-profile/eu.amazon.nova-micro-v1:0"
+    )
+
+
+def test_only_the_reader_may_call_bedrock(free):
+    callers = {
+        role_id
+        for role_id in resources(free, "AWS::IAM::Role")
+        if any(a.startswith("bedrock:") for s in policy_statements(free, role_id) for a in as_list(s["Action"]))
+    }
+    assert callers == {reader_role_id(free)}
+
+
+def test_reader_role_cannot_reach_the_drafts_identity(free):
+    text = json.dumps([render_arn(r) for s in policy_statements(free, reader_role_id(free)) for r in as_list(s["Resource"])])
+    assert "inbox-agent-drafts" not in text
+
+
+def event_source(template):
+    [mapping] = resources(template, "AWS::Lambda::EventSourceMapping").values()
+    return mapping["Properties"]
+
+
+def test_reader_reads_the_agent_queue_with_partial_failures(free):
+    reader_id, fn = reader_function(free)
+    props = event_source(free)
+    assert props["FunctionName"] == {"Ref": reader_id}
+    assert props["EventSourceArn"] == {"Fn::GetAtt": [agent_queue_id(free), "Arn"]}
+    assert props["BatchSize"] == 5
+    assert props["FunctionResponseTypes"] == ["ReportBatchItemFailures"]
+    assert props["ScalingConfig"] == {"MaximumConcurrency": 2}
+
+
+def test_queue_visibility_outlasts_the_reader(free):
+    _, fn = reader_function(free)
+    queue = resources(free, "AWS::SQS::Queue")[agent_queue_id(free)]
+    assert queue["Properties"]["VisibilityTimeout"] >= 6 * fn["Properties"]["Timeout"]
+
+
+def test_reader_is_off_until_the_owner_turns_it_on(free):
+    assert event_source(free)["Enabled"] is False
+
+
+@pytest.mark.parametrize(("mode", "enabled"), [("cloud", True), ("local", False)])
+def test_once_on_the_reader_runs_only_in_cloud_mode(monkeypatch, mode, enabled):
+    from infra import always_free_stack
+
+    monkeypatch.setattr(always_free_stack, "QUEUE_READER_ON", True)
+    assert event_source(synth(mode)[ALWAYS_FREE_STACK])["Enabled"] is enabled
+
+
+def test_model_id_lives_in_config_only():
+    from inbox_agent import model
+
+    from infra import config
+
+    assert config.CLASSIFIER_MODEL_ID == f"eu.{config.CLASSIFIER_FOUNDATION_MODEL}"
+    with pytest.raises(ValueError):
+        model.classifier_model({})

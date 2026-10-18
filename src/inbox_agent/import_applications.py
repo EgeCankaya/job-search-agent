@@ -8,7 +8,12 @@ Rows go through the TRK-1 normalization, so importing the same file twice
 leaves the same rows. The CSV stays on the Mac; `.gitignore` excludes it.
 The script prints counts only, never company names.
 
+`--aliases` takes a second CSV with the columns variant and canonical. It
+replaces the alias item in the tracker table (OQ-41 d) before the rows are
+imported. Without it, the import uses the aliases already stored.
+
     uv run python import_applications.py data/applications.csv --table <ApplicationsTableName>
+    uv run python import_applications.py data/applications.csv --table <name> --aliases data/aliases.csv
 """
 
 import argparse
@@ -26,6 +31,7 @@ from inbox_agent.query import normalize_address, normalize_domain
 from inbox_agent.tracker import STATUSES, TrackerTable
 
 REQUIRED_COLUMNS = ("company", "role", "applied_date", "status")
+ALIAS_COLUMNS = ("variant", "canonical")
 OPTIONAL_COLUMNS = ("company_domain", "contact_address")
 DATE_FORMATS = ("%Y-%m-%d", "%d.%m.%Y")
 
@@ -64,17 +70,52 @@ def _parse_date(value: str) -> date:
     raise ValueError("expected YYYY-MM-DD or DD.MM.YYYY")
 
 
-def parse_csv(text: str) -> list[ImportRow]:
-    """Every row, validated. Raises CsvError listing every problem by line."""
+def _reader(text: str, required: tuple[str, ...]) -> tuple[csv.DictReader, dict[str, str]]:
     try:
         dialect = csv.Sniffer().sniff(text.split("\n", 1)[0], delimiters=",;")
     except csv.Error:
         dialect = csv.excel
     reader = csv.DictReader(io.StringIO(text), dialect=dialect)
     columns = {_column(name): name for name in reader.fieldnames or []}
-    missing = [name for name in REQUIRED_COLUMNS if name not in columns]
+    missing = [name for name in required if name not in columns]
     if missing:
         raise CsvError(f"missing columns: {', '.join(missing)}")
+    return reader, columns
+
+
+def parse_aliases(text: str) -> dict[str, str]:
+    """Variant -> canonical name, validated. Raises CsvError listing every problem by line."""
+    reader, columns = _reader(text, ALIAS_COLUMNS)
+    aliases: dict[str, str] = {}
+    lines: dict[str, int] = {}  # normalized variant -> line
+    errors: list[tuple[int, str]] = []
+    for line, record in enumerate(reader, start=2):
+        variant, canonical = ((record.get(columns[name]) or "").strip() for name in ALIAS_COLUMNS)
+        if not variant and not canonical:
+            continue
+        try:
+            key = company_key(variant, {})
+            company_key(canonical, {})
+        except ValueError:
+            errors.append((line, "variant and canonical must both name a company"))
+            continue
+        if key in lines:
+            errors.append((line, f"same variant as line {lines[key]} after normalization"))
+            continue
+        lines[key] = line
+        aliases[variant] = canonical
+    # An alias is applied once, so a canonical name that is itself a variant
+    # would leave a chain half-resolved.
+    canonical_keys = {company_key(c, {}) for c in aliases.values()}
+    errors += [(line, "this variant is also a canonical name") for key, line in lines.items() if key in canonical_keys]
+    if errors:
+        raise CsvError("\n".join(f"line {line}: {problem}" for line, problem in sorted(errors)))
+    return aliases
+
+
+def parse_csv(text: str, aliases: dict[str, str] | None = None) -> list[ImportRow]:
+    """Every row, validated. Raises CsvError listing every problem by line."""
+    reader, columns = _reader(text, REQUIRED_COLUMNS)
 
     rows: list[ImportRow] = []
     errors: list[str] = []
@@ -105,7 +146,7 @@ def parse_csv(text: str) -> list[ImportRow]:
                     problems.append(f"{name}: {error}")
         if values["company"] and values["role"]:
             try:
-                key = (company_key(values["company"]), role_key(values["role"]))
+                key = (company_key(values["company"], aliases), role_key(values["role"]))
             except ValueError as error:
                 problems.append(str(error))
             else:
@@ -129,10 +170,10 @@ def parse_csv(text: str) -> list[ImportRow]:
     return rows
 
 
-def _merged(existing: dict | None, row: ImportRow) -> dict:
+def _merged(existing: dict | None, row: ImportRow, aliases: dict[str, str] | None) -> dict:
     item = dict(existing or {})
     item.update(
-        company_key=company_key(row.company),
+        company_key=company_key(row.company, aliases),
         role_key=role_key(row.role),
         company=row.company,
         role=row.role,
@@ -149,11 +190,11 @@ def _merged(existing: dict | None, row: ImportRow) -> dict:
     return item
 
 
-def import_rows(rows: list[ImportRow], tracker: TrackerTable) -> ImportResult:
+def import_rows(rows: list[ImportRow], tracker: TrackerTable, aliases: dict[str, str] | None = None) -> ImportResult:
     created = updated = unchanged = 0
     for row in rows:
-        existing = tracker.get(company_key(row.company), role_key(row.role))
-        item = _merged(existing, row)
+        existing = tracker.get(company_key(row.company, aliases), role_key(row.role))
+        item = _merged(existing, row, aliases)
         if item == existing:
             unchanged += 1
             continue
@@ -175,15 +216,21 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="import_applications", description=__doc__.split("\n\n")[0])
     parser.add_argument("csv_path", type=Path)
     parser.add_argument("--table", required=True, help="the ApplicationsTableName stack output")
+    parser.add_argument("--aliases", type=Path, help="CSV of variant,canonical; replaces the stored alias list")
     args = parser.parse_args(argv)
 
+    tracker = TrackerTable(_dynamodb_table(args.table))
     try:
-        rows = parse_csv(args.csv_path.read_text(encoding="utf-8-sig"))
+        new_aliases = parse_aliases(args.aliases.read_text(encoding="utf-8-sig")) if args.aliases else None
+        aliases = tracker.aliases() if new_aliases is None else new_aliases
+        rows = parse_csv(args.csv_path.read_text(encoding="utf-8-sig"), aliases)
     except CsvError as error:
         print(f"Nothing imported:\n{error}", file=sys.stderr)
         return 1
-    result = import_rows(rows, TrackerTable(_dynamodb_table(args.table)))
-    print(f"created={result.created} updated={result.updated} unchanged={result.unchanged}")
+    if new_aliases is not None:
+        tracker.put_aliases(new_aliases)
+    result = import_rows(rows, tracker, aliases)
+    print(f"created={result.created} updated={result.updated} unchanged={result.unchanged} aliases={len(aliases)}")
     return 0
 
 

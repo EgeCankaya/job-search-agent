@@ -1,8 +1,8 @@
 """The model interface (MODE-1). The model ID is config, never code.
 
-The route in OQ-39 (b) decides the ID (Nova Micro or Nova Lite, `eu.`
-profile or in-Region) and isn't picked yet, so there is no default. Tests
-use a fake model.
+Route 1 was chosen on 2026-10-18 (OQ-39 b, OQ-41 f): the CDK sets
+CLASSIFIER_MODEL_ID to the `eu.` Nova Micro profile (infra/config.py). The
+code keeps no default, so the ID lives in one place. Tests use a fake model.
 """
 
 import os
@@ -24,7 +24,7 @@ class Model(Protocol):
 class BedrockConverseModel:
     client: object  # boto3 bedrock-runtime client
     model_id: str
-    max_tokens: int = 200
+    max_tokens: int = 300  # the classes, the yes/no answer, company, role and date
 
     def complete(self, system: str, prompt: str) -> str:
         response = self.client.converse(

@@ -8,11 +8,11 @@ app. It never sends or forwards email from Gmail.
 AWS serverless plus Amazon Bedrock AgentCore, defined in AWS CDK (Python), in
 eu-north-1 (Stockholm), the home Region AWS assigned to this account. Requirements live in the PRD; architecture lives in the design doc.
 
-## Status: milestone M1 (week 1), skeleton
+## Status: week 2, Gmail ingestion and alerts
 
 | Stack | Contents |
 |---|---|
-| `InboxAgentAlwaysFree` | DynamoDB tables (applications tracker; processed-email log and pending drafts, both with 30-day TTL), one SQS queue (14-day retention) with a dead-letter queue after 3 receives, an SNS alert topic with one email subscription (mine), AWS Budgets alerts at $1, $5 and $10 |
+| `InboxAgentAlwaysFree` | DynamoDB tables (applications tracker; processed-email log and pending drafts, both with 30-day TTL), one SQS queue (14-day retention) with a dead-letter queue after 3 receives, an SNS alert topic with one email subscription (mine), AWS Budgets alerts at $1, $5 and $10, the Gmail poll Lambda on a 30-minute schedule, and a temporary queue reader Lambda that classifies each email with Nova Micro, updates the tracker and sends the alert (week 2 only; the week 3 agent replaces it) |
 | `InboxAgentAgentCore` | Empty until week 3. Deployed only when `AGENT_MODE=cloud` |
 
 The account is on the AWS Free plan: credits pay for all usage and nothing is
@@ -24,8 +24,8 @@ credits run out, whichever comes first.
 Day-one guardrails in code: every resource tagged `project=inbox-agent`, 7-day
 log retention, no VPC/NAT/load balancer/OpenSearch Serverless/SES inbound, no
 public endpoint (no API Gateway, no Lambda function URL), and hand-built IAM
-roles with no wildcards. The alert topic's policy lets only this account's principals
-publish, over TLS; week 3 narrows it to the agent's role.
+roles with no wildcards. The alert topic's policy lets only the queue reader's role
+publish, over TLS; week 3 moves it to the agent's role.
 
 ## Layout
 
@@ -34,8 +34,8 @@ app.py                       CDK entry point
 infra/                       stacks and settings
 import_applications.py       one-off import of current applications (TRK-3)
 src/budgets/                 deploy-time custom resource that creates the budgets
-src/inbox_agent/             runtime code: Gmail poll, query builder, tracker matching, classifier
-tests/unit/                  unit tests with in-memory fakes for Gmail, the model, DynamoDB and SQS
+src/inbox_agent/             runtime code: Gmail poll, query builder, tracker matching, classifier, queue reader
+tests/unit/                  unit tests with in-memory fakes for Gmail, the model, DynamoDB, SQS and SNS
 tests/infra/                 CDK assertion tests
 ```
 
@@ -60,6 +60,16 @@ After a deploy, AWS emails a subscription confirmation to `alert_email`.
 Confirm it, or no alert arrives. Alerts come from
 `no-reply@sns.amazonaws.com`; the agent's Gmail query (week 2) excludes that
 sender (ING-1).
+
+## Company aliases
+
+The alias list (TRK-1) names companies I applied to, so it never lives in
+this repo. It is one reserved item in the tracker table, set from a local CSV
+with the columns `variant,canonical`:
+
+```bash
+uv run python import_applications.py data/applications.csv --table <ApplicationsTableName> --aliases data/aliases.csv
+```
 
 Never commit application CSVs, `.env` files or `cdk.out/`; `.gitignore`
 excludes them.

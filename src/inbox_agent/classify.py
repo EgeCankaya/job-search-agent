@@ -1,14 +1,20 @@
-"""CLS-1 and CLS-3: one class per email, plus the yes/no uncertainty question.
+"""CLS-1, CLS-2 and CLS-3: one class per email, the yes/no uncertainty
+question, and the company, role and date, in one model call.
 
 The trimmed email goes to the model as quoted data between fixed
 delimiters, under a system rule never to follow instructions inside it. The
 model lists every class that fits; the precedence rule picks one in code, so
 the choice doesn't depend on the model.
+
+Extracted fields are email text: they go to the tracker and the alert,
+never into logs (NFR-PRIV-3). A date the reply doesn't state in ISO form is
+dropped, never guessed (CLS-2).
 """
 
 import json
 import re
 from dataclasses import dataclass
+from datetime import date, datetime
 
 from inbox_agent.classes import PRECEDENCE, URGENT_CLASSES, EmailClass
 from inbox_agent.model import Model
@@ -51,7 +57,12 @@ List every class that fits.
 
 Also answer yes or no: {question}
 
-Reply with only this JSON: {{"classes": ["<class>", ...], "asks_by_date": "yes" or "no"}}
+Also extract, from the email only:
+- company: the hiring company's name as the email gives it (not the job board, ATS or test platform), or null
+- role: the job title, or null
+- date: the interview time or assessment deadline, as YYYY-MM-DD or YYYY-MM-DDTHH:MM (add the UTC offset if the email states the time zone), or null if the email gives none. Never guess a date.
+
+Reply with only this JSON: {{"classes": ["<class>", ...], "asks_by_date": "yes" or "no", "company": "..." or null, "role": "..." or null, "date": "..." or null}}
 
 {open}
 Subject: {subject}
@@ -67,11 +78,18 @@ class ClassifierOutputError(ValueError):
     silent fallback to "other" could hide an interview invite."""
 
 
+# Company and role are names, not paragraphs.
+FIELD_LIMIT = 100
+
+
 @dataclass(frozen=True)
 class Classification:
     email_class: EmailClass
     asks_by_date: bool
     candidates: tuple[EmailClass, ...]
+    company: str | None = None
+    role: str | None = None
+    date: date | datetime | None = None
 
     @property
     def urgent(self) -> bool:
@@ -110,6 +128,28 @@ def apply_precedence(classes) -> EmailClass:
     return next(name for name in PRECEDENCE if name in found)
 
 
+def _name(value) -> str | None:
+    if not isinstance(value, str):
+        return None
+    text = " ".join(value.split())[:FIELD_LIMIT].strip()
+    return text if text and text.lower() not in ("null", "none", "unknown") else None
+
+
+def _date(value) -> date | datetime | None:
+    """An ISO date or date-time, or None. Anything else is dropped, not guessed."""
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    try:
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+            return date.fromisoformat(text)
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:\d{2})?", text):
+            return datetime.fromisoformat(text)
+    except ValueError:
+        pass
+    return None
+
+
 def parse_response(text: str) -> Classification:
     start = text.find("{")
     if start < 0:
@@ -139,7 +179,14 @@ def parse_response(text: str) -> Classification:
     else:
         raise ClassifierOutputError('asks_by_date must be "yes" or "no"')
 
-    return Classification(email_class=apply_precedence(candidates), asks_by_date=asks_by_date, candidates=candidates)
+    return Classification(
+        email_class=apply_precedence(candidates),
+        asks_by_date=asks_by_date,
+        candidates=candidates,
+        company=_name(answer.get("company")),
+        role=_name(answer.get("role")),
+        date=_date(answer.get("date")),
+    )
 
 
 def classify(email: TrimmedEmail, model: Model) -> Classification:

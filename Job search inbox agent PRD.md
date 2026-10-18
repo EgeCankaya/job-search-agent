@@ -2,12 +2,12 @@
 
 > **One-liner:** A personal agent that watches my Gmail for job-search email, keeps my applications tracker current without my input, emails me only for interview invites, assessments and offers, and writes follow-ups that are saved as Gmail drafts only after I approve them. A local Mac app answers my questions and takes my approvals. It never sends or forwards email from my Gmail; its only outbound messages are AWS SNS notifications to me.
 
-**Date:** 2026-10-17 (v0.4.0; all versions the same day)
-**Status:** Draft v0.4.0
+**Date:** 2026-10-18 (v0.4.1; v0.1 to v0.4.0 on 2026-10-17)
+**Status:** Draft v0.4.1
 **Owner:** Egemen Çankaya (sole builder and sole user)
 **DRI:** the owner. No email address is listed because the repo will be public.
 **Audience:** Me, as builder; reviewers who read the portfolio repo (hiring managers, interviewers)
-**Source of truth:** "Job search inbox agent design" (PDF, this folder). If this PRD and the design doc disagree, the design doc wins and this PRD needs a revision. **On 2026-10-17 I accepted all seven design-doc changes in OQ-32, and they were applied that day** to the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51). The Claude Doc is the source of truth. **On 2026-10-17 I also accepted all items of OQ-39 (AWS Free plan, home Region Stockholm) and OQ-40 (SNS email alerts and a local Mac app instead of WhatsApp)**, and their design-doc rows were applied the same day (revision 51 → 90). The PDF in this folder was re-exported from revision 90. The exact edits are recorded in "Design doc edits for OQ-32.md", "Design doc edits for OQ-39.md" and "Design doc edits for OQ-40.md". §13 sets the order of authority.
+**Source of truth:** "Job search inbox agent design" (PDF, this folder). If this PRD and the design doc disagree, the design doc wins and this PRD needs a revision. **On 2026-10-17 I accepted all seven design-doc changes in OQ-32, and they were applied that day** to the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51). The Claude Doc is the source of truth. **On 2026-10-17 I also accepted all items of OQ-39 (AWS Free plan, home Region Stockholm) and OQ-40 (SNS email alerts and a local Mac app instead of WhatsApp)**, and their design-doc rows were applied the same day (revision 51 → 90). The PDF in this folder was re-exported from revision 90. **On 2026-10-18 I accepted all six items of OQ-41 (finishing week 2)**, and its design-doc rows were applied the same day (revision 90 → 98). The exact edits are recorded in "Design doc edits for OQ-32.md", "Design doc edits for OQ-39.md", "Design doc edits for OQ-40.md" and "Design doc edits for OQ-41.md". §13 sets the order of authority.
 
 | Assessment dimension | Value | Why |
 |---|---|---|
@@ -203,10 +203,10 @@ Requirement IDs use the form `{DOMAIN}-{N}` for brevity, inside the project pref
 
 The system SHALL search Gmail every 30 minutes, the low end of the decided 30 to 60 minute range [Brief; interval chosen in v0.2, OQ-7]. In cloud mode the poll is started by EventBridge Scheduler and run by Lambda. In MacBook mode the Mac worker polls every 30 minutes while awake [Doc]. The query SHALL be built from four parts [PRD, OQ-15]:
 
-1. Senders from the ATS domain list in config.
+1. Senders from the ATS and assessment-platform domain list in config, including hackerrank.com, codility.com, testgorilla.com and codesignal.com [accepted in OQ-41 (b)].
 2. Domains of companies in the tracker.
 3. Senders saved as recruiters.
-4. Subject keywords in English and Turkish, kept in config: interview, mülakat, görüşme, assessment, değerlendirme, offer, teklif, başvuru, application.
+4. Subject keywords in English and Turkish, kept in config: interview, mülakat, görüşme, assessment, değerlendirme, offer, teklif, başvuru, application. Gmail matches whole words, so the common Turkish forms are keywords too: başvurunuz, başvurunuzu, başvurunuza, başvurunuzla, başvurunuzun, başvurusu, mülakatı, mülakata, mülakatınız, mülakatınızı, görüşmesi, görüşmeye, görüşmeniz, görüşmenizi, teklifi, teklifimiz, teklifiniz, değerlendirmesi, değerlendirmeye, değerlendirmeniz [accepted in OQ-41 (a)]. "görüşmek" is left out, because "görüşmek üzere" is a common sign-off.
 
 These parts are combined with OR, and the result is limited to `after:` the last successful poll minus a 1-hour overlap. The query SHALL exclude the alert sender (`-from:no-reply@sns.amazonaws.com`), so the agent never reads its own alerts, whose subjects contain words like "interview" [accepted in OQ-40].
 
@@ -263,7 +263,7 @@ The Google OAuth app SHALL be usable only by my account. Its publishing status i
 
 #### CLS-1 (P1): Six-class classification with an uncertainty flag
 
-The agent SHALL assign each ingested email exactly one class, using the route's classification model in cloud mode (Nova Micro on route 1, Nova Lite on route 2; OQ-39 (b), route not yet chosen) or the configured local model in MacBook mode [Doc, OQ-39]. When an email fits more than one class, precedence SHALL be offer > interview invite > assessment > rejection > recruiter outreach > other [PRD, OQ-16]. The agent SHALL also answer one yes/no question: "Does this email ask me to schedule, attend, complete or reply to something by a date?" [PRD, OQ-17].
+The agent SHALL assign each ingested email exactly one class, using the route's classification model in cloud mode (Nova Micro through the `eu.` profile: route 1, chosen 2026-10-18; OQ-39 (b), OQ-41 (f)) or the configured local model in MacBook mode [Doc, OQ-39]. When an email fits more than one class, precedence SHALL be offer > interview invite > assessment > rejection > recruiter outreach > other [PRD, OQ-16]. The agent SHALL also answer one yes/no question: "Does this email ask me to schedule, attend, complete or reply to something by a date?" [PRD, OQ-17].
 
 | Class | Definition (adopted in v0.2, OQ-16) | Action |
 |---|---|---|
@@ -312,7 +312,7 @@ The agent SHALL pass email content to the model as quoted data, under a system r
 
 `upsert_application` SHALL create or update one row per application in DynamoDB, and the agent SHALL update that company's memory summary [Doc]. Rows SHALL be matched on a normalized company plus a normalized role [PRD, OQ-14]:
 
-- Normalization lowercases, folds Turkish letters (ş→s, ı→i, ğ→g, ü→u, ö→o, ç→c), removes legal suffixes (A.Ş., Ltd. Şti., Inc., GmbH) and applies an alias list.
+- Normalization lowercases, folds Turkish letters (ş→s, ı→i, ğ→g, ü→u, ö→o, ç→c), removes legal suffixes (A.Ş., Ltd. Şti., Inc., GmbH) and applies an alias list. The alias list is one reserved item in the tracker table (it can't collide with a company key), never in the repo. Every reader of tracker rows skips it [accepted in OQ-41 (d)].
 - The company comes from extraction, not from the ATS sender domain.
 - If the email names no role, the email goes to the only open row for that company. If there are several, it goes to the row with the latest last contact date, and the alert names that row.
 - If nothing matches, a new row is created: `recruiter_contact` for recruiter outreach, `applied` for everything else.
@@ -361,7 +361,7 @@ Automatic updates SHALL never replace `offer`, `rejected` or `withdrawn` with an
 
 #### TRK-3 (P1, new in v0.3): One-off import of current applications
 
-A command-line script, `import_applications`, SHALL import my current applications from a CSV file into the tracker, using the same normalization and matching as TRK-1 [PRD, OQ-33]. The CSV columns are company, role, applied date and status, plus an optional company domain and contact address. I run the script once, before week 2's first poll. The CSV stays on the Mac and is never committed.
+A command-line script, `import_applications`, SHALL import my current applications from a CSV file into the tracker, using the same normalization and matching as TRK-1 [PRD, OQ-33]. The CSV columns are company, role, applied date and status, plus an optional company domain and contact address. I run the script once, before week 2's first poll. The CSV stays on the Mac and is never committed. An optional input, `--aliases <csv>` with the columns variant and canonical name, replaces the alias item before the rows are imported, so the import uses the same aliases; that CSV stays on the Mac too [accepted in OQ-41 (d)].
 
 - **Customer scenario:** on the first day of polling, a reply to an application I sent weeks ago lands on the right row.
 - **Pain removed:** with an empty tracker, every early reply would create a duplicate row, the query would have no company domains, and the stale check would have nothing to check.
@@ -391,7 +391,7 @@ The 24-hour rule was deleted with WhatsApp (OQ-40 (b)). Email has no 24-hour win
 
 #### ALR-3 (P1): Alerts go only to me
 
-`notify_owner` SHALL publish only to the alert SNS topic, whose single confirmed subscription is my address. The topic policy SHALL let only the agent's role publish. The recipient SHALL NOT be an input the model can set [PRD; channel from OQ-40]. The address is supplied at deploy time and never committed.
+`notify_owner` SHALL publish only to the alert SNS topic, whose single confirmed subscription is my address. The topic policy SHALL let only the agent's role publish (in week 2, the temporary queue reader's role), and SHALL deny every other principal [accepted in OQ-41 (e)]. The recipient SHALL NOT be an input the model can set [PRD; channel from OQ-40]. The address is supplied at deploy time and never committed.
 
 - **Customer scenario:** whatever an email says, the agent cannot notify anyone else.
 - **Pain removed:** a model-controlled recipient would let a hostile email leak tracker data.
@@ -540,10 +540,10 @@ An AgentCore Policy written in Cedar SHALL deny any send or forward action at th
 
 #### TOOL-3 (P1): Least-privilege model access
 
-The AgentCore Runtime IAM role SHALL be allowed to invoke only the Nova models of the route chosen in OQ-39 (b), which is not yet chosen [Doc, OQ-39]:
+The AgentCore Runtime IAM role SHALL be allowed to invoke only the Nova models of the route chosen in OQ-39 (b): **route 1, chosen 2026-10-18** after its test call succeeded [Doc, OQ-39, OQ-41 (f)]. In week 2 the same rule applies to the temporary queue reader's role, which may invoke Nova Micro only:
 
-- **Route 1:** Nova Micro and Nova Lite, through the `eu.` cross-Region inference profile from eu-north-1.
-- **Route 2:** Nova Lite only, called in-Region as `amazon.nova-lite-v1:0` in eu-north-1. The IAM permission names that one model ARN.
+- **Route 1 (chosen):** Nova Micro and Nova Lite, through the `eu.` cross-Region inference profile from eu-north-1. The IAM permission names each profile and the model ARNs in the 4 Regions it routes to (eu-central-1, eu-north-1, eu-west-1, eu-west-3), reachable only through that profile (`bedrock:InferenceProfileArn`).
+- **Route 2 (fallback):** Nova Lite only, called in-Region as `amazon.nova-lite-v1:0` in eu-north-1. The IAM permission names that one model ARN. Used only if cross-Region calls ever stop working.
 
 - **Customer scenario:** I know which models touch my email, and that they run in the EU.
 - **Pain removed:** a broad Bedrock permission could send data to a model or region I did not choose.
@@ -583,11 +583,11 @@ One setting, `AGENT_MODE=cloud|local`, SHALL select the runtime, model, tools an
 
 #### MODE-2 (P1): Separate stacks
 
-The CDK app SHALL deploy the AgentCore resources (Runtime, Gateway, Memory, Evaluations) as a stack that can be turned off, separate from the always-free stack [Doc]. The always-free stack includes the EventBridge schedules, which stay on in MacBook mode (APR-1) [PRD].
+The CDK app SHALL deploy the AgentCore resources (Runtime, Gateway, Memory, Evaluations) as a stack that can be turned off, separate from the always-free stack [Doc]. The always-free stack includes the EventBridge schedules. The daily stale-check schedule stays on in MacBook mode (APR-1). The Gmail poll schedule is turned off, because the Mac worker polls (ING-1) [PRD, accepted in OQ-41 (c)].
 
 - **Customer scenario:** switching to MacBook mode removes the parts that cost money and keeps the tracker and queue.
 - **Pain removed:** tearing everything down would lose the tracker.
-- **Acceptance criteria:** redeploying with the AgentCore stack off removes those 4 resources and leaves the DynamoDB tables, SQS queues and schedules unchanged.
+- **Acceptance criteria:** redeploying with the AgentCore stack off removes those 4 resources, leaves the DynamoDB tables, the SQS queues and the stale-check schedule unchanged, and turns the poll schedule off.
 - **Trace:** UAC-MODE-2
 
 #### MODE-3 (P2): Memory carried over in both directions
@@ -810,8 +810,8 @@ These follow the doc's build plan, where each week ends with something running [
 | Week | Deliverables | Exit criterion |
 |---|---|---|
 | 1. Account and skeleton | [Doc] AWS account on the Free plan [OQ-39]; budget alerts at $1, $5 and $10, counting usage before credits [OQ-39 (d)]; where Nova can be called in-Region checked, and its quotas checked [OQ-39]; CDK app with DynamoDB and one Lambda; an SNS alert topic with my email subscription [OQ-40]; day-one guardrails. [v0.2] Time-log baseline started; a test AgentCore runtime created to settle OQ-1 | `cdk deploy` succeeds from a clean checkout. **A test alert email arrives** [OQ-40]. All 3 budgets are visible. Nova quota values are recorded, and the quota requests are filed (§16a). The next day, Billing → Credits shows whether the AgentCore test charge was taken from credits (OQ-1) |
-| 2. Gmail ingestion and alerts | [Doc] Google OAuth through AgentCore Identity (spike); the scheduled poller; SQS; a first Nova classifier (Nova Micro on route 1, Nova Lite on route 2; OQ-39 (b)); urgent emails go out by email [OQ-40]; labeling started. [v0.2] Split read and compose grants; Google app publishing status set (OQ-2, after OQ-32); query builder with M8 check. [v0.3] One-off import before the first poll (TRK-3); language tag on labels; sampling rule. The dead-letter queue moved to week 3. [v0.4] Alert sender excluded from the query (ING-1) | A test invite sent to my Gmail produces exactly 1 alert email within 35 minutes. The alert email is not returned by the query. Re-polling produces no duplicate. A reply to an imported application lands on its row. M8 = 100% on the labels so far, including job emails found outside the query |
-| 3. The agent | [Doc] LangGraph on AgentCore Runtime; tracker tools through the Gateway; answers to tracker questions; interfaces for model, tools and memory. [v0.3] GitHub Actions deploy with OIDC (OPS-1); dead-letter queue and alarm; approval call path decided (OQ-36). [v0.4] The Mac app with the Dashboard and Ask pages (DASH-1, CHT-1, CHT-2); the webhook signature check is dropped [OQ-40] | Both US-04 example questions are answered correctly. The same graph runs locally against Ollama with `AGENT_MODE=local`. A push to main deploys through GitHub Actions. The read token still works on day 8 after consent. The app refuses a connection on a non-loopback address. Dashboard numbers match a direct count on a seeded table. A failing message reaches the dead-letter queue and the alarm email arrives |
+| 2. Gmail ingestion and alerts | [Doc] Google OAuth through AgentCore Identity (spike); the scheduled poller; SQS; a first Nova classifier (Nova Micro, route 1; OQ-39 (b), OQ-41 (f)); urgent emails go out by email [OQ-40]; labeling started. [v0.2] Split read and compose grants; Google app publishing status set (OQ-2, after OQ-32); query builder with M8 check. [v0.3] One-off import before the first poll (TRK-3); language tag on labels; sampling rule. The dead-letter queue moved to week 3. [v0.4] Alert sender excluded from the query (ING-1). [v0.4.1] A temporary queue reader Lambda (fetch, trim, classify and extract, TRK-1 update, ALR-1 alert) until the week 3 agent replaces it [OQ-41 (e)] | A test invite sent to my Gmail produces exactly 1 alert email within 35 minutes. The alert email is not returned by the query. Re-polling produces no duplicate. A reply to an imported application lands on its row. M8 = 100% on the labels so far, including job emails found outside the query |
+| 3. The agent | [Doc] LangGraph on AgentCore Runtime; tracker tools through the Gateway; answers to tracker questions; interfaces for model, tools and memory. [v0.3] GitHub Actions deploy with OIDC (OPS-1); dead-letter queue and alarm; approval call path decided (OQ-36). [v0.4] The Mac app with the Dashboard and Ask pages (DASH-1, CHT-1, CHT-2); the webhook signature check is dropped [OQ-40]. [v0.4.1] The agent replaces the temporary queue reader; the topic policy moves to the agent's role [OQ-41 (e)] | Both US-04 example questions are answered correctly. The same graph runs locally against Ollama with `AGENT_MODE=local`. A push to main deploys through GitHub Actions. The read token still works on day 8 after consent. The app refuses a connection on a non-loopback address. Dashboard numbers match a direct count on a seeded table. A failing message reaches the dead-letter queue and the alarm email arrives |
 | 4. Memory and approval | [Doc] AgentCore Memory; the daily stale check; the durable-function approval flow that saves Gmail drafts. [v0.2] `approval_id` check; follow-up rules; 30-day event expiry; ListMemoryRecords export test. [v0.3] Approve and Skip decisions routed to the approval workflow without the model; approval-workflow identity in Cedar; draft language rule; DynamoDB TTLs. [v0.4] The Follow-ups page and the drafts-ready email [OQ-40]; Lambda durable functions checked in Stockholm (OQ-27) | A seeded 10-day-old application produces a draft on the Follow-ups page with Approve and Skip, and the drafts-ready email arrives. Approve puts a draft in Gmail and leaves Sent unchanged. Skip and a 1-minute test timeout create none. Exported memory record count matches. A draft call made with the agent's identity is denied |
 | 5. Safety | [Doc] Cedar policy that blocks sending; at least 20 planted injection emails; log trimming. [v0.2] Engine in ENFORCE mode; recipient forbid; cedarpy enforcement on the local MCP server | A direct send call is denied by the Gateway and by the local MCP server. M4 is recorded in both modes. A log scan finds no email text |
 | 6 to 7. Evaluation and write-up | [Doc] 250 to 300 labeled emails finished; AgentCore Evaluations in GitHub Actions; latency and cost from CloudWatch; local baseline; README with numbers, an architecture diagram and Mac app screenshots. [v0.2] Dev/test split frozen; EV-1s written; Tier 1 and Tier 2 gates; self-hosted runner | Both tiers fail on a deliberately weakened change and pass on main. M1 to M8 have measured values. Targets are confirmed or revised in the next PRD revision. The README shows only measured numbers |
@@ -871,7 +871,7 @@ Rows tagged [Doc] come from the doc. Later updates are marked with their version
 | Risk | Impact | Likelihood | Mitigation |
 |---|---|---|---|
 | Gmail OAuth through AgentCore Identity: the documented Google example covers Drive, not Gmail [Doc] | High | Medium | Week 2 spike. **[v0.2]** Testing-status tokens expire after 7 days [R]. Use the personal-use, unverified production setup (OQ-2), and check that the token still works on day 8 |
-| Bedrock quotas near zero on a new account [Doc] | High | **[v0.4] Certain: every Nova inference quota on this account was 0 on 2026-10-17** | Check Service Quotas on day one [Doc]. **[v0.4]** One support case asks AWS to lift the quotas for both routes, because Service Quotas accepts only values above the default (OQ-39 (b), §16a blocker). If neither route works after the increase, use a local model from the start (EV-6, MacBook mode), or activate advanced features (Paid plan, irreversible) |
+| Bedrock quotas near zero on a new account [Doc] | High | **[v0.4] Certain: every Nova inference quota on this account was 0 on 2026-10-17.** **[v0.4.1] Resolved 2026-10-18:** the quotas were raised and route 1 works (§16a) | Check Service Quotas on day one [Doc]. **[v0.4]** One support case asks AWS to lift the quotas for both routes, because Service Quotas accepts only values above the default (OQ-39 (b), §16a blocker). If neither route works after the increase, use a local model from the start (EV-6, MacBook mode), or activate advanced features (Paid plan, irreversible) |
 | Credits do not cover everything [Doc]: Marketplace model coverage is undocumented, and the Free plan blocks cross-Region inference **[v0.4, OQ-39 (e)]** | Medium | Medium | Use Nova. Route 2 avoids cross-Region inference (OQ-39 (b)). KDV applies only after an upgrade (NFR-COST-6) |
 | Prompt injection from email [Doc] | High | Medium | Four layers (NFR-SEC-1) |
 | Mailbox privacy [Doc] | High | Certain (by design) | Narrow query, trimmed bodies, EU-only model calls (NFR-PRIV-5), no text in logs, 30-day memory expiry |
@@ -891,13 +891,13 @@ Rows tagged [Doc] come from the doc. Later updates are marked with their version
 
 ## 16a. Dependencies (new in v0.3)
 
-Each external dependency has one of three statuses: **verified** (confirmed by first-party docs), **research target** (needs a check, named below), or **blocker** (currently one: the Nova quotas).
+Each external dependency has one of three statuses: **verified** (confirmed by first-party docs), **research target** (needs a check, named below), or **blocker** (none since 2026-10-18, when the Nova quotas were raised).
 
 | Dependency | Provider | Status | Check | Impact if delayed |
 |---|---|---|---|---|
 | Gmail API with `gmail.readonly` and `gmail.compose`; the OAuth app's publishing status | Google | Research target: Testing tokens expire in 7 days [R]; personal-use exception [R]. **Partly verified (checked 2026-10-18):** the app is "In production", unverified, with both scopes; a read token ran the ING-1 query, and Gmail refused a draft from it (HTTP 403, UAC-ING-4) | Token alive on day 8 (week 3 exit) | No ingestion, so no alerts |
 | AgentCore Identity holding two Google grants for one user | AWS | **Verified (week 2 spike, 2026-10-18):** one Google credential provider and two workload identities, `inbox-agent-poller` (`gmail.readonly`) and `inbox-agent-drafts` (`gmail.compose`), for one user. Session binding completed through a localhost return URL. After both consents, the read token came from the token vault with no new sign-in | Week 2 spike | — |
-| Bedrock Nova quotas in eu-north-1, for both routes in OQ-39 (b) | AWS | **Blocker**: every Nova inference quota is 0 (checked 2026-10-17). Service Quotas requests `L-DC7FF66C` and `L-7C42E72A` are pending, and one support case asks for the tokens-per-day and per-minute quotas | Until AWS grants the quotas. Then use route 1 if its call succeeds, otherwise route 2 (OQ-39 (b)) | Blocks week 2: no classifier, so no alerts |
+| Bedrock Nova quotas in eu-north-1, for both routes in OQ-39 (b) | AWS | **Verified (2026-10-18):** both Service Quotas requests closed; cross-Region Nova Micro and Lite at 400,000 tokens and 20 requests per minute, in-Region Nova Lite at 200,000 tokens and 10 requests per minute, and 207,360,000 (Micro) and 564,480,001 (Lite) tokens per day. One call to `eu.amazon.nova-micro-v1:0` from eu-north-1 succeeded, so route 1 is used (OQ-41 (f)) | Route 1 test call, 2026-10-18 | — |
 | AgentCore Runtime, Gateway, Memory, Identity, Policy and Evaluations in Stockholm | AWS | Verified in Stockholm (control plane, 2026-10-17) [R] | Week 1 test runtime (OQ-1) | — |
 | Lambda durable functions in Stockholm, Python 3.13/3.14 | AWS | Research target: verified for Frankfurt only [R] (OQ-27) | Week 4, when the approval flow is built | The approval wait needs another mechanism (§17) |
 | Gateway accepting two caller identities that Cedar can tell apart | AWS | Research target (OQ-36) | Week 4 | See §16 fallback |
@@ -975,8 +975,9 @@ Many Provisional answers are already written into SHALL statements. To keep them
 | OQ-36 (new) | Which component calls `create_gmail_draft`, and how does the Approve decision reach the waiting function? | Provisional (approach accepted in OQ-32 (e); week 4 test left) | Week 3 | APR-3: Approve and Skip decisions from the app bypass the model. The consumer resumes the durable function with the callback ID from the pending-draft record. The approval workflow calls the tool through the Gateway under its own identity, so Cedar applies (TOOL-4). Week 4 check: the Gateway accepts calls from two IAM identities and Cedar tells them apart [R: principal types]. Fallback in §16 |
 | OQ-37 (new) | How are emails sampled for labeling? | Provisional | Week 2 | §12 sampling rule: every query hit in the chosen windows, plus the job emails I find by reading the full inbox for the same windows myself |
 | OQ-38 (new) | How long are DynamoDB records kept? | Provisional | Week 4 | NFR-PRIV-4: a 30-day TTL on the processed-email log and on resolved pending drafts. Tracker rows are kept until the project ends, then exported and deleted |
-| OQ-39 (new in v0.4) | Should the docs move to the AWS Free plan? (a) Free instead of Paid plan. (b) Two model routes. (c) 6 months on AWS, then upgrade or leave. (d) Budgets count credit usage. (e) No KDV on the Free plan. (f) Home Region Stockholm instead of Frankfurt | Resolved (accepted 2026-10-17) | Done; the (b) route waits on the Nova quotas | **All six accepted on 2026-10-17** and applied to this PRD (v0.4.0) and the source Claude Doc (revision 90), recorded in "Design doc edits for OQ-39.md". The route in (b) is still open: every Nova quota is 0 and the quota requests are pending (§16a blocker). Once the quotas arrive, use route 1 if its call succeeds, otherwise route 2. In the design doc, row b4 replaced f2, which named the same bullet |
+| OQ-39 (new in v0.4) | Should the docs move to the AWS Free plan? (a) Free instead of Paid plan. (b) Two model routes. (c) 6 months on AWS, then upgrade or leave. (d) Budgets count credit usage. (e) No KDV on the Free plan. (f) Home Region Stockholm instead of Frankfurt | Resolved (accepted 2026-10-17) | Done; the (b) route chosen 2026-10-18 | **All six accepted on 2026-10-17** and applied to this PRD (v0.4.0) and the source Claude Doc (revision 90), recorded in "Design doc edits for OQ-39.md". **The route in (b) is decided: route 1** (2026-10-18, OQ-41 (f)). The quotas were raised, and one call to the `eu.` Nova Micro profile from eu-north-1 succeeded. In the design doc, row b4 replaced f2, which named the same bullet |
 | OQ-40 (new in v0.4) | Should WhatsApp be replaced by SNS email alerts and a local Mac app? (a) Interface and scope. (b) Alerts by email. (c) Chat, approvals and the new Dashboard. (d) NFRs, milestones and risks. (e) Design doc | Resolved (accepted 2026-10-17) | Done; the code change is a separate task | **All five accepted on 2026-10-17** and applied to this PRD (v0.4.0) and the source Claude Doc (revision 90), recorded in "Design doc edits for OQ-40.md". OQ-3, OQ-12, OQ-28 and OQ-31 are closed as no longer applicable. The deployed webhook stays until the code change removes it |
+| OQ-41 (new in v0.4.1) | How is week 2 finished? (a) Inflected Turkish subject keywords. (b) Assessment-platform sender domains. (c) In MacBook mode only the Mac worker polls. (d) The alias list as a tracker item. (e) A temporary queue reader until the week 3 agent. (f) Model route 1 | Resolved (accepted 2026-10-18) | Done | **All six accepted on 2026-10-18** and applied to this PRD (v0.4.1) and the source Claude Doc (revision 98), recorded in "Design doc edits for OQ-41.md". (c), (d) and (a) change only this PRD |
 
 ## 19. Rabbit holes
 
@@ -1061,7 +1062,7 @@ Many Provisional answers are already written into SHALL statements. To keep them
 **GIVEN** `AGENT_MODE=local`. **WHEN** EV-1 and EV-3 run. **THEN** they complete with no code change.
 
 ### UAC-MODE-2: Separate stacks
-**GIVEN** a populated tracker. **WHEN** I redeploy with the AgentCore stack off. **THEN** the 4 AgentCore resources are gone, and the tables, queues and schedules are unchanged.
+**GIVEN** a populated tracker. **WHEN** I redeploy with the AgentCore stack off. **THEN** the 4 AgentCore resources are gone, the tables, queues and stale-check schedule are unchanged, and the poll schedule is off.
 
 ### UAC-MODE-4: Never-send enforcement in MacBook mode
 **GIVEN** MacBook mode. **WHEN** the TOOL-2 and TOOL-4 test suites run against the local MCP server, and again with the policy files removed. **THEN** the suites pass, and with no policy files every tool call is denied.
@@ -1128,6 +1129,24 @@ Many Provisional answers are already written into SHALL statements. To keep them
 - [cedarpy on PyPI](https://pypi.org/project/cedarpy): not officially supported by AWS or the Cedar team
 
 ## Changelog
+
+### v0.4.1, 2026-10-18
+
+**Topics in this revision** (decision input; the owner accepted every item of OQ-41 on 2026-10-18):
+- OQ-41 (a) to (f): inflected Turkish subject keywords; assessment-platform sender domains; the Gmail poll schedule off in MacBook mode; the alias list as a reserved tracker item set by `import_applications --aliases`; a temporary week 2 queue reader; model route 1, after the Nova quotas were raised and its test call succeeded.
+
+**Sections updated:**
+- Header: date, version, status; source-of-truth note (OQ-41, design-doc revision 98)
+- §9.1 ING-1: parts 1 and 4
+- §9.2 CLS-1: route 1
+- §9.3 TRK-1 (alias item), TRK-3 (`--aliases`)
+- §9.4 ALR-3: the week 2 publisher and the deny for every other principal
+- §9.8 TOOL-3: route 1 chosen, its IAM shape, route 2 as the fallback
+- §9.9 MODE-2: only the stale-check schedule stays on in MacBook mode
+- §14 weeks 2 and 3: the temporary queue reader
+- §16 Bedrock quota risk resolved; §16a Nova quotas verified, no blocker left
+- §18: OQ-39 (b) decided; OQ-41 added
+- Appendix B: UAC-MODE-2
 
 ### v0.4.0, 2026-10-17
 

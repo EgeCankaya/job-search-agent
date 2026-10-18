@@ -4,7 +4,13 @@ The owner's own data (companies, recruiter addresses) lives in the tracker
 table, never in this file.
 """
 
+from datetime import timedelta, timezone
+
 AWS_REGION = "eu-north-1"
+
+# The day an email counts for in the tracker (TRK-1 last contact). Turkey has
+# kept UTC+3 all year since 2016; a fixed offset needs no tz database.
+OWNER_TIMEZONE = timezone(timedelta(hours=3), "Europe/Istanbul")
 
 # TRK-1 alias list: normalized variant -> normalized canonical name. Empty in
 # the repo, because entries would name the companies the owner applied to.
@@ -14,14 +20,18 @@ COMPANY_ALIASES: dict[str, str] = {}
 # "interview", so the query excludes it (OQ-40).
 ALERT_SENDER = "no-reply@sns.amazonaws.com"
 
-# ING-1 part 1: applicant tracking systems that send on a company's behalf.
+# ING-1 part 1: applicant tracking systems that send on a company's behalf,
+# and assessment platforms, whose test invites often match no keyword (OQ-41 b).
 # Gmail's from:domain also matches subdomains (hire.lever.co).
 ATS_DOMAINS = (
     "ashbyhq.com",
     "bamboohr.com",
     "breezy.hr",
+    "codesignal.com",
+    "codility.com",
     "greenhouse.io",
     "greenhouse-mail.io",
+    "hackerrank.com",
     "icims.com",
     "jobvite.com",
     "kariyer.net",
@@ -36,10 +46,13 @@ ATS_DOMAINS = (
     "successfactors.eu",
     "taleo.net",
     "teamtailor.com",
+    "testgorilla.com",
     "workable.com",
 )
 
-# ING-1 part 4: subject keywords, English and Turkish (PRD §9.1).
+# ING-1 part 4: subject keywords, English and Turkish (PRD §9.1). Gmail
+# matches whole words, so the common Turkish inflections are listed too
+# (OQ-41 a). "görüşmek" is left out: "görüşmek üzere" is a sign-off.
 SUBJECT_KEYWORDS = (
     "interview",
     "mülakat",
@@ -50,6 +63,31 @@ SUBJECT_KEYWORDS = (
     "teklif",
     "başvuru",
     "application",
+    # başvuru
+    "başvurunuz",
+    "başvurunuzu",
+    "başvurunuza",
+    "başvurunuzla",
+    "başvurunuzun",
+    "başvurusu",
+    # mülakat
+    "mülakatı",
+    "mülakata",
+    "mülakatınız",
+    "mülakatınızı",
+    # görüşme
+    "görüşmesi",
+    "görüşmeye",
+    "görüşmeniz",
+    "görüşmenizi",
+    # teklif
+    "teklifi",
+    "teklifimiz",
+    "teklifiniz",
+    # değerlendirme
+    "değerlendirmesi",
+    "değerlendirmeye",
+    "değerlendirmeniz",
 )
 
 # ING-4: Gmail tokens come from AgentCore Identity. The owner created these by

@@ -96,9 +96,31 @@ def test_unrelated_mail_is_not_returned():
 
 
 def test_local_matcher_needs_whole_words():
-    # Gmail matches words, not prefixes, so Turkish suffixes ("başvurunuz")
-    # miss the "başvuru" keyword. M8 shows whether that costs urgent mail.
-    assert not query(rows=[]).matches(email("person@unknown.example", "Başvurunuz alındı"))
+    # Gmail matches words, not prefixes, so a Turkish form that isn't listed
+    # ("başvurularınız") misses the "başvuru" keyword. M8 shows whether that
+    # costs urgent mail.
+    assert not query(rows=[]).matches(email("person@unknown.example", "Başvurularınız hakkında"))
+
+
+@pytest.mark.parametrize(
+    "subject",
+    ["Başvurunuz alındı", "BAŞVURUNUZU aldık", "Mülakatınız planlandı", "Teknik mülakata davet",
+     "İş teklifimiz", "Görüşmeniz hakkında", "Değerlendirmeye davet"],
+)
+def test_listed_turkish_forms_return_their_email(subject):
+    # OQ-41 (a): the common inflections are keywords of their own.
+    assert query(rows=[]).matches(email("person@unknown.example", subject))
+
+
+def test_a_sign_off_alone_is_not_a_keyword():
+    assert not query(rows=[]).matches(email("person@unknown.example", "Görüşmek üzere"))
+
+
+@pytest.mark.parametrize("sender", ["no-reply@hackerrank.com", "support@codility.com",
+                                    "tests@testgorilla.com", "no-reply@app.codesignal.com"])
+def test_assessment_platform_senders_are_in_the_default_query(sender):
+    # OQ-41 (b): test invites often have no keyword in the subject.
+    assert build_query([], LAST_POLL).matches(email(sender, "You're invited to a test"))
 
 
 def test_after_is_last_successful_poll_minus_one_hour():

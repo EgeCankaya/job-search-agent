@@ -7,6 +7,13 @@ and floats. Scans come back in small pages, so pagination is exercised.
 
 import copy
 import json
+import re
+
+
+class FakeConditionalCheckFailed(Exception):
+    """Shaped like botocore's ClientError for a failed condition."""
+
+    response = {"Error": {"Code": "ConditionalCheckFailedException"}}
 
 
 class FakeTable:
@@ -41,8 +48,15 @@ class FakeTable:
         item = self.items.get(self._key(Key))
         return {"Item": copy.deepcopy(item)} if item is not None else {}
 
-    def put_item(self, Item: dict) -> dict:
+    def put_item(self, Item: dict, ConditionExpression: str | None = None) -> dict:
         self._check_types(Item)
+        if ConditionExpression is not None:
+            # Only the form the runtime code uses.
+            match = re.fullmatch(r"attribute_not_exists\((\w+)\)", ConditionExpression)
+            assert match, f"unsupported condition {ConditionExpression!r}"
+            existing = self.items.get(self._key(Item))
+            if existing is not None and match.group(1) in existing:
+                raise FakeConditionalCheckFailed()
         self.items[self._key(Item)] = copy.deepcopy(Item)
         self.puts += 1
         return {}
@@ -68,3 +82,20 @@ class FakeQueue:
         assert QueueUrl == self.queue_url
         self.messages.append(json.loads(MessageBody))
         return {"MessageId": f"sqs-{len(self.messages)}"}
+
+
+class FakeTopic:
+    """The boto3 SNS client's publish, for one topic."""
+
+    def __init__(self, topic_arn: str = "arn:aws:sns:eu-north-1:111122223333:alerts", failures: int = 0) -> None:
+        self.topic_arn = topic_arn
+        self.failures = failures
+        self.published: list[dict] = []
+
+    def publish(self, TopicArn: str, Subject: str, Message: str) -> dict:
+        assert TopicArn == self.topic_arn
+        if self.failures:
+            self.failures -= 1
+            raise ConnectionError("SNS unavailable")
+        self.published.append({"Subject": Subject, "Message": Message})
+        return {"MessageId": f"sns-{len(self.published)}"}

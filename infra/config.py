@@ -53,3 +53,12 @@ POLLER_WORKLOAD_IDENTITY = "inbox-agent-poller"
 # (clientSecretArn). The name is not the secret. Recreating the provider
 # changes it.
 GOOGLE_CLIENT_SECRET_NAME = "bedrock-agentcore-identity!default/oauth2/inbox-agent-google-1ed2e5b8-NDkbRv"
+
+# OQ-39 (b), OQ-41 (f): route 1, chosen 2026-10-18 after its test call
+# succeeded. The classifier calls Nova Micro through the `eu.` inference
+# profile from eu-north-1. The profile runs the request in one of these
+# Regions (`aws bedrock get-inference-profile`, 2026-10-18), so the IAM
+# grant names each Region's model, reachable only through the profile.
+CLASSIFIER_MODEL_ID = "eu.amazon.nova-micro-v1:0"
+CLASSIFIER_FOUNDATION_MODEL = "amazon.nova-micro-v1:0"
+CLASSIFIER_PROFILE_REGIONS = ("eu-central-1", "eu-north-1", "eu-west-1", "eu-west-3")

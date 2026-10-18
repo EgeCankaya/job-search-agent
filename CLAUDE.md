@@ -11,15 +11,17 @@ repo is **public**.
 
 1. **Design doc** owns architecture: services, models, modes, data flow. The
    live version is the Claude Doc https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9
-   (revision 90). `Job search inbox agent design.pdf` is an export of revision 90.
-2. **`Job search inbox agent PRD.md`** (v0.4.0) owns requirements and targets:
+   (revision 98). `Job search inbox agent design.pdf` is still the export of revision 90;
+   the owner re-exports it.
+2. **`Job search inbox agent PRD.md`** (v0.4.1) owns requirements and targets:
    FRs §9, NFRs §10, metrics §11, CI gates §12, milestones §14, dependencies §16a.
 3. **The code follows both.** Never add tools, tool inputs, endpoints or
    capabilities beyond PRD §9, or architecture beyond the design doc.
 4. **Changes to the design doc go through an OQ-style item** that the owner
    accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`,
-   `Design doc edits for OQ-39.md` and `Design doc edits for OQ-40.md`, all
-   accepted and applied to the PRD and the design doc.
+   `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md` and
+   `Design doc edits for OQ-41.md`, all accepted and applied to the PRD and
+   the design doc.
 
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
 scope.**
@@ -55,13 +57,16 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   tracker.py, matching.py    tracker table; TRK-1 normalization and matching
   import_applications.py     TRK-3 CSV import
   query.py                   ING-1 query builder, local matcher, M8 coverage hook
-  gmail.py                   GmailClient interface; real client via AgentCore Identity (ING-4)
-  processed_log.py, poll.py  ING-2 log + last-poll time; the poll Lambda
-  trim.py, classify.py       CLS-3 trimming and prompt; CLS-1 classes and precedence
+  gmail.py                   GmailClient interface (search, fetch); real client via AgentCore Identity (ING-4)
+  messages.py                headers, and a fetched message's text parts and calendar invite
+  processed_log.py, poll.py  ING-2 log, alert claim and handled marks, last-poll time; the poll Lambda
+  trim.py, classify.py       CLS-3 trimming and prompt; CLS-1 classes and precedence, CLS-2 extraction
+  reader.py                  the temporary week 2 queue reader Lambda (OQ-41 e)
+  tracker_update.py, alerts.py  TRK-1 row update; ALR-1 alert text
   classes.py, model.py       the 6 classes; Model interface + Bedrock Converse adapter
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
-tests/fakes.py               in-memory DynamoDB table and SQS queue
-tests/unit/                  handler, import, query, poll, trim and classifier tests
+tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
+tests/unit/                  handler, import, query, poll, reader, trim and classifier tests
 tests/infra/                 CDK assertion tests
 ```
 
@@ -101,7 +106,7 @@ account ID and the alert email.
   TTL values (30 days, NFR-PRIV-4) are set by application code later. Table keys are provisional until data lands in week 2.
 - SQS agent queue with 14-day retention, plus a dead-letter queue (`maxReceiveCount` 3, 14 days). Both SSE-SQS and HTTPS-only. The DLQ alarm is week 3.
 - SNS alert topic (ALR-3) with exactly one email subscription, to the `alert_email` address. `notify_owner` will publish here in week 2; it takes no recipient.
-  - Topic policy (owner's pick, 2026-10-17): Allow `sns:Publish` to this account's principals only (`arn:aws:iam::<account>:root`, from `AWS::AccountId`), so the owner's `aws login` session can send the week 1 test alert. It also denies `sns:Publish` from other accounts (`aws:PrincipalAccount`) and without TLS. Week 3 narrows the Allow to the agent's role.
+  - Topic policy (owner's pick, 2026-10-17): Allow `sns:Publish` to this account's principals only (`arn:aws:iam::<account>:root`, from `AWS::AccountId`), so the owner's `aws login` session can send the week 1 test alert. It also denies `sns:Publish` from other accounts (`aws:PrincipalAccount`) and without TLS. **Narrowed in week 2 (OQ-41 e, not deployed yet):** the Allow names only the queue reader's role, and `DenyPublishFromOtherPrincipals` (`ArnNotEquals aws:PrincipalArn`) replaces the other-accounts deny, so the owner's session can no longer publish. Week 3 moves both to the agent's role.
 - No inbound HTTP endpoint (CHT-2): no API Gateway API and no Lambda function URL in any stack. The OQ-40 change removed the M1 WhatsApp webhook, its HTTP API and the five Meta and owner SSM parameter names.
 - 3 AWS Budgets ($1, $5, $10, monthly, email), with `IncludeCredit: false` (see the Free plan section), created by the custom resource described under Gotchas.
 
@@ -112,7 +117,7 @@ account ID and the alert email.
 - 7-day retention on every log group;
 - no EC2/VPC, ELB, OpenSearch Serverless or SES resources;
 - no API Gateway API or Lambda function URL, in either mode;
-- every role is hand-built: no managed policies, no wildcards. The budgets role is the only one so far.
+- every role is hand-built: no managed policies, no wildcards (budgets, poll, poll schedule, queue reader).
 - resource policies use `Principal: "*"` only on a Deny with a condition (the topic policy), never on an Allow.
 
 ### Gotchas learned
@@ -125,20 +130,27 @@ account ID and the alert email.
 - **`cdk.json` carries the recommended feature flags** from `cdk init`.
 - **Check before an AWS service publishes to the alert topic** (for example the week 3 DLQ alarm). The `DenyPublishFromOtherAccounts` statement keys on `aws:PrincipalAccount`, which a service-principal call may not carry, so that publish could be denied. Test it, and add a `aws:SourceAccount`-scoped exception if needed.
 
-## Week 2 so far (2026-10-18, on main): no Gmail, no Bedrock
+## Week 2 so far (2026-10-18)
 
 Built behind interfaces with fakes, so Gmail and Nova plug in later:
 - **TRK-3 import** and the shared **TRK-1 matching** module. Imported rows use the applied date as `last_contact`, so the stale check can see them.
 - **ING-1 query builder**: four OR'd parts, `after:` (last successful poll - 1 h) as epoch seconds, and `-from:no-reply@sns.amazonaws.com`. Tracker domains and addresses must pass strict checks, or they are skipped, so a stored value can't widen the query. `query_coverage` is the M8 hook.
-- **ING-2/ING-3 poll Lambda** (`inbox_agent.poll.handler`). The processed-email log has a 30-day TTL. The last-poll time is the `#poll-state` item in the same table. A message is queued before it is logged, so it's never lost. Queue messages carry IDs and times only. The schedule is `rate(30 minutes)` in the `inbox-agent` schedule group, and stays **DISABLED** until the Gmail client exists. It is the same in both modes.
+- **ING-2/ING-3 poll Lambda** (`inbox_agent.poll.handler`). The processed-email log has a 30-day TTL. The last-poll time is the `#poll-state` item in the same table. A message is queued before it is logged, so it's never lost. Queue messages carry IDs and times only. The schedule is `rate(30 minutes)` in the `inbox-agent` schedule group, and stays **DISABLED** until the owner turns it on. It exists in both modes, but only cloud mode can enable it (OQ-41 c).
 - **CLS-1/CLS-3 classifier step**: trimming to 2,000 characters, a quoted-data prompt that the email can't break out of, precedence applied in code, and a yes/no question. `CLASSIFIER_MODEL_ID` has no default.
+- **OQ-41, accepted 2026-10-18 (all items, (a) to (f)), built, not committed or deployed yet:**
+  - (a) 20 inflected Turkish subject keywords and (b) hackerrank.com, codility.com, testgorilla.com, codesignal.com in `settings.py`.
+  - (c) The poll schedule is ENABLED only in cloud mode; in MacBook mode the Mac worker polls.
+  - (d) The alias list is the reserved tracker item `#config`/`aliases`; `rows()` skips it. `import_applications --aliases data/aliases.csv` replaces it; without `--aliases` the import uses the stored list. `settings.COMPANY_ALIASES` stays empty.
+  - (e) **Queue reader** (`inbox_agent.reader.handler`): skips non-`new_email` messages; fetches the message (`format=raw`) with the poller's read grant; trims; one Nova Micro call returns classes, the yes/no answer, company, role and date (ISO or null, never guessed); a calendar invite's start wins; TRK-1 update unless the matched row already lists the message ID; `claim_alert` (conditional put on the log item) before publishing, released if the publish fails; `mark_handled` last. Partial batch failures, batch 5, max concurrency 2, queue visibility 6 min (6 x the 60 s timeout). Its event source mapping stays **disabled** until the owner says so (`QUEUE_READER_ON`), and only ever enabled in cloud mode.
+  - (f) `CLASSIFIER_MODEL_ID=eu.amazon.nova-micro-v1:0` lives in `infra/config.py`. Only the reader's role has `bedrock:InvokeModel`: on the profile ARN, plus `amazon.nova-micro-v1:0` in eu-central-1, eu-north-1, eu-west-1 and eu-west-3 with a `bedrock:InferenceProfileArn` condition.
+  - A read-only `cdk diff` (2026-10-18) showed no replacements: 5 new reader resources, plus in-place updates to the queue, the topic policy, and the poll role and function.
 - **`boto3[crt]` is a dev dependency** (owner approved 2026-10-18), for the import script on the Mac. The `crt` extra is required: boto3 can't read `aws login` credentials without it (`MissingDependencyException`). The Lambda runtime brings its own boto3, and tests use fakes, never AWS.
 
 ## AWS Free plan (decided 2026-10-17)
 
 The owner is on the **AWS Free plan and will stay on it**. Research findings:
 - AWS's current docs list Bedrock and AgentCore as available on the Free plan.
-- **No cross-Region features on the Free plan**, so the design's `eu.` Nova inference profile may be blocked. Measurements leave two routes (OQ-39 (b)): route 1, the `eu.` profile from Stockholm (Nova Micro + Nova Lite, design unchanged); route 2, Nova Lite in-Region in Stockholm for everything. Frankfurt adds nothing, because it has no in-Region Nova Micro either. **The route is not chosen yet**; it waits on the quotas (see Current state).
+- **No cross-Region features on the Free plan**, so the design's `eu.` Nova inference profile may be blocked. Measurements leave two routes (OQ-39 (b)): route 1, the `eu.` profile from Stockholm (Nova Micro + Nova Lite, design unchanged); route 2, Nova Lite in-Region in Stockholm for everything. Frankfurt adds nothing, because it has no in-Region Nova Micro either. **Route 1 was chosen on 2026-10-18** (OQ-41 (f)): the quotas were raised, and one call to `eu.amazon.nova-micro-v1:0` from eu-north-1 succeeded, so the Free plan doesn't block the `eu.` profile.
 - **The account closes 6 months after sign-up, or when the credits run out**, with no extension. Data can be recovered only by upgrading within 90 days. You can't downgrade from Paid back to Free.
 - Nothing is ever charged, so no KDV.
 
@@ -161,7 +173,7 @@ The owner doesn't want a Meta account. OQ-40 (all items, (a) to (e)) replaced Wh
 
 There is no public endpoint. **The code now matches:** the WhatsApp webhook, its HTTP API and the Meta SSM parameter names are removed, and the SNS alert topic is in (see What M1 built). The owner redeployed on 2026-10-18, so the deployed stack matches too: the webhook is gone, and a test alert email arrived (the new week 1 exit).
 
-## Current state (2026-10-17)
+## Current state (2026-10-18)
 
 - **Commit `e723332` on `main`:** the M1 code plus the PRD, the design PDF and the OQ-32 edits.
 - **Commit `73a4f03` on `main`:** the move to eu-north-1, the budgets custom resource and its tests, the README notes, the OQ-39 and OQ-40 proposals.
@@ -184,7 +196,7 @@ There is no public endpoint. **The code now matches:** the WhatsApp webhook, its
   - Nova Micro is profile-only in both eu-north-1 and eu-central-1; Nova Lite runs on demand in eu-north-1.
   - The `eu.` profiles are `ACTIVE`, but calls get throttled because **every Nova inference quota is 0**.
   - AgentCore's control plane (Runtime, Gateway, Memory, Identity, Policy, Evaluations) responds in eu-north-1.
-- **Blocker for week 2:** the Nova quotas. The account is held at 0, while the AWS defaults are 400k cross-Region tokens per minute and 5.76B tokens per day. Service Quotas rejects requests at or below the default, so the owner files **one support case** to lift them. After that, use route 1 if its call succeeds, otherwise route 2 (OQ-39 (b)), and record the choice in the PRD.
+- **Nova quotas raised (seen 2026-10-18):** both requests `CASE_CLOSED`; cross-Region Micro and Lite at 400k tokens and 20 requests per minute, in-Region Lite at 200k and 10, per day 207M (Micro) and 564M (Lite). The route 1 call succeeded (7 in, 2 out tokens), so **route 1 is used**, recorded in PRD v0.4.1 (CLS-1, TOOL-3, §16a, OQ-39). No blocker is left.
 - **ING-4 spike passed (2026-10-18)**, with `spikes/agentcore_identity_gmail.py` (run it in a real terminal; it waits for a browser sign-in):
   - Google side, done by the owner: project created, Gmail API enabled, consent screen "In production" (unverified) with `gmail.readonly` and `gmail.compose`, a web client whose redirect URI is the AgentCore callback URL. Homepage and privacy policy point at the repo and `PRIVACY.md`.
   - AWS side, made by the owner with the CLI (not in CDK yet): credential provider `inbox-agent-google` (its client secret sits in a Secrets Manager secret AgentCore manages), workload identities `inbox-agent-poller` and `inbox-agent-drafts`, both allowing the return URL `http://localhost:9090/oauth2/callback`. The fixed user ID is `owner`.
@@ -192,7 +204,7 @@ There is no public endpoint. **The code now matches:** the WhatsApp webhook, its
   - Still open: the day-8 refresh check (around 2026-10-26, run the read command again).
 - **Real `GmailClient` in the poll Lambda (2026-10-18, not deployed yet):** `AgentCoreGmailClient` gets the read token as `inbox-agent-poller` for user `owner`. It asks Gmail only for IDs and `internalDate` (`fields=id,internalDate`, so no snippet). It stops above 500 matches. The poll role can call `GetWorkloadAccessTokenForUserId` and `GetResourceOauth2Token` on the exact directory, workload, vault and provider ARNs, plus `GetSecretValue` on the provider's one secret (`infra/config.py`; recreating the provider changes its name).
   - **Dry run:** invoke the Lambda by hand with `{"dry_run": true}`. It searches but queues nothing, logs nothing as processed, and leaves the last-poll time alone.
-  - **The schedule stays DISABLED until something reads the queue** (a week 2 reader, or the week 3 agent). A live poll marks emails processed and queues them; if nothing reads the queue within its 14-day retention, those emails are lost while the log says they were handled.
+  - **The schedule stays DISABLED until the owner says so** (`POLL_SCHEDULE_ON` in `infra/always_free_stack.py`), and only ever ENABLED in cloud mode (OQ-41 c). A live poll marks emails processed and queues them; if nothing reads the queue within its 14-day retention, those emails are lost while the log says they were handled. So turn the reader on first, or together.
 - **Week 1 items the owner does by hand:**
   - MFA in AWS Settings;
   - a calendar reminder at sign-up + 5 months (OQ-39 (c));

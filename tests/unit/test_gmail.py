@@ -1,5 +1,6 @@
 """The AgentCore-backed Gmail client (ING-4), with fakes. No AWS, no Google."""
 
+import base64
 import io
 import json
 import urllib.error
@@ -57,7 +58,23 @@ class FakeGmailApi:
                 body["nextPageToken"] = str(page + 1)
             return FakeResponse(json.dumps(body).encode())
         message_id = url.path.rsplit("/", 1)[1]
-        return FakeResponse(json.dumps({"id": message_id, "internalDate": "1792314000000"}).encode())
+        body = {"id": message_id, "internalDate": "1792314000000"}
+        if params.get("format") == ["raw"]:
+            body["raw"] = base64.urlsafe_b64encode(RAW_EMAIL).decode().rstrip("=")
+        return FakeResponse(json.dumps(body).encode())
+
+
+RAW_EMAIL = (
+    "From: =?utf-8?q?=C4=B0K?= <ik@kuzey.example.com>\r\n"
+    "Subject: =?utf-8?q?M=C3=BClakat_daveti?=\r\n"
+    "MIME-Version: 1.0\r\n"
+    'Content-Type: multipart/mixed; boundary="b"\r\n\r\n'
+    "--b\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nMerhaba, mülakat için davet.\r\n"
+    "--b\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<p>Merhaba</p>\r\n"
+    "--b\r\nContent-Type: text/calendar; charset=utf-8; method=REQUEST\r\n\r\n"
+    "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART:20261103T110000Z\r\nSUMMARY:Teknik mülakat\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+    "--b--\r\n"
+).encode("utf-8")
 
 
 def test_token_comes_from_the_pollers_workload_identity_for_the_owner():
@@ -125,3 +142,34 @@ def test_a_runaway_query_stops():
 def test_gmail_errors_name_the_status_only():
     with pytest.raises(GmailError, match="HTTP 403 PERMISSION_DENIED"):
         AgentCoreGmailClient(FakeIdentity(), opener=FakeGmailApi([[]], error=403)).search("q")
+
+
+# fetch: one queued message, read in full (the temporary queue reader)
+
+
+def test_fetch_reads_one_message_with_the_read_grant():
+    identity = FakeIdentity()
+    api = FakeGmailApi([[]])
+    fetched = AgentCoreGmailClient(identity, opener=api).fetch("18c0ffee")
+    assert identity.calls[1][1]["scopes"] == [settings.GMAIL_READ_SCOPE]
+    [request] = api.requests
+    url = urllib.parse.urlparse(request.full_url)
+    assert url.path.endswith("/messages/18c0ffee")
+    assert urllib.parse.parse_qs(url.query) == {"format": ["raw"], "fields": ["id,internalDate,raw"]}
+    assert request.get_method() == "GET"
+
+    assert fetched.header.message_id == "18c0ffee"
+    assert fetched.header.sender == "İK <ik@kuzey.example.com>"
+    assert fetched.header.subject == "Mülakat daveti"
+    assert fetched.header.received_at == datetime(2026, 10, 18, 9, 0, tzinfo=UTC)
+    assert fetched.text.strip() == "Merhaba, mülakat için davet."
+    assert "<p>Merhaba</p>" in fetched.html
+    assert fetched.invite.start == datetime(2026, 11, 3, 11, 0, tzinfo=UTC)
+
+
+@pytest.mark.parametrize("bad", ["../drafts", "a b", "", "x" * 65, "id?format=full"])
+def test_fetch_refuses_anything_but_a_message_id(bad):
+    api = FakeGmailApi([[]])
+    with pytest.raises(GmailError, match="not a Gmail message ID"):
+        AgentCoreGmailClient(FakeIdentity(), opener=api).fetch(bad)
+    assert api.requests == []

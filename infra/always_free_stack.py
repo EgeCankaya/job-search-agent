@@ -1,9 +1,10 @@
 """The always-free stack (MODE-2): it stays deployed in both runtime modes.
 
 Contents: the three DynamoDB tables, the one SQS queue with its dead-letter
-queue, the SNS alert topic, the budget alerts, and the Gmail poll Lambda with
-its 30-minute EventBridge Scheduler schedule. There is no inbound HTTP
-endpoint (CHT-2). The DLQ alarm arrives in week 3.
+queue, the SNS alert topic, the budget alerts, the Gmail poll Lambda with
+its 30-minute EventBridge Scheduler schedule, and the temporary week 2 queue
+reader (OQ-41 e). There is no inbound HTTP endpoint (CHT-2). The DLQ alarm
+arrives in week 3.
 """
 
 from pathlib import Path
@@ -18,6 +19,7 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_lambda as lambda_,
+    aws_lambda_event_sources as event_sources,
     aws_logs as logs,
     aws_scheduler as scheduler,
     aws_sns as sns,
@@ -37,19 +39,44 @@ QUEUE_RETENTION = Duration.days(14)  # NFR-REL-2 and ING-3
 MAX_RECEIVE_COUNT = 3  # ING-3
 LOG_RETENTION = logs.RetentionDays.ONE_WEEK  # NFR-PRIV-4
 POLL_RATE = "rate(30 minutes)"  # ING-1
-# Off until the Gmail client exists (ING-4): until then every poll would fail.
-POLL_SCHEDULE_STATE = "DISABLED"
+READER_TIMEOUT = Duration.seconds(60)
+# AWS's advice for a Lambda reading SQS: visibility at least 6 x the timeout,
+# so a slow attempt isn't handed to a second reader mid-run.
+QUEUE_VISIBILITY = Duration.seconds(6 * 60)
+READER_BATCH_SIZE = 5
+READER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
+# Off until the owner turns it on, after a deploy and a dry run.
+QUEUE_READER_ON = False
+# Off until the owner turns it on: a live poll marks emails processed, so it
+# must wait until something reads the queue.
+POLL_SCHEDULE_ON = False
+
+
+def poll_schedule_state(agent_mode: str) -> str:
+    """ENABLED only in cloud mode. In MacBook mode the Mac worker polls, with
+    the read token in the Keychain (ING-1, MODE-2, OQ-41 c)."""
+    return "ENABLED" if POLL_SCHEDULE_ON and agent_mode == "cloud" else "DISABLED"
+
+
+def queue_reader_enabled(agent_mode: str) -> bool:
+    """Cloud mode only: its Gmail token lives in AgentCore Identity (ING-4)."""
+    return QUEUE_READER_ON and agent_mode == "cloud"
 
 
 class AlwaysFreeStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, *, alert_email: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, *, alert_email: str, agent_mode: str = "cloud", **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        self.agent_mode = agent_mode
 
         self._tables()
         self._queues()
-        self._alerts(alert_email)
+        self.alert_topic = sns.Topic(self, "AlertTopic", display_name="Inbox agent")
         self._budgets(alert_email)
         self._poller()
+        self._reader()
+        self._alerts(alert_email, publisher=self.reader_function.role)
 
     def _tables(self) -> None:
         # Tracker rows are kept until the project ends (NFR-PRIV-4), so the
@@ -98,6 +125,7 @@ class AlwaysFreeStack(Stack):
             self,
             "AgentQueue",
             retention_period=QUEUE_RETENTION,
+            visibility_timeout=QUEUE_VISIBILITY,
             encryption=sqs.QueueEncryption.SQS_MANAGED,
             enforce_ssl=True,
             dead_letter_queue=sqs.DeadLetterQueue(
@@ -105,34 +133,36 @@ class AlwaysFreeStack(Stack):
             ),
         )
 
-    def _alerts(self, owner_email: str) -> None:
+    def _alerts(self, owner_email: str, *, publisher: iam.IRole) -> None:
         # ALR-3: alerts reach only the owner, through the topic's single email
-        # subscription. `notify_owner` publishes here and takes no recipient.
-        self.alert_topic = sns.Topic(self, "AlertTopic", display_name="Inbox agent")
+        # subscription. The publisher takes no recipient.
         self.alert_topic.add_subscription(subscriptions.EmailSubscription(owner_email))
 
-        # Until the agent's role exists (week 3), only this account's principals
-        # may publish, so the owner's `aws login` session can send the week 1
-        # test alert. Week 3 narrows the Allow to the agent's role.
+        # Only the publisher's role may publish: in week 2 the temporary queue
+        # reader, from week 3 the agent (OQ-41 e). The Deny also stops other
+        # principals in this account, such as the owner's `aws login` session,
+        # whose own policy would otherwise allow it.
         topic_arn = [self.alert_topic.topic_arn]
         self.alert_topic.add_to_resource_policy(
             iam.PolicyStatement(
-                sid="AllowPublishFromThisAccount",
+                sid="AllowPublishFromThePublisher",
                 actions=["sns:Publish"],
-                principals=[iam.AccountRootPrincipal()],
+                principals=[iam.ArnPrincipal(publisher.role_arn)],
                 resources=topic_arn,
             )
         )
         # Explicit denies use Principal "*" with a condition: that is how a
         # resource policy names "everyone else". No action or resource wildcards.
+        # A service principal carries no aws:PrincipalArn, so it is denied too;
+        # the week 3 DLQ alarm needs its own exception.
         self.alert_topic.add_to_resource_policy(
             iam.PolicyStatement(
-                sid="DenyPublishFromOtherAccounts",
+                sid="DenyPublishFromOtherPrincipals",
                 effect=iam.Effect.DENY,
                 actions=["sns:Publish"],
                 principals=[iam.AnyPrincipal()],
                 resources=topic_arn,
-                conditions={"StringNotEquals": {"aws:PrincipalAccount": self.account}},
+                conditions={"ArnNotEquals": {"aws:PrincipalArn": publisher.role_arn}},
             )
         )
         self.alert_topic.add_to_resource_policy(
@@ -203,36 +233,10 @@ class AlwaysFreeStack(Stack):
             },
         )
 
-    def _poller(self) -> None:
-        # ING-1 to ING-3. The schedule lives here, not in the AgentCore stack,
-        # so it is the same in both modes (MODE-2).
-        log_group = logs.LogGroup(
-            self,
-            "PollLogGroup",
-            retention=LOG_RETENTION,
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-        role = iam.Role(
-            self,
-            "PollRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            description="Gmail poll: Gmail read token, tracker read, processed-email log, send to the agent queue",
-        )
-        log_group.grant_write(role)
-        role.add_to_policy(
-            iam.PolicyStatement(actions=["dynamodb:Scan"], resources=[self.applications_table.table_arn])
-        )
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=["dynamodb:GetItem", "dynamodb:PutItem"],
-                resources=[self.processed_emails_table.table_arn],
-            )
-        )
-        role.add_to_policy(
-            iam.PolicyStatement(actions=["sqs:SendMessage"], resources=[self.agent_queue.queue_arn])
-        )
+    def _grant_gmail_read(self, role: iam.Role) -> None:
         # ING-4: the Gmail read token, from AgentCore Identity, as the poller's
         # workload identity, from the one Google provider (exact ARNs only).
+        # Never the drafts identity, which holds the compose grant.
         directory = self.format_arn(
             service="bedrock-agentcore", resource="workload-identity-directory", resource_name="default"
         )
@@ -263,6 +267,36 @@ class AlwaysFreeStack(Stack):
                 ],
             )
         )
+
+    def _poller(self) -> None:
+        # ING-1 to ING-3. The schedule lives here, not in the AgentCore stack,
+        # so it survives a mode switch; only its state follows the mode (MODE-2).
+        log_group = logs.LogGroup(
+            self,
+            "PollLogGroup",
+            retention=LOG_RETENTION,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        role = iam.Role(
+            self,
+            "PollRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            description="Gmail poll: Gmail read token, tracker read, processed-email log, send to the agent queue",
+        )
+        log_group.grant_write(role)
+        role.add_to_policy(
+            iam.PolicyStatement(actions=["dynamodb:Scan"], resources=[self.applications_table.table_arn])
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:GetItem", "dynamodb:PutItem"],
+                resources=[self.processed_emails_table.table_arn],
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(actions=["sqs:SendMessage"], resources=[self.agent_queue.queue_arn])
+        )
+        self._grant_gmail_read(role)
 
         self.poll_function = lambda_.Function(
             self,
@@ -305,7 +339,7 @@ class AlwaysFreeStack(Stack):
             group_name=group.name,
             schedule_expression=POLL_RATE,
             flexible_time_window=scheduler.CfnSchedule.FlexibleTimeWindowProperty(mode="OFF"),
-            state=POLL_SCHEDULE_STATE,
+            state=poll_schedule_state(self.agent_mode),
             target=scheduler.CfnSchedule.TargetProperty(
                 arn=self.poll_function.function_arn,
                 role_arn=schedule_role.role_arn,
@@ -315,3 +349,86 @@ class AlwaysFreeStack(Stack):
             ),
         )
         schedule.add_resource_dependency(group)
+
+    def _reader(self) -> None:
+        # OQ-41 (e): the temporary week 2 queue reader. The week 3 agent
+        # replaces it, and the topic policy moves to the agent's role.
+        log_group = logs.LogGroup(
+            self,
+            "ReaderLogGroup",
+            retention=LOG_RETENTION,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        role = iam.Role(
+            self,
+            "ReaderRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            description="Queue reader: Gmail read token, Nova Micro, tracker, processed-email log, alert topic",
+        )
+        log_group.grant_write(role)
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:Scan", "dynamodb:GetItem", "dynamodb:PutItem"],
+                resources=[self.applications_table.table_arn],
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:GetItem", "dynamodb:PutItem"],
+                resources=[self.processed_emails_table.table_arn],
+            )
+        )
+        role.add_to_policy(iam.PolicyStatement(actions=["sns:Publish"], resources=[self.alert_topic.topic_arn]))
+        self._grant_gmail_read(role)
+
+        # TOOL-3, route 1: the `eu.` Nova Micro profile, and its Regions'
+        # model only when the call comes through that profile.
+        profile = self.format_arn(
+            service="bedrock", resource="inference-profile", resource_name=config.CLASSIFIER_MODEL_ID
+        )
+        role.add_to_policy(iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=[profile]))
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"],
+                resources=[
+                    self.format_arn(
+                        service="bedrock",
+                        region=region,
+                        account="",
+                        resource="foundation-model",
+                        resource_name=config.CLASSIFIER_FOUNDATION_MODEL,
+                    )
+                    for region in config.CLASSIFIER_PROFILE_REGIONS
+                ],
+                conditions={"StringEquals": {"bedrock:InferenceProfileArn": profile}},
+            )
+        )
+
+        self.reader_function = lambda_.Function(
+            self,
+            "ReaderFunction",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            architecture=lambda_.Architecture.ARM_64,
+            handler=f"{AGENT_PACKAGE}.reader.handler",
+            code=lambda_.Code.from_asset(str(SRC), exclude=["*", f"!{AGENT_PACKAGE}", f"!{AGENT_PACKAGE}/*.py"]),
+            role=role,
+            log_group=log_group,
+            memory_size=256,
+            timeout=READER_TIMEOUT,
+            environment={
+                "TRACKER_TABLE_NAME": self.applications_table.table_name,
+                "PROCESSED_EMAILS_TABLE_NAME": self.processed_emails_table.table_name,
+                "ALERT_TOPIC_ARN": self.alert_topic.topic_arn,
+                "CLASSIFIER_MODEL_ID": config.CLASSIFIER_MODEL_ID,
+            },
+        )
+        # Failed messages go back one by one; after 3 receives, to the DLQ (ING-3).
+        self.reader_function.add_event_source(
+            event_sources.SqsEventSource(
+                self.agent_queue,
+                batch_size=READER_BATCH_SIZE,
+                report_batch_item_failures=True,
+                max_concurrency=READER_MAX_CONCURRENCY,
+                enabled=queue_reader_enabled(self.agent_mode),
+            )
+        )

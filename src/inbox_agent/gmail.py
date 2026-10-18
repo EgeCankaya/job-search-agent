@@ -1,12 +1,17 @@
-"""The Gmail interface the poller uses (ING-1), and its real client (ING-4).
+"""The Gmail interface the poller and the queue reader use (ING-1), and its
+real client (ING-4).
 
 The real client gets a `gmail.readonly` token from AgentCore Identity for the
 owner, as the poller's workload identity, then calls the Gmail REST API with
-the standard library. It asks Gmail only for IDs and the receipt time, and
-never for the snippet or any other email text (NFR-PRIV-1, NFR-PRIV-3).
+the standard library. A search asks Gmail only for IDs and the receipt time,
+never for the snippet. Only `fetch` reads email text, for one message the
+poller queued; that text goes to the classifier, never into logs
+(NFR-PRIV-1, NFR-PRIV-3).
 """
 
+import base64
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -15,12 +20,15 @@ from datetime import UTC, datetime
 from typing import Protocol
 
 from inbox_agent import settings
+from inbox_agent.messages import FetchedEmail, parse_message
 
 GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me"
 PAGE_SIZE = 100
 # A poll covers about 90 minutes of mail. Far more than this means the query
 # has gone wrong, so stop instead of reading the whole mailbox.
 MAX_MESSAGES = 500
+# Gmail message IDs are hex. Anything else never reaches a URL path.
+_MESSAGE_ID = re.compile(r"^[0-9A-Za-z_-]{1,64}$")
 
 
 @dataclass(frozen=True)
@@ -35,6 +43,10 @@ class GmailMessageRef:
 class GmailClient(Protocol):
     def search(self, query: str) -> list[GmailMessageRef]:
         """Every message matching the query, across all result pages."""
+        ...
+
+    def fetch(self, message_id: str) -> FetchedEmail:
+        """One message, read in full."""
         ...
 
 
@@ -102,6 +114,15 @@ class AgentCoreGmailClient:
             received_at = datetime.fromtimestamp(int(meta["internalDate"]) / 1000, UTC)
             refs.append(GmailMessageRef(message_id=message_id, thread_id=thread_id, received_at=received_at))
         return refs
+
+
+    def fetch(self, message_id: str) -> FetchedEmail:
+        if not _MESSAGE_ID.match(message_id):
+            raise GmailError("not a Gmail message ID")
+        message = self._get(self._token(), f"messages/{message_id}", {"format": "raw", "fields": "id,internalDate,raw"})
+        raw = base64.urlsafe_b64decode(message["raw"] + "=" * (-len(message["raw"]) % 4))
+        received_at = datetime.fromtimestamp(int(message["internalDate"]) / 1000, UTC)
+        return parse_message(raw, message_id=message_id, received_at=received_at)
 
 
 def gmail_client() -> GmailClient:
