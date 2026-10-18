@@ -207,6 +207,13 @@ There is no public endpoint. **The code now matches:** the WhatsApp webhook, its
   - **Tracker:** 1 imported application, no alias item yet (`import_applications` 2026-10-18: `unchanged=1 aliases=0`).
   - **Deploy from Terminal.app, not the inline `!` shell** (it garbles long nested commands and can't answer the IAM prompt): look up `ALERT_EMAIL` from the confirmed subscription, then `ALERT_EMAIL="$ALERT_EMAIL" cdk deploy --all`.
   - **The schedule is ENABLED** (`POLL_SCHEDULE_ON` in `infra/always_free_stack.py`, owner's go 2026-10-18, needs a deploy), and only ever in cloud mode (OQ-41 c). A test keeps it off whenever the reader is off. A live poll marks emails processed and queues them; if nothing reads the queue within its 14-day retention, those emails are lost while the log says they were handled. So turn the reader on first, or together.
+- **Live since 2026-10-18 (commits `387fe3d`, `454ff2a`, `c5511ec` on `origin/main`):** the owner deployed with the poll schedule ENABLED and the reader's event source mapping Enabled. The topic still has exactly 1 confirmed subscription.
+  - A first deploy attempt failed on a typo (`ALERT_EMAIL="$<address>"` left `@gmail.com`); it rolled back cleanly. `c5511ec` makes the synth reject a partial address.
+- **Week 2 exit checks (2026-10-18):**
+  - A Turkish test invite (subject matched `mülakatınız`) gave exactly 1 alert, under 30 minutes: poll 18:52:33Z found 1 and queued 1; the reader created 1 row and sent 1 alert. Class, company, role and date were right.
+  - The next poll (19:23Z) re-saw the invite in its overlap: `found 1, skipped 1, enqueued 0`, and the reader did nothing. The alert email, inside the same window, was not returned.
+  - The test row was deleted afterwards; the tracker holds the 1 imported application.
+  - Still waiting: a real reply to an imported application landing on its row, and M8 on the owner's labels.
 - **Week 1 items the owner does by hand:**
   - MFA in AWS Settings;
   - a calendar reminder at sign-up + 5 months (OQ-39 (c));
