@@ -5,6 +5,7 @@ or the environment at synth time.
 """
 
 import os
+import re
 
 from constructs import Construct
 
@@ -17,6 +18,9 @@ AGENT_MODES = ("cloud", "local")
 
 BUDGET_LIMITS_USD = (1, 5, 10)
 BUDGET_NAME_PREFIX = "inbox-agent"
+
+
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def _setting(scope: Construct, key: str, env_var: str) -> str | None:
@@ -38,9 +42,12 @@ def alert_email(scope: Construct) -> str:
     Supplied at synth time, never committed.
     """
     email = _setting(scope, "alert_email", "ALERT_EMAIL")
-    if not email or "@" not in email:
+    # A whole address, checked here: SNS rejects a broken one only mid-deploy,
+    # and the subscription's construct ID comes from it, so a typo also tries
+    # to replace the confirmed subscription.
+    if not email or not _EMAIL.match(email):
         raise ValueError(
-            "Set the owner's alert address: `cdk synth -c alert_email=you@example.com` "
+            "Set the owner's whole alert address: `cdk synth -c alert_email=you@example.com` "
             "or the ALERT_EMAIL environment variable."
         )
     return email

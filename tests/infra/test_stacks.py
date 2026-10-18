@@ -182,6 +182,13 @@ def test_alert_email_is_required():
         build(App(context={"agent_mode": "cloud"}))
 
 
+@pytest.mark.parametrize("bad", ["@example.com", "alerts@", "alerts@example", "a b@example.com", "alerts"])
+def test_a_partial_alert_email_fails_at_synth(bad):
+    # A shell typo like ALERT_EMAIL="$name@example.com" leaves "@example.com".
+    with pytest.raises(ValueError, match="whole alert address"):
+        build(App(context={"alert_email": bad, "agent_mode": "cloud"}))
+
+
 # Alerts (ALR-3)
 
 
