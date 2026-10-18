@@ -15,6 +15,11 @@ dedup (ING-2) covers that case.
 
 Queue messages and logs carry IDs, counts and times only, never email text
 or the query (NFR-PRIV-3).
+
+A dry run (`{"dry_run": true}`, invoked by hand) does steps 1 to 3 and
+reports what it would queue, but writes nothing: no queue message, no log
+entry, no last-poll time. It checks the Gmail and IAM path in AWS while
+nothing reads the queue yet.
 """
 
 import json
@@ -51,6 +56,7 @@ class PollResult:
     skipped: int
     enqueued_ids: tuple[str, ...] = field(default_factory=tuple)
     query_values_skipped: int = 0
+    dry_run: bool = False
 
 
 def poll(
@@ -60,6 +66,7 @@ def poll(
     log: ProcessedLog,
     queue: AgentQueue,
     now: datetime,
+    dry_run: bool = False,
 ) -> PollResult:
     # With no earlier poll, assume one ran an interval ago.
     since = log.last_successful_poll() or now - POLL_INTERVAL
@@ -69,6 +76,9 @@ def poll(
     enqueued = []
     for ref in refs:
         if log.contains(ref.message_id):
+            continue
+        if dry_run:
+            enqueued.append(ref.message_id)
             continue
         queue.send(
             {
@@ -82,17 +92,19 @@ def poll(
         log.record(ref.message_id, now)
         enqueued.append(ref.message_id)
 
-    log.mark_successful_poll(now)
+    if not dry_run:
+        log.mark_successful_poll(now)
     result = PollResult(
         found=len(refs),
         skipped=len(refs) - len(enqueued),
         enqueued_ids=tuple(enqueued),
         query_values_skipped=query.skipped_values,
+        dry_run=dry_run,
     )
     logger.info(
         json.dumps(
             {
-                "event": "poll_done",
+                "event": "poll_dry_run" if dry_run else "poll_done",
                 "found": result.found,
                 "skipped": result.skipped,
                 "enqueued": len(result.enqueued_ids),
@@ -119,5 +131,9 @@ def handler(event: dict, context: object) -> dict:
         log=ProcessedLog(dynamodb.Table(os.environ["PROCESSED_EMAILS_TABLE_NAME"])),
         queue=AgentQueue(sqs, os.environ["AGENT_QUEUE_URL"]),
         now=datetime.now(UTC),
+        dry_run=event.get("dry_run") is True,
     )
-    return {"found": result.found, "skipped": result.skipped, "enqueued": len(result.enqueued_ids)}
+    counts = {"found": result.found, "skipped": result.skipped}
+    if result.dry_run:
+        return {"dry_run": True, **counts, "would_enqueue": len(result.enqueued_ids)}
+    return {**counts, "enqueued": len(result.enqueued_ids)}

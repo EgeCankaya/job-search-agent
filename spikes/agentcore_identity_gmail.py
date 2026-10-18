@@ -36,20 +36,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from inbox_agent import settings  # noqa: E402
 from inbox_agent.query import build_query  # noqa: E402
 
-PROVIDER_NAME = "inbox-agent-google"
-# One fixed user for the whole project: the owner. Not personal data.
-OWNER_USER_ID = "owner"
+PROVIDER_NAME = settings.GOOGLE_CREDENTIAL_PROVIDER
+OWNER_USER_ID = settings.OWNER_USER_ID
 CALLBACK_HOST, CALLBACK_PORT, CALLBACK_PATH = "127.0.0.1", 9090, "/oauth2/callback"
-RETURN_URL = f"http://localhost:{CALLBACK_PORT}{CALLBACK_PATH}"
+RETURN_URL = settings.OAUTH_RETURN_URL
 CONSENT_TIMEOUT_SECONDS = 600  # an authorization URL is valid for 10 minutes
 
 GRANTS = {
-    "read": ("inbox-agent-poller", "https://www.googleapis.com/auth/gmail.readonly"),
-    "compose": ("inbox-agent-drafts", "https://www.googleapis.com/auth/gmail.compose"),
+    "read": (settings.POLLER_WORKLOAD_IDENTITY, settings.GMAIL_READ_SCOPE),
+    "compose": (settings.DRAFTS_WORKLOAD_IDENTITY, settings.GMAIL_COMPOSE_SCOPE),
 }
-# Google returns a refresh token only for offline access; "consent" makes it
-# return one again on a repeated sign-in.
-GOOGLE_PARAMETERS = {"access_type": "offline", "prompt": "consent"}
+GOOGLE_PARAMETERS = settings.GOOGLE_OAUTH_PARAMETERS
 
 GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me"
 

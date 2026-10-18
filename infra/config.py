@@ -44,3 +44,12 @@ def alert_email(scope: Construct) -> str:
             "or the ALERT_EMAIL environment variable."
         )
     return email
+
+# ING-4: AgentCore Identity resources the owner made by hand (2026-10-18).
+# Keep in step with src/inbox_agent/settings.py; a test checks they match.
+GOOGLE_CREDENTIAL_PROVIDER = "inbox-agent-google"
+POLLER_WORKLOAD_IDENTITY = "inbox-agent-poller"
+# The provider's client secret, as `get-oauth2-credential-provider` reports it
+# (clientSecretArn). The name is not the secret. Recreating the provider
+# changes it.
+GOOGLE_CLIENT_SECRET_NAME = "bedrock-agentcore-identity!default/oauth2/inbox-agent-google-1ed2e5b8-NDkbRv"

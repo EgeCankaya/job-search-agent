@@ -55,7 +55,7 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   tracker.py, matching.py    tracker table; TRK-1 normalization and matching
   import_applications.py     TRK-3 CSV import
   query.py                   ING-1 query builder, local matcher, M8 coverage hook
-  gmail.py                   GmailClient interface (no real client until ING-4)
+  gmail.py                   GmailClient interface; real client via AgentCore Identity (ING-4)
   processed_log.py, poll.py  ING-2 log + last-poll time; the poll Lambda
   trim.py, classify.py       CLS-3 trimming and prompt; CLS-1 classes and precedence
   classes.py, model.py       the 6 classes; Model interface + Bedrock Converse adapter
@@ -189,7 +189,10 @@ There is no public endpoint. **The code now matches:** the WhatsApp webhook, its
   - Google side, done by the owner: project created, Gmail API enabled, consent screen "In production" (unverified) with `gmail.readonly` and `gmail.compose`, a web client whose redirect URI is the AgentCore callback URL. Homepage and privacy policy point at the repo and `PRIVACY.md`.
   - AWS side, made by the owner with the CLI (not in CDK yet): credential provider `inbox-agent-google` (its client secret sits in a Secrets Manager secret AgentCore manages), workload identities `inbox-agent-poller` and `inbox-agent-drafts`, both allowing the return URL `http://localhost:9090/oauth2/callback`. The fixed user ID is `owner`.
   - Results: a read token ran the ING-1 query, Gmail refused a draft from it (HTTP 403), and after both consents the read token came from the vault with no sign-in. Recorded in PRD §16a.
-  - Still open: the day-8 refresh check (around 2026-10-26, run the read command again), then the real `GmailClient` and turning on the poll schedule.
+  - Still open: the day-8 refresh check (around 2026-10-26, run the read command again).
+- **Real `GmailClient` in the poll Lambda (2026-10-18, not deployed yet):** `AgentCoreGmailClient` gets the read token as `inbox-agent-poller` for user `owner`. It asks Gmail only for IDs and `internalDate` (`fields=id,internalDate`, so no snippet). It stops above 500 matches. The poll role can call `GetWorkloadAccessTokenForUserId` and `GetResourceOauth2Token` on the exact directory, workload, vault and provider ARNs, plus `GetSecretValue` on the provider's one secret (`infra/config.py`; recreating the provider changes its name).
+  - **Dry run:** invoke the Lambda by hand with `{"dry_run": true}`. It searches but queues nothing, logs nothing as processed, and leaves the last-poll time alone.
+  - **The schedule stays DISABLED until something reads the queue** (a week 2 reader, or the week 3 agent). A live poll marks emails processed and queues them; if nothing reads the queue within its 14-day retention, those emails are lost while the log says they were handled.
 - **Week 1 items the owner does by hand:**
   - MFA in AWS Settings;
   - a calendar reminder at sign-up + 5 months (OQ-39 (c));

@@ -189,7 +189,53 @@ def test_handler_wires_the_environment(env, monkeypatch):
     assert env["queue"].messages[0]["message_id"] == "a1"
 
 
-def test_handler_fails_clearly_without_a_gmail_client(env, monkeypatch):
-    monkeypatch.setattr(poll_module, "_aws", lambda: (FakeDynamoDB({}), env["queue"]))
-    with pytest.raises(NotImplementedError, match="ING-4"):
-        handler({}, None)
+def test_dry_run_writes_nothing(env):
+    gmail = FakeGmail([ref("a1"), ref("b2")])
+    run(env, FakeGmail([ref("a1")]))  # a1 is already processed
+    log_items_before = dict(env["log_table"].items)
+
+    result = poll(
+        gmail=gmail,
+        tracker=TrackerTable(env["tracker_table"]),
+        log=ProcessedLog(env["log_table"]),
+        queue=AgentQueue(env["queue"], env["queue"].queue_url),
+        now=NOW + timedelta(minutes=30),
+        dry_run=True,
+    )
+    assert result.dry_run and result.enqueued_ids == ("b2",)
+    assert (result.found, result.skipped) == (2, 1)
+    assert [m["message_id"] for m in env["queue"].messages] == ["a1"]
+    assert env["log_table"].items == log_items_before  # no log entry, no last-poll time
+
+
+def test_dry_run_uses_the_same_query(env):
+    gmail = FakeGmail()
+    run(env, gmail)
+    poll(
+        gmail=gmail,
+        tracker=TrackerTable(env["tracker_table"]),
+        log=ProcessedLog(env["log_table"]),
+        queue=AgentQueue(env["queue"], env["queue"].queue_url),
+        now=NOW + timedelta(minutes=30),
+        dry_run=True,
+    )
+    first, second = gmail.queries
+    assert first == second.replace(str(int((NOW - timedelta(hours=1)).timestamp())), str(int((NOW - timedelta(minutes=90)).timestamp())))
+
+
+@pytest.mark.parametrize(("event", "dry"), [({"dry_run": True}, True), ({"dry_run": "yes"}, False), ({}, False)])
+def test_handler_dry_run_only_on_an_explicit_true(env, monkeypatch, event, dry):
+    monkeypatch.setenv("TRACKER_TABLE_NAME", "Tracker")
+    monkeypatch.setenv("PROCESSED_EMAILS_TABLE_NAME", "Processed")
+    monkeypatch.setenv("AGENT_QUEUE_URL", env["queue"].queue_url)
+    dynamodb = FakeDynamoDB({"Tracker": env["tracker_table"], "Processed": env["log_table"]})
+    monkeypatch.setattr(poll_module, "_aws", lambda: (dynamodb, env["queue"]))
+    monkeypatch.setattr(poll_module, "gmail_client", lambda: FakeGmail([ref("a1")]))
+
+    response = handler(event, None)
+    if dry:
+        assert response == {"dry_run": True, "found": 1, "skipped": 0, "would_enqueue": 1}
+        assert env["queue"].messages == []
+    else:
+        assert response == {"found": 1, "skipped": 0, "enqueued": 1}
+        assert len(env["queue"].messages) == 1

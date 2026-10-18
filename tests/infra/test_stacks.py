@@ -369,23 +369,71 @@ def as_list(value):
     return value if isinstance(value, list) else [value]
 
 
+def render_arn(value):
+    """An ARN built with Fn::Join, as text with ${Partition} and ${AccountId} placeholders."""
+    if isinstance(value, str):
+        return value
+    if "Ref" in value:
+        return "${" + value["Ref"].split("::")[-1] + "}"
+    if "Fn::GetAtt" in value:
+        return "<" + value["Fn::GetAtt"][0] + ">"
+    separator, parts = value["Fn::Join"]
+    return separator.join(render_arn(part) for part in parts)
+
+
 def test_poll_role_is_least_privilege(free):
     _, fn = poll_function(free)
     role_id = fn["Properties"]["Role"]["Fn::GetAtt"][0]
-    statements = policy_statements(free, role_id)
-    granted = {action: s["Resource"] for s in statements for action in as_list(s["Action"])}
-    tracker_arn = {"Fn::GetAtt": [logical_id_by_key(free, "company_key"), "Arn"]}
-    log_arn = {"Fn::GetAtt": [logical_id_by_key(free, "message_id"), "Arn"]}
+    granted = {}
+    for statement in policy_statements(free, role_id):
+        assert statement["Effect"] == "Allow"
+        for action in as_list(statement["Action"]):
+            granted[action] = sorted(render_arn(r) for r in as_list(statement["Resource"]))
+
+    tracker = f"<{logical_id_by_key(free, 'company_key')}>"
+    processed = f"<{logical_id_by_key(free, 'message_id')}>"
     queue_id = [lid for lid, r in resources(free, "AWS::SQS::Queue").items() if "RedrivePolicy" in r["Properties"]][0]
-    log_group_id = fn["Properties"]["LoggingConfig"]["LogGroup"]["Ref"]
+    log_group = f"<{fn['Properties']['LoggingConfig']['LogGroup']['Ref']}>"
+    agentcore = "arn:${Partition}:bedrock-agentcore:eu-north-1:${AccountId}"
+    directory = f"{agentcore}:workload-identity-directory/default"
+    workload = f"{directory}/workload-identity/inbox-agent-poller"
+    vault = f"{agentcore}:token-vault/default"
+    provider = f"{vault}/oauth2credentialprovider/inbox-agent-google"
+    secret = (
+        "arn:${Partition}:secretsmanager:eu-north-1:${AccountId}:secret:"
+        "bedrock-agentcore-identity!default/oauth2/inbox-agent-google-1ed2e5b8-NDkbRv"
+    )
     assert granted == {
-        "dynamodb:Scan": tracker_arn,
-        "dynamodb:GetItem": log_arn,
-        "dynamodb:PutItem": log_arn,
-        "sqs:SendMessage": {"Fn::GetAtt": [queue_id, "Arn"]},
-        "logs:CreateLogStream": {"Fn::GetAtt": [log_group_id, "Arn"]},
-        "logs:PutLogEvents": {"Fn::GetAtt": [log_group_id, "Arn"]},
+        "dynamodb:Scan": [tracker],
+        "dynamodb:GetItem": [processed],
+        "dynamodb:PutItem": [processed],
+        "sqs:SendMessage": [f"<{queue_id}>"],
+        "logs:CreateLogStream": [log_group],
+        "logs:PutLogEvents": [log_group],
+        "bedrock-agentcore:GetWorkloadAccessTokenForUserId": sorted([directory, workload]),
+        "bedrock-agentcore:GetResourceOauth2Token": sorted([directory, workload, vault, provider]),
+        "secretsmanager:GetSecretValue": [secret],
     }
+
+
+def test_poll_role_cannot_reach_the_drafts_identity(free):
+    # ING-4: the compose grant belongs to inbox-agent-drafts; the poller never gets it.
+    _, fn = poll_function(free)
+    role_id = fn["Properties"]["Role"]["Fn::GetAtt"][0]
+    text = json.dumps([render_arn(r) for s in policy_statements(free, role_id) for r in as_list(s["Resource"])])
+    assert "inbox-agent-drafts" not in text
+
+
+def test_identity_names_match_the_runtime_settings():
+    from inbox_agent import settings
+
+    from infra import config
+
+    assert config.GOOGLE_CREDENTIAL_PROVIDER == settings.GOOGLE_CREDENTIAL_PROVIDER
+    assert config.POLLER_WORKLOAD_IDENTITY == settings.POLLER_WORKLOAD_IDENTITY
+    assert config.GOOGLE_CLIENT_SECRET_NAME.startswith(
+        f"bedrock-agentcore-identity!default/oauth2/{config.GOOGLE_CREDENTIAL_PROVIDER}-"
+    )
 
 
 def schedule(template):

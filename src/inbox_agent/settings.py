@@ -51,3 +51,18 @@ SUBJECT_KEYWORDS = (
     "başvuru",
     "application",
 )
+
+# ING-4: Gmail tokens come from AgentCore Identity. The owner created these by
+# hand with the CLI (2026-10-18); the names must match.
+GOOGLE_CREDENTIAL_PROVIDER = "inbox-agent-google"
+POLLER_WORKLOAD_IDENTITY = "inbox-agent-poller"  # gmail.readonly only
+DRAFTS_WORKLOAD_IDENTITY = "inbox-agent-drafts"  # gmail.compose only
+# The token vault keys tokens by workload identity and user. One user: the owner.
+OWNER_USER_ID = "owner"
+GMAIL_READ_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+GMAIL_COMPOSE_SCOPE = "https://www.googleapis.com/auth/gmail.compose"
+# Where AgentCore sends the browser after consent; only the owner's Mac listens.
+OAUTH_RETURN_URL = "http://localhost:9090/oauth2/callback"
+# Google returns a refresh token only for offline access; "consent" makes it
+# return one again on a repeated sign-in.
+GOOGLE_OAUTH_PARAMETERS = {"access_type": "offline", "prompt": "consent"}

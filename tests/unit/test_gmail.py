@@ -1,0 +1,127 @@
+"""The AgentCore-backed Gmail client (ING-4), with fakes. No AWS, no Google."""
+
+import io
+import json
+import urllib.error
+import urllib.parse
+from datetime import UTC, datetime
+
+import pytest
+
+from inbox_agent import settings
+from inbox_agent.gmail import MAX_MESSAGES, AgentCoreGmailClient, GmailError, GmailMessageRef
+
+
+class FakeIdentity:
+    def __init__(self, token="google-token"):
+        self.token = token
+        self.calls = []
+
+    def get_workload_access_token_for_user_id(self, **kwargs):
+        self.calls.append(("workload_token", kwargs))
+        return {"workloadAccessToken": "workload-token"}
+
+    def get_resource_oauth2_token(self, **kwargs):
+        self.calls.append(("resource_token", kwargs))
+        if self.token:
+            return {"accessToken": self.token}
+        return {"authorizationUrl": "https://accounts.example.com/consent", "sessionUri": "urn:session:1"}
+
+
+class FakeResponse(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+class FakeGmailApi:
+    """Answers messages.list in pages and messages.get with id and internalDate."""
+
+    def __init__(self, pages, error=None):
+        self.pages = pages
+        self.error = error
+        self.requests = []
+
+    def __call__(self, request, timeout):
+        self.requests.append(request)
+        if self.error:
+            raise urllib.error.HTTPError(request.full_url, self.error, "error", {}, io.BytesIO(b'{"error": {"status": "PERMISSION_DENIED"}}'))
+        url = urllib.parse.urlparse(request.full_url)
+        params = urllib.parse.parse_qs(url.query)
+        if url.path.endswith("/messages"):
+            page = int(params.get("pageToken", ["0"])[0])
+            body = {"messages": [{"id": i, "threadId": f"t-{i}"} for i in self.pages[page]]}
+            if page + 1 < len(self.pages):
+                body["nextPageToken"] = str(page + 1)
+            return FakeResponse(json.dumps(body).encode())
+        message_id = url.path.rsplit("/", 1)[1]
+        return FakeResponse(json.dumps({"id": message_id, "internalDate": "1792314000000"}).encode())
+
+
+def test_token_comes_from_the_pollers_workload_identity_for_the_owner():
+    identity = FakeIdentity()
+    AgentCoreGmailClient(identity, opener=FakeGmailApi([[]])).search("q")
+    (_, workload), (_, resource) = identity.calls
+    assert workload == {"workloadName": "inbox-agent-poller", "userId": "owner"}
+    assert resource == {
+        "workloadIdentityToken": "workload-token",
+        "resourceCredentialProviderName": "inbox-agent-google",
+        "scopes": [settings.GMAIL_READ_SCOPE],
+        "oauth2Flow": "USER_FEDERATION",
+        "resourceOauth2ReturnUrl": settings.OAUTH_RETURN_URL,
+        "customParameters": settings.GOOGLE_OAUTH_PARAMETERS,
+    }
+    assert "forceAuthentication" not in resource
+
+
+def test_read_scope_only():
+    identity = FakeIdentity()
+    AgentCoreGmailClient(identity, opener=FakeGmailApi([[]])).search("q")
+    assert identity.calls[1][1]["scopes"] == ["https://www.googleapis.com/auth/gmail.readonly"]
+
+
+def test_missing_consent_fails_without_a_link():
+    with pytest.raises(GmailError, match="--grant read") as error:
+        AgentCoreGmailClient(FakeIdentity(token=None), opener=FakeGmailApi([[]])).search("q")
+    assert "accounts.example.com" not in str(error.value)
+
+
+def test_search_pages_and_returns_ids_and_receipt_times():
+    api = FakeGmailApi([["a1", "b2"], ["c3"]])
+    refs = AgentCoreGmailClient(FakeIdentity(), opener=api).search("subject:interview")
+    received = datetime(2026, 10, 18, 9, 0, tzinfo=UTC)
+    assert refs == [
+        GmailMessageRef("a1", "t-a1", received),
+        GmailMessageRef("b2", "t-b2", received),
+        GmailMessageRef("c3", "t-c3", received),
+    ]
+    first = urllib.parse.urlparse(api.requests[0].full_url)
+    assert urllib.parse.parse_qs(first.query)["q"] == ["subject:interview"]
+    assert api.requests[0].get_header("Authorization") == "Bearer google-token"
+
+
+def test_message_lookups_never_ask_for_the_snippet():
+    api = FakeGmailApi([["a1"]])
+    AgentCoreGmailClient(FakeIdentity(), opener=api).search("q")
+    get = urllib.parse.urlparse(api.requests[-1].full_url)
+    params = urllib.parse.parse_qs(get.query)
+    assert params == {"format": ["minimal"], "fields": ["id,internalDate"]}
+
+
+def test_only_get_requests():
+    api = FakeGmailApi([["a1"], ["b2"]])
+    AgentCoreGmailClient(FakeIdentity(), opener=api).search("q")
+    assert {request.get_method() for request in api.requests} == {"GET"}
+
+
+def test_a_runaway_query_stops():
+    pages = [[f"m{p}-{i}" for i in range(100)] for p in range(MAX_MESSAGES // 100 + 1)]
+    with pytest.raises(GmailError, match="too wide"):
+        AgentCoreGmailClient(FakeIdentity(), opener=FakeGmailApi(pages)).search("q")
+
+
+def test_gmail_errors_name_the_status_only():
+    with pytest.raises(GmailError, match="HTTP 403 PERMISSION_DENIED"):
+        AgentCoreGmailClient(FakeIdentity(), opener=FakeGmailApi([[]], error=403)).search("q")

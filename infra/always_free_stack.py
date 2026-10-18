@@ -9,6 +9,7 @@ endpoint (CHT-2). The DLQ alarm arrives in week 3.
 from pathlib import Path
 
 from aws_cdk import (
+    ArnFormat,
     CfnOutput,
     CustomResource,
     Duration,
@@ -215,7 +216,7 @@ class AlwaysFreeStack(Stack):
             self,
             "PollRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            description="Gmail poll: read the tracker, read and write the processed-email log, send to the agent queue",
+            description="Gmail poll: Gmail read token, tracker read, processed-email log, send to the agent queue",
         )
         log_group.grant_write(role)
         role.add_to_policy(
@@ -229,6 +230,38 @@ class AlwaysFreeStack(Stack):
         )
         role.add_to_policy(
             iam.PolicyStatement(actions=["sqs:SendMessage"], resources=[self.agent_queue.queue_arn])
+        )
+        # ING-4: the Gmail read token, from AgentCore Identity, as the poller's
+        # workload identity, from the one Google provider (exact ARNs only).
+        directory = self.format_arn(
+            service="bedrock-agentcore", resource="workload-identity-directory", resource_name="default"
+        )
+        workload = f"{directory}/workload-identity/{config.POLLER_WORKLOAD_IDENTITY}"
+        vault = self.format_arn(service="bedrock-agentcore", resource="token-vault", resource_name="default")
+        provider = f"{vault}/oauth2credentialprovider/{config.GOOGLE_CREDENTIAL_PROVIDER}"
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["bedrock-agentcore:GetWorkloadAccessTokenForUserId"], resources=[directory, workload]
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["bedrock-agentcore:GetResourceOauth2Token"],
+                resources=[directory, workload, vault, provider],
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["secretsmanager:GetSecretValue"],
+                resources=[
+                    self.format_arn(
+                        service="secretsmanager",
+                        resource="secret",
+                        resource_name=config.GOOGLE_CLIENT_SECRET_NAME,
+                        arn_format=ArnFormat.COLON_RESOURCE_NAME,
+                    )
+                ],
+            )
         )
 
         self.poll_function = lambda_.Function(
