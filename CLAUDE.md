@@ -32,7 +32,7 @@ gitignored and must stay out of the repo.
 - **Ask before installing anything** (Homebrew, npm, uv packages beyond the project).
 - **Never deploy** and never create accounts or enter credentials. The owner does these.
 - **Never commit secrets, emails, phone numbers or personal data.** Tests use fictional values (`example.com`, `90555…`).
-- Commit only when asked. Commit messages end with the co-author line.
+- Commit and push only on the owner's verbal confirmation in chat (for example "yes, commit" or "push it"). A yes covers the commit or push it answers, not later ones. Commit messages end with the co-author line.
 - Stay inside the current milestone. Week 2+ items (Gmail, Bedrock, LangGraph, AgentCore resources, the Mac app, GitHub Actions) wait for their week.
 - Research notes go to `/Users/egemencankaya/Vault/OpenCode Research/` (from `~/AGENTS.md`).
 
