@@ -131,7 +131,7 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
 - **ING-1 query builder**: four OR'd parts, `after:` (last successful poll - 1 h) as epoch seconds, and `-from:no-reply@sns.amazonaws.com`. Tracker domains and addresses must pass strict checks, or they are skipped, so a stored value can't widen the query. `query_coverage` is the M8 hook.
 - **ING-2/ING-3 poll Lambda** (`inbox_agent.poll.handler`). The processed-email log has a 30-day TTL. The last-poll time is the `#poll-state` item in the same table. A message is queued before it is logged, so it's never lost. Queue messages carry IDs and times only. The schedule is `rate(30 minutes)` in the `inbox-agent` schedule group, and stays **DISABLED** until the Gmail client exists. It is the same in both modes.
 - **CLS-1/CLS-3 classifier step**: trimming to 2,000 characters, a quoted-data prompt that the email can't break out of, precedence applied in code, and a yes/no question. `CLASSIFIER_MODEL_ID` has no default.
-- **boto3 is a dev dependency** (owner approved 2026-10-18), for the import script on the Mac. The Lambda runtime brings its own, and tests use fakes, never AWS.
+- **`boto3[crt]` is a dev dependency** (owner approved 2026-10-18), for the import script on the Mac. The `crt` extra is required: boto3 can't read `aws login` credentials without it (`MissingDependencyException`). The Lambda runtime brings its own boto3, and tests use fakes, never AWS.
 
 ## AWS Free plan (decided 2026-10-17)
 

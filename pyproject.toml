@@ -9,7 +9,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "boto3>=1.43.114",
+    "boto3[crt]>=1.43.114",
     "pytest>=9.1.1",
 ]
 
