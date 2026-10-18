@@ -59,6 +59,7 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   processed_log.py, poll.py  ING-2 log + last-poll time; the poll Lambda
   trim.py, classify.py       CLS-3 trimming and prompt; CLS-1 classes and precedence
   classes.py, model.py       the 6 classes; Model interface + Bedrock Converse adapter
+spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
 tests/fakes.py               in-memory DynamoDB table and SQS queue
 tests/unit/                  handler, import, query, poll, trim and classifier tests
 tests/infra/                 CDK assertion tests
@@ -184,6 +185,11 @@ There is no public endpoint. **The code now matches:** the WhatsApp webhook, its
   - The `eu.` profiles are `ACTIVE`, but calls get throttled because **every Nova inference quota is 0**.
   - AgentCore's control plane (Runtime, Gateway, Memory, Identity, Policy, Evaluations) responds in eu-north-1.
 - **Blocker for week 2:** the Nova quotas. The account is held at 0, while the AWS defaults are 400k cross-Region tokens per minute and 5.76B tokens per day. Service Quotas rejects requests at or below the default, so the owner files **one support case** to lift them. After that, use route 1 if its call succeeds, otherwise route 2 (OQ-39 (b)), and record the choice in the PRD.
+- **ING-4 spike passed (2026-10-18)**, with `spikes/agentcore_identity_gmail.py` (run it in a real terminal; it waits for a browser sign-in):
+  - Google side, done by the owner: project created, Gmail API enabled, consent screen "In production" (unverified) with `gmail.readonly` and `gmail.compose`, a web client whose redirect URI is the AgentCore callback URL. Homepage and privacy policy point at the repo and `PRIVACY.md`.
+  - AWS side, made by the owner with the CLI (not in CDK yet): credential provider `inbox-agent-google` (its client secret sits in a Secrets Manager secret AgentCore manages), workload identities `inbox-agent-poller` and `inbox-agent-drafts`, both allowing the return URL `http://localhost:9090/oauth2/callback`. The fixed user ID is `owner`.
+  - Results: a read token ran the ING-1 query, Gmail refused a draft from it (HTTP 403), and after both consents the read token came from the vault with no sign-in. Recorded in PRD §16a.
+  - Still open: the day-8 refresh check (around 2026-10-26, run the read command again), then the real `GmailClient` and turning on the poll schedule.
 - **Week 1 items the owner does by hand:**
   - MFA in AWS Settings;
   - a calendar reminder at sign-up + 5 months (OQ-39 (c));
