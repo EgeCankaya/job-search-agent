@@ -174,7 +174,7 @@ PRD and design doc: no change. These are build details (PRD §13).
 The week 3 exit says the same graph runs locally against Ollama.
 
 **Recommendation:**
-- **Model:** `qwen3:32b` in Ollama (about 20 GB at 4-bit). It is in the design's 27B to 32B range and supports tool calls, which the chat path needs. Its Turkish is unverified; EV-6 measures it. Fallback: `mistral-small3.2` (24B).
+- **Model:** `qwen3.8:27b` in Ollama (18 GB at 4-bit, 256K context; tools, thinking and image input). **Changed on 2026-10-19 at my request** from the accepted `qwen3:32b` (about 20 GB). It is in the design's 27B to 32B range and supports tool calls, which the chat path needs. Thinking stays off for classification, which needs a short answer. Its Turkish is unverified; EV-6 measures it. Fallback: `qwen3:32b`.
 - **Tools:** the local MCP server runs the same tool code and talks over stdio, so it opens no port at all. cedarpy is added in week 5 (MODE-4).
 - **Worker:** the same Runtime entry point, served on 127.0.0.1:8080, which the Ask page calls in local mode.
 - **Week 3 local check:** the chat path answers both US-04 questions. Local alerts wait for the Mac worker (queue reader, poll, Keychain), which no milestone schedules yet. Who may publish in MacBook mode (my session, or a local-worker role) is decided then.
@@ -242,7 +242,7 @@ Nothing is installed until I approve each group.
 | Group | Packages | Where they run | Why |
 |---|---|---|---|
 | Agent | `langgraph`, `langchain-aws`, `bedrock-agentcore`, `mcp`, `langchain-mcp-adapters` | Runtime ZIP, local worker | The graph (design doc), Converse through LangChain (design doc), the Runtime's HTTP entry point, the MCP client and server, MCP tools as LangChain tools |
-| Local | `langchain-ollama`; the Ollama app (Homebrew `ollama`); the `qwen3:32b` model (about 20 GB) | The Mac | Local mode (j) |
+| Local | `langchain-ollama`; the Ollama app (Homebrew `ollama`); the `qwen3.8:27b` model (18 GB; was `qwen3:32b` until 2026-10-19) | The Mac | Local mode (j) |
 | Mac app | `streamlit` (brings pandas, pyarrow, altair and others) | The Mac | Already chosen in OQ-40 |
 | CI | GitHub actions `actions/checkout`, `astral-sh/setup-uv`, `actions/setup-node`, `aws-actions/configure-aws-credentials`; the `aws-cdk` CLI from npm | GitHub's runners only | OPS-1 |
 
@@ -269,7 +269,7 @@ The steps in `Week 3 plan.md`: interfaces (1), tool handlers (2), the graph and 
 | (g) DLQ alarm exception in the topic policy | Accept | 2026-10-18 | |
 | (h) Chat path gets `list_applications` only | Accept | 2026-10-18 | |
 | (i) aws-cdk-lib AgentCore constructs, uv-built arm64 ZIP | Accept | 2026-10-18 | |
-| (j) Local mode: `qwen3:32b`, stdio MCP server, chat-path check | Accept | 2026-10-18 | |
+| (j) Local mode: `qwen3.8:27b`, stdio MCP server, chat-path check | Accept | 2026-10-18 | Model changed from `qwen3:32b` to `qwen3.8:27b` on 2026-10-19 |
 | (k) Log fields now, OpenTelemetry in week 6 | Accept | 2026-10-18 | |
 | (l) CI stack deployed once by hand | Accept | 2026-10-18 | |
 | (m) Unit tests and synth gate the deploy until Tier 1 | Accept | 2026-10-18 | |

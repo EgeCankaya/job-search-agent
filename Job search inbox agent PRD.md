@@ -916,7 +916,7 @@ Each external dependency has one of three statuses: **verified** (confirmed by f
 | LangGraph and langchain-aws for the agent graph and Converse calls [Doc, OQ-42 (n)] | Open source | Research target; added 2026-10-19 | Week 3 graph and Runtime ZIP (arm64 wheels) | No agent |
 | bedrock-agentcore, the Runtime's HTTP entry point [OQ-42 (n)] | AWS, open source | Research target; added 2026-10-19 | Week 3 Runtime deploy | The entry point is written by hand |
 | The MCP Python SDK and langchain-mcp-adapters, for the Gateway client and the local MCP server [OQ-42 (n)] | Open source | Research target; added 2026-10-19 | Week 3 Gateway calls with SigV4 | No tools in either mode |
-| A local model through Ollama (27B to 32B at 4-bit, with acceptable Turkish) | Ollama and model publishers | Research target (H4, H6). `qwen3:32b` through langchain-ollama chosen for week 3, fallback `mistral-small3.2` [OQ-42 (j)] | Week 3 local chat check; EV-6 in weeks 6 to 7 | Can't switch modes |
+| A local model through Ollama (27B to 32B at 4-bit, with acceptable Turkish) | Ollama and model publishers | Research target (H4, H6). `qwen3.8:27b` (18 GB at 4-bit) through langchain-ollama chosen for week 3 (2026-10-19, replacing `qwen3:32b`), fallback `qwen3:32b` [OQ-42 (j)] | Week 3 local chat check; EV-6 in weeks 6 to 7 | Can't switch modes |
 
 ## 17. Decisions and rejected alternatives
 
@@ -1143,7 +1143,7 @@ Many Provisional answers are already written into SHALL statements. To keep them
 ### v0.4.2, 2026-10-19
 
 **Topics in this revision** (decision input; the owner accepted every item of OQ-42 on 2026-10-18):
-- OQ-42 (a) to (n): the queue consumer Lambda; the fixed batch path; one Lambda per tool in the always-free stack, 4 tools in week 3; the tool inputs; IAM auth at the Gateway and the Runtime; the `notify_owner` role as the only publisher; the DLQ alarm's topic-policy exception; `list_applications` only on the chat path; the CDK constructs and the arm64 ZIP; local mode with `qwen3:32b`; log fields before OpenTelemetry; the CI stack; the deploy gate before Tier 1; the week 3 dependencies.
+- OQ-42 (a) to (n): the queue consumer Lambda; the fixed batch path; one Lambda per tool in the always-free stack, 4 tools in week 3; the tool inputs; IAM auth at the Gateway and the Runtime; the `notify_owner` role as the only publisher; the DLQ alarm's topic-policy exception; `list_applications` only on the chat path; the CDK constructs and the arm64 ZIP; local mode with `qwen3.8:27b` (changed from `qwen3:32b` on 2026-10-19); log fields before OpenTelemetry; the CI stack; the deploy gate before Tier 1; the week 3 dependencies.
 
 **Sections updated:**
 - Header: date, version, status; source-of-truth note (OQ-42, design-doc revision 105)

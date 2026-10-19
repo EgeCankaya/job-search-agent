@@ -1,7 +1,7 @@
 # Week 3 plan: the agent
 
 **Date:** 2026-10-18
-**Status:** OQ-42 accepted (2026-10-18). Step 0 is done (2026-10-19): PRD v0.4.2, design-doc revision 105, and the Python packages added with uv. Still open from step 0: the Nova Lite profile lookup, and Ollama with its model, which I install. Nothing is built, deployed or committed.
+**Status:** OQ-42 accepted (2026-10-18). Step 0 is done (2026-10-19): PRD v0.4.2, design-doc revision 105, and the Python packages added with uv. The Nova Lite `eu.` profile routes to the same 4 Regions as Micro (looked up 2026-10-19). Still open from step 0: Ollama with its model, which I install. Nothing is built, deployed or committed.
 **Sources:** PRD v0.4.1 (§9 TOOL, CHT, MODE, MEM, ALR-3, ING-3, OPS-1; §10; §12; §14 week 3), the design doc (Claude Doc, revision 98), `Design doc edits for OQ-42.md` (the open choices, drafted alongside this plan).
 
 ## Week 3 exit criteria (PRD §14, plus OQ-41 (e))
@@ -68,7 +68,7 @@ Plain functions first, then thin Lambda handlers that read the tool name from th
 ### 4. CDK: tools, Gateway, Runtime, consumer (TOOL-1, TOOL-3, MODE-2)
 - **Always-free stack:** 4 tool Lambdas, each with an explicit 7-day log group and its own hand-built role (exact ARNs, no wildcards). Only `read_email`'s role gets the AgentCore Identity read-token calls; only `upsert_application` writes the tracker; `list_applications` gets `dynamodb:Scan` only; only `notify_owner` gets `sns:Publish`.
 - **AgentCore stack:** the stable AgentCore constructs in aws-cdk-lib 2.273 (OQ-42 (i)), each given a hand-built role:
-  - Runtime from a ZIP built for Linux arm64, Python 3.13; inbound IAM; its role may call the Nova Micro and Nova Lite `eu.` profiles and their Regional model ARNs only (TOOL-3), `InvokeGateway` on the one Gateway, and the processed-email log. The Lite profile's Regions are read with `aws bedrock get-inference-profile` before coding, as the Micro ones were;
+  - Runtime from a ZIP built for Linux arm64, Python 3.13; inbound IAM; its role may call the Nova Micro and Nova Lite `eu.` profiles and their Regional model ARNs only (TOOL-3), `InvokeGateway` on the one Gateway, and the processed-email log. Both profiles route to eu-central-1, eu-north-1, eu-west-1 and eu-west-3 (checked 2026-10-19), so that is 2 profiles and 8 model ARNs;
   - Gateway with IAM inbound auth and one Lambda target per tool; its role may invoke only those 4 functions;
   - the queue consumer Lambda (OQ-42 (a)), `bedrock-agentcore:InvokeAgentRuntime` on the one Runtime, its event source mapping created **disabled**.
 - Tests: the existing guardrails extended to every new role and log group; the Gateway's tool list equals the week 3 list; the Runtime role names exactly the 2 profiles and their Regional model ARNs; local mode synthesizes no Runtime, Gateway or consumer; still no API Gateway API or function URL.

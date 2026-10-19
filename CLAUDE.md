@@ -153,10 +153,10 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (a) a cloud-only queue consumer Lambda calls `InvokeAgentRuntime` per message (it is APR-3's consumer; OQ-36's path is decided); (b) the batch path is a fixed sequence, the model only classifies, and the processed-email log is graph bookkeeping, not a tool;
   - (c) one Lambda and role per tool, in the always-free stack; week 3 builds `read_email`, `upsert_application`, `list_applications`, `notify_owner`; (d) the tool inputs are fixed in PRD §9 conventions (`notify_owner` has no free-text input);
   - (e) IAM (SigV4) at the Gateway and the Runtime; (f) only the `notify_owner` role publishes to the topic; (g) the DLQ alarm gets an exception scoped to its own ARN;
-  - (h) the chat path binds only `list_applications`; (i) the AgentCore constructs in aws-cdk-lib 2.273 with hand-built roles, Runtime ZIP built by uv for arm64, no Docker; (j) local mode uses `qwen3:32b`, a stdio MCP server, the worker on 127.0.0.1:8080, and the week 3 local check covers the chat path only;
+  - (h) the chat path binds only `list_applications`; (i) the AgentCore constructs in aws-cdk-lib 2.273 with hand-built roles, Runtime ZIP built by uv for arm64, no Docker; (j) local mode uses `qwen3.8:27b` (the owner's pick 2026-10-19, replacing `qwen3:32b`), a stdio MCP server, the worker on 127.0.0.1:8080, and the week 3 local check covers the chat path only;
   - (k) timing as log fields now, OpenTelemetry in week 6; (l) an `InboxAgentCi` stack (OIDC provider, deploy role) deployed once by hand; (m) pytest + synth gate the deploy until Tier 1.
-- **Dependencies (approved 2026-10-18, added 2026-10-19):** groups `agent` (langgraph, langchain-aws, bedrock-agentcore, mcp, langchain-mcp-adapters), `local` (langchain-ollama), `app` (streamlit). The owner installs Ollama and pulls `qwen3:32b`.
-- **Still to look up before coding the Runtime role:** the Regions behind `eu.amazon.nova-lite-v1:0` (`aws bedrock get-inference-profile`).
+- **Dependencies (approved 2026-10-18, added 2026-10-19):** groups `agent` (langgraph, langchain-aws, bedrock-agentcore, mcp, langchain-mcp-adapters), `local` (langchain-ollama), `app` (streamlit). The owner installs Ollama (Homebrew, 0.40.6) and pulls `qwen3.8:27b`.
+- **Nova Lite profile (looked up 2026-10-19):** `eu.amazon.nova-lite-v1:0` is `ACTIVE` and routes to `amazon.nova-lite-v1:0` in the same 4 Regions as Micro (eu-central-1, eu-north-1, eu-west-1, eu-west-3). The Runtime role names both profiles and these 8 model ARNs.
 
 ## AWS Free plan (decided 2026-10-17)
 
