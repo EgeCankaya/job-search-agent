@@ -74,6 +74,7 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   runtime.py                 the Runtime entry point (new_email, chat); local worker on 127.0.0.1:8080
   consumer.py                the queue consumer Lambda: one InvokeAgentRuntime per new email (OQ-42 a)
   dashboard.py, app_backend.py  DASH-1 numbers; the Mac app's AWS calls (stack discovery, scans, Ask)
+  local_mcp_server.py, stdio_tools.py  MacBook mode's tools: MCP over stdio (no port), and the worker's client
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
 mac_app/                     the Streamlit Mac app: app.py (navigation), dashboard_page.py, ask_page.py, common.py
 .streamlit/config.toml       the app binds 127.0.0.1:8501 and sends no usage stats (CHT-2)
@@ -91,7 +92,7 @@ cdk synth -c alert_email=alerts@example.com
 cdk synth -c alert_email=alerts@example.com -c agent_mode=local
 uv run python import_applications.py data/applications.csv --table <ApplicationsTableName>
 uv run streamlit run mac_app/app.py              # the Mac app, from the repo root
-AGENT_MODE=local uv run python -m inbox_agent.runtime   # the local worker on 127.0.0.1:8080
+AGENT_MODE=local PYTHONPATH=src uv run python -m inbox_agent.runtime   # the local worker on 127.0.0.1:8080
 ```
 
 The import uses boto3 from the dev group and your `aws login` session.
@@ -182,6 +183,8 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - The log group `/aws/bedrock-agentcore/runtimes/<runtime id>-DEFAULT` exists with 7 days, and the Runtime writes there: `chat_done` and `batch_done` lines only, no question text, no errors. No log group in the account lacks retention.
   - Not yet exercised live: the batch path through the Gateway tools (read_email, upsert, notify_owner), which runs at the cutover; the DLQ alarm email.
 - **Step 6 built (2026-10-19), not committed:** the Mac app's Dashboard and Ask pages (`mac_app/`), backed by `app_backend.py` (finds the tables and the Runtime from the deployed stacks, so no name is written down) and `dashboard.py`. Alert claims now record their kind (`alert_kind`: urgent or possible) for the weekly counts; claims from before that count as "unrecorded". Tests render both pages with Streamlit's AppTest and a fake backend, and check every Dashboard number against a direct count on a seeded table. Live check: the app answers on 127.0.0.1:8501 and a connection to the Mac's LAN address is refused (week 3 exit 5); the Dashboard loaded from the real tables.
+- **Step 7 built (2026-10-19), not committed:** the local MCP server (`local_mcp_server.py`, the tracker tools over stdio, no port; cedarpy in week 5) and the worker's client (`stdio_tools.py`, one long-lived session on a background event loop). In local mode the worker starts the server as a child process, with the tracker table's name (from `TRACKER_TABLE_NAME` or the deployed stack), `PYTHONPATH`, and MCP's safe environment only. Live check: the worker answered count-only questions from the real tracker through Ollama (14 s first, 5 s after); only the worker listens (127.0.0.1:8080), the child has no socket, and the LAN address is refused (week 3 exit 2, chat path).
+- **Gotchas from step 7:** the project isn't installed as a package, so the worker needs `PYTHONPATH=src` and passes the same to its child. The MCP SDK's own input check would quote bad values in its error, so the server turns it off (`validate_input=False`) and relies on `tools.validate`.
 - **Gotchas from step 4:**
   - The AgentCore `Runtime` construct adds wildcard X-Ray, CloudWatch and S3 grants to the role you pass, so the Runtime is the raw `CfnRuntime`. The `Gateway` construct is fine, but its default semantic search adds a search tool; the stack deletes `SearchType`.
   - numpy has no `aarch64-manylinux2014` wheel: the bundle targets `manylinux_2_28`. Check at the first deploy that the Runtime starts.

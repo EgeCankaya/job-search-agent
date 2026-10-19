@@ -110,7 +110,7 @@ def ask_local(question: str, opener=urllib.request.urlopen, url: str = LOCAL_WOR
             return _answer(response.read())
     except OSError:
         raise AskError(
-            "the local worker isn't answering: start it with `AGENT_MODE=local uv run python -m inbox_agent.runtime`"
+            "the local worker isn't answering: start it with `AGENT_MODE=local PYTHONPATH=src uv run python -m inbox_agent.runtime`"
         ) from None
 
 

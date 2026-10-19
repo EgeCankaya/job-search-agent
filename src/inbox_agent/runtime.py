@@ -8,10 +8,11 @@ One handler routes on the payload's type:
 Week 4 adds the daily stale check. Approve and Skip decisions never come
 here: the consumer takes them to the approval workflow (APR-3).
 
-In cloud mode the tools are the Gateway's (TOOL-1). In MacBook mode, until
-the local MCP server and the Mac worker exist, the chat path runs the same
-tool code in this process, and the batch path is not available: its Gmail
-token would come from the Keychain (ING-4), which isn't built yet.
+In cloud mode the tools are the Gateway's (TOOL-1). In MacBook mode they
+are the local MCP server's, a child process spoken to over stdio (OQ-42 j).
+The batch path is not available locally yet: its Gmail token would come
+from the Keychain (ING-4), and the Mac worker that reads the queue isn't
+built.
 
 Logs carry IDs, the class, flags and times, never email text, questions or
 answers (NFR-PRIV-3). The times are the NFR-OBS-1 fields until week 6 adds
@@ -61,11 +62,37 @@ def _tools():
         from inbox_agent.gateway_tools import GatewayTools
 
         return GatewayTools(os.environ[GATEWAY_URL_ENV])
-    from inbox_agent.tool_handlers import InProcessTools, ToolDeps
-    from inbox_agent.tracker import TrackerTable
+    return _local_tools()
 
-    deps = ToolDeps(tracker=TrackerTable(_table("TRACKER_TABLE_NAME")), today=_today)
-    return InProcessTools(deps, names=CHAT_TOOLS)
+
+def _local_tools(environ=os.environ):
+    """The local MCP server as a child process, with the tracker table's name
+    (from TRACKER_TABLE_NAME, or else the deployed stack) and nothing else
+    from this process's environment beyond MCP's safe defaults and AWS's
+    profile settings."""
+    from pathlib import Path
+
+    from mcp.client.stdio import get_default_environment
+
+    from inbox_agent.local_mcp_server import TRACKER_TABLE_ENV
+    from inbox_agent.stdio_tools import StdioTools, server_command
+
+    table = environ.get(TRACKER_TABLE_ENV)
+    if not table:
+        import boto3
+
+        from inbox_agent.app_backend import discover
+
+        table = discover(boto3.client("cloudformation", region_name=settings.AWS_REGION), mode="local").tracker_table
+    env = {
+        **get_default_environment(),
+        **{key: environ[key] for key in ("AWS_PROFILE", "AWS_CONFIG_FILE", "AWS_SHARED_CREDENTIALS_FILE") if key in environ},
+        TRACKER_TABLE_ENV: table,
+        # The package isn't installed; the child finds it where this one is.
+        "PYTHONPATH": str(Path(__file__).resolve().parents[1]),
+    }
+    command, args = server_command()
+    return StdioTools(CHAT_TOOLS, command=command, args=args, env=env)
 
 
 @cache
@@ -147,7 +174,7 @@ def _app():
 
 def main() -> None:
     """The process AgentCore Runtime starts (the ZIP's main.py), or the local
-    worker on the Mac: `AGENT_MODE=local uv run python -m inbox_agent.runtime`."""
+    worker on the Mac: `AGENT_MODE=local PYTHONPATH=src uv run python -m inbox_agent.runtime`."""
     logging.basicConfig(level=logging.INFO)
     app = _app()
     if agent_mode() == "local":
