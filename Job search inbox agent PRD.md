@@ -2,12 +2,12 @@
 
 > **One-liner:** A personal agent that watches my Gmail for job-search email, keeps my applications tracker current without my input, emails me only for interview invites, assessments and offers, and writes follow-ups that are saved as Gmail drafts only after I approve them. A local Mac app answers my questions and takes my approvals. It never sends or forwards email from my Gmail; its only outbound messages are AWS SNS notifications to me.
 
-**Date:** 2026-10-19 (v0.4.2; v0.4.1 on 2026-10-18; v0.1 to v0.4.0 on 2026-10-17)
-**Status:** Draft v0.4.2
+**Date:** 2026-10-19 (v0.4.3; v0.4.2 the same day; v0.4.1 on 2026-10-18; v0.1 to v0.4.0 on 2026-10-17)
+**Status:** Draft v0.4.3
 **Owner:** Egemen Çankaya (sole builder and sole user)
 **DRI:** the owner. No email address is listed because the repo will be public.
 **Audience:** Me, as builder; reviewers who read the portfolio repo (hiring managers, interviewers)
-**Source of truth:** "Job search inbox agent design" (PDF, this folder). If this PRD and the design doc disagree, the design doc wins and this PRD needs a revision. **On 2026-10-17 I accepted all seven design-doc changes in OQ-32, and they were applied that day** to the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51). The Claude Doc is the source of truth. **On 2026-10-17 I also accepted all items of OQ-39 (AWS Free plan, home Region Stockholm) and OQ-40 (SNS email alerts and a local Mac app instead of WhatsApp)**, and their design-doc rows were applied the same day (revision 51 → 90). The PDF in this folder was re-exported from revision 90. **On 2026-10-18 I accepted all six items of OQ-41 (finishing week 2)**, and its design-doc rows were applied the same day (revision 90 → 98). **On 2026-10-18 I accepted all fourteen items of OQ-42 (building week 3)**, and its design-doc rows were applied on 2026-10-19 (revision 98 → 105). The exact edits are recorded in "Design doc edits for OQ-32.md", "Design doc edits for OQ-39.md", "Design doc edits for OQ-40.md", "Design doc edits for OQ-41.md" and "Design doc edits for OQ-42.md". §13 sets the order of authority.
+**Source of truth:** "Job search inbox agent design" (PDF, this folder). If this PRD and the design doc disagree, the design doc wins and this PRD needs a revision. **On 2026-10-17 I accepted all seven design-doc changes in OQ-32, and they were applied that day** to the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51). The Claude Doc is the source of truth. **On 2026-10-17 I also accepted all items of OQ-39 (AWS Free plan, home Region Stockholm) and OQ-40 (SNS email alerts and a local Mac app instead of WhatsApp)**, and their design-doc rows were applied the same day (revision 51 → 90). The PDF in this folder was re-exported from revision 90. **On 2026-10-18 I accepted all six items of OQ-41 (finishing week 2)**, and its design-doc rows were applied the same day (revision 90 → 98). **On 2026-10-18 I accepted all fourteen items of OQ-42 (building week 3)**, and its design-doc rows were applied on 2026-10-19 (revision 98 → 105). **On 2026-10-19 I accepted OQ-43 (deploying from main on a self-hosted runner, because the account can't hold an OIDC provider)**, applied the same day (revision 105 → 106). The exact edits are recorded in "Design doc edits for OQ-32.md", "Design doc edits for OQ-39.md", "Design doc edits for OQ-40.md", "Design doc edits for OQ-41.md", "Design doc edits for OQ-42.md" and "Design doc edits for OQ-43.md". §13 sets the order of authority.
 
 | Assessment dimension | Value | Why |
 |---|---|---|
@@ -78,7 +78,7 @@ G1 to G4 are user goals. G5 and G6 are portfolio and cost goals.
 | G2 | Routine job-search mail needs no tracker work from me | M2 extraction accuracy; US-01 |
 | G3 | Answer tracker questions in the Mac app | M3 tool-selection accuracy; US-04 |
 | G4 | Follow up on stale applications with one click in the Mac app, and never send automatically | US-05, US-06; M4 injection pass rate |
-| G5 | Close the four CV gaps with evidence a reviewer can check | Cloud: the whole stack is in CDK and deployed by GitHub Actions through OIDC (OPS-1). Agentic: MCP tools, memory, the approval gate, an approval UI and dashboard, Cedar policy and traces; README screenshots of the Mac app. Evaluation: metrics M1 to M4 and M8 produced in CI. Outcomes: M5 to M7 from my own search |
+| G5 | Close the four CV gaps with evidence a reviewer can check | Cloud: the whole stack is in CDK and deployed from main by GitHub Actions, with no AWS credential stored in GitHub (OPS-1, OQ-43). Agentic: MCP tools, memory, the approval gate, an approval UI and dashboard, Cedar policy and traces; README screenshots of the Mac app. Evaluation: metrics M1 to M4 and M8 produced in CI. Outcomes: M5 to M7 from my own search |
 | G6 | Keep AWS usage at about $2 to $8 of credits per month in cloud mode (estimate) and about $0 to $1 in MacBook mode (estimate). Nothing is charged on the Free plan; KDV applies only after an upgrade (§10) | M6 cost per email and per month; budget alerts |
 
 ### Non-goals
@@ -637,16 +637,16 @@ M2 and M3 SHALL be reported on every run. Each SHALL become a failing gate, at 9
 
 ### 9.11 Delivery (OPS), new in v0.3
 
-#### OPS-1 (P1): Deploy from main through GitHub Actions with OIDC
+#### OPS-1 (P1): Deploy from main through GitHub Actions, with no AWS credential in GitHub
 
-WHEN a commit lands on main and Tier 1 passes, GitHub Actions SHALL deploy the CDK app to eu-north-1 [Brief, PRD; Region from OQ-39 (f)]. It SHALL authenticate through OIDC to an IAM role whose trust policy allows only this repo's main branch, and no long-lived AWS keys SHALL be stored in GitHub. Tier 2 uses a separate role limited to invoking the chosen route's Nova models and AgentCore Evaluations. The OIDC provider and the deploy role are a separate stack that I deploy by hand; the pipeline never deploys it. The deploy role may only assume the CDK bootstrap roles [accepted in OQ-42 (l)]. Until Tier 1 exists (week 6), the unit tests and `cdk synth` gate the deploy [accepted in OQ-42 (m)].
+WHEN a commit lands on main and Tier 1 passes, GitHub Actions SHALL deploy the CDK app to eu-north-1 [Brief, PRD; Region from OQ-39 (f)]. The deploy job SHALL run on the self-hosted runner on my Mac, using my `aws login` session, and only for commits on main; no AWS credential SHALL be stored in GitHub [accepted in OQ-43]. The account can't use GitHub OIDC: the service control policy of the AWS-managed organization it sits in denies every IAM OIDC provider action (checked 2026-10-19), and leaving that organization is ruled out (OQ-39). Tier 2 runs on the same runner and session. OQ-42 (l), an OIDC provider and deploy role in their own stack, is superseded. Until Tier 1 exists (week 6), the unit tests and `cdk synth` gate the deploy [accepted in OQ-42 (m)].
 
-- **Customer scenario:** a reviewer sees in the repo history that the running stack is deployed by the pipeline, not from my laptop.
+- **Customer scenario:** a reviewer sees in the repo's Actions history that the running stack is deployed by the pipeline from main, not by hand.
 - **Pain removed:** this closes the cloud-deployment CV gap with evidence anyone can check. A manual `cdk deploy` cannot be checked.
 - **Acceptance criteria:**
   - A push to main produces a successful deploy job.
   - The repo has no AWS access-key secrets.
-  - Assuming the deploy role from another branch fails.
+  - The deploy workflow has no `pull_request` trigger, and its deploy job runs only for main.
 - **Trace:** UAC-OPS-1
 
 ### 9.12 Dashboard (DASH), new in v0.4
@@ -682,7 +682,7 @@ The Mac app's **Dashboard** page SHALL show totals, open applications, counts by
   - (b) a draft created without an Approve decision;
   - (c) a notification to anyone but me;
   - (d) a tracker change, alert content or reply that follows an instruction found inside the email.
-- **NFR-SEC-3:** GitHub Actions SHALL deploy through OIDC, with no long-lived AWS keys [Brief]. The Meta token and app secret were removed with WhatsApp (OQ-40).
+- **NFR-SEC-3:** GitHub Actions SHALL deploy with no AWS credential stored in GitHub [Brief; mechanism changed in OQ-43: the self-hosted runner and my session, because the account can't hold an OIDC provider]. The Meta token and app secret were removed with WhatsApp (OQ-40).
 
 **Trust boundaries:** Gmail (untrusted content) → poller (read grant) → SQS → agent. Agent → Gateway (Cedar, ENFORCE mode) → tools. Draft tool (compose grant, approval check). Mac app on 127.0.0.1 → AWS under my IAM session → SQS or the agent's chat path. Agent → SNS alert topic (single subscription: me).
 
@@ -692,8 +692,8 @@ The Mac app's **Dashboard** page SHALL show totals, open applications, counts by
 | An email instructs the agent to notify someone else | Tracker data leaks | No recipient input; one subscription on the alert topic; topic policy; Cedar forbid on recipient-like keys (ALR-3) | Covered |
 | Someone else reaches the agent through a public endpoint | A false Approve or a data leak | No public endpoint exists; the Mac app binds to 127.0.0.1 and uses my IAM session (CHT-2) | Covered |
 | The compose grant also allows sending [R] | A bypass that does not go through the Gateway | Separate grants (ING-4); method allowlist (TOOL-4) | Covered |
-| A token leaks through logs or the repo | Account takeover | AgentCore Identity or Keychain; OIDC | Covered |
-| A pull request runs code on the self-hosted runner | Private emails and the Mac exposed | The private-eval workflow never runs on `pull_request` (§12) | Covered |
+| A token leaks through logs or the repo | Account takeover | AgentCore Identity or Keychain; no AWS credential in GitHub (OQ-43) | Covered |
+| A pull request runs code on the self-hosted runner | Private emails, the Mac and my AWS session exposed | Neither the deploy nor the private-eval workflow runs on `pull_request` (§12, OQ-43) | Covered |
 
 ### Cost (COST)
 
@@ -805,7 +805,7 @@ All targets are **initial, to be confirmed or revised after the first evaluation
 1. **The design doc (S1) owns architecture decisions:** services, models, modes and data flow. This PRD does not override it.
 2. **This PRD owns requirements and targets:** the FRs in §9, the NFRs in §10, the metrics in §11 and the gates in §12. S1 does not specify these at that level of detail.
 3. **The code follows both.** It must not add tools, tool inputs, endpoints or capabilities beyond §9 without a PRD revision, and must not add architecture beyond S1 without a doc update.
-4. **A change to S1 goes through an OQ-32-style item,** which I ratify. Each item is accepted or rejected one by one. If I reject an item, the affected FR reverts to S1's behavior, and the research finding stays as a risk in §16. On 2026-10-17 I accepted all seven items in OQ-32, and they were applied to the source Claude Doc the same day (revision 51). On the same day I accepted OQ-39 (a) to (f) and OQ-40 (a) to (e), and their design-doc rows were applied (revision 90). On 2026-10-18 I accepted OQ-41 (a) to (f) (revision 98) and OQ-42 (a) to (n), whose design-doc rows were applied on 2026-10-19 (revision 105).
+4. **A change to S1 goes through an OQ-32-style item,** which I ratify. Each item is accepted or rejected one by one. If I reject an item, the affected FR reverts to S1's behavior, and the research finding stays as a risk in §16. On 2026-10-17 I accepted all seven items in OQ-32, and they were applied to the source Claude Doc the same day (revision 51). On the same day I accepted OQ-39 (a) to (f) and OQ-40 (a) to (e), and their design-doc rows were applied (revision 90). On 2026-10-18 I accepted OQ-41 (a) to (f) (revision 98) and OQ-42 (a) to (n), whose design-doc rows were applied on 2026-10-19 (revision 105). On 2026-10-19 I accepted OQ-43 (revision 106).
 
 In the other direction, this PRD does not specify implementation detail (table keys, graph node names, prompt wording). Where a safety question forced a mechanism (the `approval_id` check and call path, split OAuth grants, cedarpy in MacBook mode), the PRD states what must hold, and the build chooses how.
 
@@ -817,7 +817,7 @@ These follow the doc's build plan, where each week ends with something running [
 |---|---|---|
 | 1. Account and skeleton | [Doc] AWS account on the Free plan [OQ-39]; budget alerts at $1, $5 and $10, counting usage before credits [OQ-39 (d)]; where Nova can be called in-Region checked, and its quotas checked [OQ-39]; CDK app with DynamoDB and one Lambda; an SNS alert topic with my email subscription [OQ-40]; day-one guardrails. [v0.2] Time-log baseline started; a test AgentCore runtime created to settle OQ-1 | `cdk deploy` succeeds from a clean checkout. **A test alert email arrives** [OQ-40]. All 3 budgets are visible. Nova quota values are recorded, and the quota requests are filed (§16a). The next day, Billing → Credits shows whether the AgentCore test charge was taken from credits (OQ-1) |
 | 2. Gmail ingestion and alerts | [Doc] Google OAuth through AgentCore Identity (spike); the scheduled poller; SQS; a first Nova classifier (Nova Micro, route 1; OQ-39 (b), OQ-41 (f)); urgent emails go out by email [OQ-40]; labeling started. [v0.2] Split read and compose grants; Google app publishing status set (OQ-2, after OQ-32); query builder with M8 check. [v0.3] One-off import before the first poll (TRK-3); language tag on labels; sampling rule. The dead-letter queue moved to week 3. [v0.4] Alert sender excluded from the query (ING-1). [v0.4.1] A temporary queue reader Lambda (fetch, trim, classify and extract, TRK-1 update, ALR-1 alert) until the week 3 agent replaces it [OQ-41 (e)] | A test invite sent to my Gmail produces exactly 1 alert email within 35 minutes. The alert email is not returned by the query. Re-polling produces no duplicate. A reply to an imported application lands on its row. M8 = 100% on the labels so far, including job emails found outside the query |
-| 3. The agent | [Doc] LangGraph on AgentCore Runtime; tracker tools through the Gateway; answers to tracker questions; interfaces for model, tools and memory. [v0.3] GitHub Actions deploy with OIDC (OPS-1); dead-letter queue and alarm; approval call path decided (OQ-36; [v0.4.2] the queue consumer of OQ-42 (a)). [v0.4] The Mac app with the Dashboard and Ask pages (DASH-1, CHT-1, CHT-2); the webhook signature check is dropped [OQ-40]. [v0.4.1] The agent replaces the temporary queue reader; the topic policy moves to the `notify_owner` tool's role [OQ-41 (e), OQ-42 (f)] | Both US-04 example questions are answered correctly. The same graph runs locally against Ollama with `AGENT_MODE=local` (the chat path; the Mac worker's queue reading comes later) [OQ-42 (j)]. A push to main deploys through GitHub Actions. The read token still works on day 8 after consent. The app refuses a connection on a non-loopback address. Dashboard numbers match a direct count on a seeded table. A failing message reaches the dead-letter queue and the alarm email arrives |
+| 3. The agent | [Doc] LangGraph on AgentCore Runtime; tracker tools through the Gateway; answers to tracker questions; interfaces for model, tools and memory. [v0.3] GitHub Actions deploy (OPS-1; [v0.4.3] on the self-hosted runner, which moves here from weeks 6 to 7, OQ-43); dead-letter queue and alarm; approval call path decided (OQ-36; [v0.4.2] the queue consumer of OQ-42 (a)). [v0.4] The Mac app with the Dashboard and Ask pages (DASH-1, CHT-1, CHT-2); the webhook signature check is dropped [OQ-40]. [v0.4.1] The agent replaces the temporary queue reader; the topic policy moves to the `notify_owner` tool's role [OQ-41 (e), OQ-42 (f)] | Both US-04 example questions are answered correctly. The same graph runs locally against Ollama with `AGENT_MODE=local` (the chat path; the Mac worker's queue reading comes later) [OQ-42 (j)]. A push to main deploys through GitHub Actions. The read token still works on day 8 after consent. The app refuses a connection on a non-loopback address. Dashboard numbers match a direct count on a seeded table. A failing message reaches the dead-letter queue and the alarm email arrives |
 | 4. Memory and approval | [Doc] AgentCore Memory; the daily stale check; the durable-function approval flow that saves Gmail drafts. [v0.2] `approval_id` check; follow-up rules; 30-day event expiry; ListMemoryRecords export test. [v0.3] Approve and Skip decisions routed to the approval workflow without the model; approval-workflow identity in Cedar; draft language rule; DynamoDB TTLs. [v0.4] The Follow-ups page and the drafts-ready email [OQ-40]; Lambda durable functions checked in Stockholm (OQ-27) | A seeded 10-day-old application produces a draft on the Follow-ups page with Approve and Skip, and the drafts-ready email arrives. Approve puts a draft in Gmail and leaves Sent unchanged. Skip and a 1-minute test timeout create none. Exported memory record count matches. A draft call made with the agent's identity is denied |
 | 5. Safety | [Doc] Cedar policy that blocks sending; at least 20 planted injection emails; log trimming. [v0.2] Engine in ENFORCE mode; recipient forbid; cedarpy enforcement on the local MCP server | A direct send call is denied by the Gateway and by the local MCP server. M4 is recorded in both modes. A log scan finds no email text |
 | 6 to 7. Evaluation and write-up | [Doc] 250 to 300 labeled emails finished; AgentCore Evaluations in GitHub Actions; latency and cost from CloudWatch; local baseline; README with numbers, an architecture diagram and Mac app screenshots. [v0.2] Dev/test split frozen; EV-1s written; Tier 1 and Tier 2 gates; self-hosted runner | Both tiers fail on a deliberately weakened change and pass on main. M1 to M8 have measured values. Targets are confirmed or revised in the next PRD revision. The README shows only measured numbers |
@@ -886,6 +886,7 @@ Rows tagged [Doc] come from the doc. Later updates are marked with their version
 | The poll interval conflicts with the "under 5 minutes" claim | Medium | Certain | End-to-end p95 is the headline; update the CV wording (OQ-7, OQ-32) |
 | The query misses invites before the classifier sees them | High | Medium | M8 query coverage at 100%; English and Turkish keywords (OQ-15) |
 | The self-hosted runner exposes the Mac | High | Low | No `pull_request` trigger; solo repo (§12) |
+| **[v0.4.3]** Deploys wait while the Mac sleeps or my `aws login` session has expired (OQ-43) | Low: a change reaches AWS late | Medium | A manual run (`workflow_dispatch`) after `aws login` |
 | cedarpy is not an official AWS or Cedar project [R] | Medium | Low | Pin the version. Run the same policy test suite against the Gateway and cedarpy, and treat any difference as a build failure |
 | Prompts tuned on the scored emails | Medium | Medium | Frozen test split (OQ-29) |
 | **[v0.3]** Classification or extraction is weaker on Turkish emails | High: Turkish invites missed | Unknown | Language tag on every label; M1 and M2 per language; H6 |
@@ -909,7 +910,7 @@ Each external dependency has one of three statuses: **verified** (confirmed by f
 | Gateway accepting two caller identities that Cedar can tell apart | AWS | Research target (OQ-36) | Week 4 | See §16 fallback |
 | Credits covering AgentCore usage on the Free plan (OQ-1); KDV only after an upgrade (OQ-5) | AWS | Research target | Billing on day 2 | Credits run out sooner, which closes the account early |
 | EventBridge Scheduler free tier and SQS target | AWS | Research target (OQ-21) | Week 4 setup | A small cost in MacBook mode |
-| GitHub Actions with OIDC; a self-hosted runner | GitHub | Research target (standard features, not yet set up) | Week 3 deploy; week 6 runner | No CI evidence for the CV |
+| GitHub Actions on a self-hosted runner on the Mac | GitHub | **OIDC blocked (checked 2026-10-19):** the account's managed-organization SCP denies IAM OIDC providers, so deploys use the self-hosted runner and my session (OQ-43). The runner is a research target | Week 3 deploy and runner | No CI evidence for the CV |
 | cedarpy | Open source, unofficial [R] | Research target | Week 5 policy parity tests | A never-send gap in MacBook mode |
 | SNS email for alerts (always free, 1,000 emails a month) [OQ-40] | AWS | Research target | Week 1 test alert | No alerts |
 | Streamlit for the Mac app [OQ-40] | Open source | Research target; added 2026-10-19 [OQ-42 (n)] | Week 3 Mac app | No Dashboard, Ask or Follow-ups page |
@@ -988,6 +989,7 @@ Many Provisional answers are already written into SHALL statements. To keep them
 | OQ-40 (new in v0.4) | Should WhatsApp be replaced by SNS email alerts and a local Mac app? (a) Interface and scope. (b) Alerts by email. (c) Chat, approvals and the new Dashboard. (d) NFRs, milestones and risks. (e) Design doc | Resolved (accepted 2026-10-17) | Done; the code change is a separate task | **All five accepted on 2026-10-17** and applied to this PRD (v0.4.0) and the source Claude Doc (revision 90), recorded in "Design doc edits for OQ-40.md". OQ-3, OQ-12, OQ-28 and OQ-31 are closed as no longer applicable. The deployed webhook stays until the code change removes it |
 | OQ-41 (new in v0.4.1) | How is week 2 finished? (a) Inflected Turkish subject keywords. (b) Assessment-platform sender domains. (c) In MacBook mode only the Mac worker polls. (d) The alias list as a tracker item. (e) A temporary queue reader until the week 3 agent. (f) Model route 1 | Resolved (accepted 2026-10-18) | Done | **All six accepted on 2026-10-18** and applied to this PRD (v0.4.1) and the source Claude Doc (revision 98), recorded in "Design doc edits for OQ-41.md". (c), (d) and (a) change only this PRD |
 | OQ-42 (new in v0.4.2) | How is week 3 built? (a) A queue consumer Lambda. (b) A fixed batch path. (c) One Lambda per tool, in the always-free stack. (d) Tool inputs. (e) IAM auth at the Gateway and the Runtime. (f) The `notify_owner` role publishes. (g) The DLQ alarm's topic-policy exception. (h) The chat path's tools. (i) CDK constructs and the ZIP build. (j) Local mode. (k) Traces. (l) The CI stack. (m) The deploy gate before Tier 1. (n) Dependencies | Resolved (accepted 2026-10-18) | Done | **All fourteen accepted on 2026-10-18** and applied to this PRD (v0.4.2) and the source Claude Doc (revision 105), recorded in "Design doc edits for OQ-42.md". (i) and (m) change only this PRD or the build; OQ-36's path is decided by (a) |
+| OQ-43 (new in v0.4.3) | How does main deploy, now that the account can't hold a GitHub OIDC provider? | Resolved (accepted 2026-10-19) | Done | The managed organization's SCP denies every IAM OIDC provider action (simulator: `explicitDeny`, 2026-10-19). Option (a), accepted: the deploy job runs on the self-hosted runner on my Mac with my `aws login` session, only for main, with no AWS credential in GitHub. Rejected: CodeBuild through CodeConnections, IAM user keys, deferring OPS-1. Recorded in "Design doc edits for OQ-43.md"; OQ-42 (l) is superseded |
 
 ## 19. Rabbit holes
 
@@ -1080,8 +1082,8 @@ Many Provisional answers are already written into SHALL statements. To keep them
 ### UAC-EVAL-1: CI fails the build on a regression
 **GIVEN** a deliberately weakened classifier prompt. **WHEN** it is pushed to a branch, and then merged to a throwaway main. **THEN** Tier 1 fails on the branch, Tier 2 fails on main, main stays red until the change is reverted, and the Tier 2 workflow has no `pull_request` trigger.
 
-### UAC-OPS-1: Deploy from main through GitHub Actions with OIDC
-**GIVEN** the repo with OIDC roles set up. **WHEN** a commit lands on main and Tier 1 passes, and separately a branch job tries to assume the deploy role. **THEN** the deploy job succeeds, the branch job is refused, and the repo has no AWS access-key secrets.
+### UAC-OPS-1: Deploy from main through GitHub Actions, with no AWS credential in GitHub
+**GIVEN** the self-hosted runner on my Mac and a fresh `aws login` session. **WHEN** a commit lands on main and the check job passes. **THEN** the deploy job succeeds on the runner, the deploy workflow has no `pull_request` trigger, and the repo has no AWS secrets.
 
 ## Quality gate notes
 
@@ -1139,6 +1141,16 @@ Many Provisional answers are already written into SHALL statements. To keep them
 - [cedarpy on PyPI](https://pypi.org/project/cedarpy): not officially supported by AWS or the Cedar team
 
 ## Changelog
+
+### v0.4.3, 2026-10-19
+
+**Topics in this revision** (decision input; the owner accepted OQ-43 on 2026-10-19):
+- OQ-43: the account's managed-organization SCP denies IAM OIDC providers, so OPS-1 deploys on the self-hosted runner on the Mac with the owner's `aws login` session; OQ-42 (l) is superseded.
+
+**Sections updated:**
+- Header: date, version, status; source-of-truth note (OQ-43, design-doc revision 106)
+- §3 G5; §9.11 OPS-1 and its acceptance criteria; §10 NFR-SEC-3 and the threat table
+- §13 point 4; §14 week 3; §16 risks; §16a GitHub row; §18 OQ-43 added; Appendix B UAC-OPS-1
 
 ### v0.4.2, 2026-10-19
 

@@ -89,7 +89,10 @@ Plain functions first, then thin Lambda handlers that read the tool name from th
 - Ollama with the model from OQ-42 (j), installed by me.
 - Week 3 local check: the chat path answers both US-04 questions. Local alerts wait for the Mac worker (OQ-42 (j)).
 
-### 8. GitHub Actions deploy with OIDC (OPS-1)
+### 8. GitHub Actions deploy (OPS-1)
+
+**Changed by OQ-43 (2026-10-19):** the account's managed-organization SCP denies IAM OIDC providers, so there is no `InboxAgentCi` stack and no AWS secret in GitHub. The deploy job runs on the self-hosted runner on the Mac with my `aws login` session. The plan below is kept for the record.
+
 - `InboxAgentCi` stack (OQ-42 (l)): the GitHub OIDC provider and a deploy role whose trust allows only `repo:EgeCankaya/job-search-agent:ref:refs/heads/main`, and which may only assume the CDK bootstrap deploy, file-publishing and lookup roles. I deploy it once by hand; the pipeline never deploys it.
 - `.github/workflows/deploy.yml`: on push to main, a `check` job (`uv sync`, `uv run pytest`, `cdk synth` in both modes), then a `deploy` job that needs it (OQ-42 (m)): `cdk deploy InboxAgentAlwaysFree InboxAgentAgentCore --require-approval never`. Actions pinned to commit SHAs; one deploy at a time; no `pull_request` trigger on the deploy job; `cdk.out` never uploaded.
 - GitHub secrets, set by me: `AWS_DEPLOY_ROLE_ARN`, `AWS_ACCOUNT_ID` (so the account ID is masked in logs), `ALERT_EMAIL`. No AWS access keys.

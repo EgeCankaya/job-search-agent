@@ -1,0 +1,36 @@
+# The check (OQ-42 m): unit tests and cdk synth in both modes, on GitHub's
+# runners, with no secrets. Tier 1 joins it in week 6. It runs on pull
+# requests and as the first job of every deploy.
+name: check
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.11.16"
+          python-version: "3.13"
+      - run: uv sync --frozen --all-groups
+      - run: uv run pytest -q
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - run: npm install --global aws-cdk@2.1145.0
+      - name: cdk synth, cloud and local
+        env:
+          JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
+        run: |
+          cdk synth -q -c alert_email=alerts@example.com
+          cdk synth -q -c alert_email=alerts@example.com -c agent_mode=local

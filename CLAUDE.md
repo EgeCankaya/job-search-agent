@@ -11,16 +11,17 @@ repo is **public**.
 
 1. **Design doc** owns architecture: services, models, modes, data flow. The
    live version is the Claude Doc https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9
-   (revision 105). `Job search inbox agent design.pdf` is still the export of revision 90;
+   (revision 106). `Job search inbox agent design.pdf` is still the export of revision 90;
    the owner re-exports it.
-2. **`Job search inbox agent PRD.md`** (v0.4.2) owns requirements and targets:
+2. **`Job search inbox agent PRD.md`** (v0.4.3) owns requirements and targets:
    FRs §9, NFRs §10, metrics §11, CI gates §12, milestones §14, dependencies §16a.
 3. **The code follows both.** Never add tools, tool inputs, endpoints or
    capabilities beyond PRD §9, or architecture beyond the design doc.
 4. **Changes to the design doc go through an OQ-style item** that the owner
    accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`,
    `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md`,
-   `Design doc edits for OQ-41.md` and `Design doc edits for OQ-42.md`, all accepted and applied to the PRD and
+   `Design doc edits for OQ-41.md`, `Design doc edits for OQ-42.md` and
+   `Design doc edits for OQ-43.md`, all accepted and applied to the PRD and
    the design doc.
 
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
@@ -78,6 +79,7 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
 mac_app/                     the Streamlit Mac app: app.py (navigation), dashboard_page.py, ask_page.py, common.py
 .streamlit/config.toml       the app binds 127.0.0.1:8501 and sends no usage stats (CHT-2)
+.github/workflows/           check.yml (tests + synth, GitHub runners, PRs) and deploy.yml (main only, deploy on the Mac's self-hosted runner)
 tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
 tests/unit/                  handler, import, query, poll, reader, trim and classifier tests
 tests/infra/                 CDK assertion tests
@@ -169,7 +171,8 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (c) one Lambda and role per tool, in the always-free stack; week 3 builds `read_email`, `upsert_application`, `list_applications`, `notify_owner`; (d) the tool inputs are fixed in PRD §9 conventions (`notify_owner` has no free-text input);
   - (e) IAM (SigV4) at the Gateway and the Runtime; (f) only the `notify_owner` role publishes to the topic; (g) the DLQ alarm gets an exception scoped to its own ARN;
   - (h) the chat path binds only `list_applications`; (i) the AgentCore constructs in aws-cdk-lib 2.273 with hand-built roles, Runtime ZIP built by uv for arm64, no Docker; (j) local mode uses `qwen3.8:27b` (the owner's pick 2026-10-19, replacing `qwen3:32b`), a stdio MCP server, the worker on 127.0.0.1:8080, and the week 3 local check covers the chat path only;
-  - (k) timing as log fields now, OpenTelemetry in week 6; (l) an `InboxAgentCi` stack (OIDC provider, deploy role) deployed once by hand; (m) pytest + synth gate the deploy until Tier 1.
+  - (k) timing as log fields now, OpenTelemetry in week 6; (l) superseded by OQ-43; (m) pytest + synth gate the deploy until Tier 1.
+- **OQ-43, accepted and applied 2026-10-19** (PRD v0.4.3, design-doc revision 106): the AWS-managed organization's SCP denies every IAM OIDC provider action (`iam:CreateOpenIDConnectProvider` simulates as `explicitDeny`), so GitHub OIDC is impossible in this account. OPS-1 deploys on a **self-hosted runner on the Mac** with the owner's `aws login` session, only for main, with no AWS credential in GitHub. The runner moves from week 6 to week 3.
 - **Dependencies (approved 2026-10-18, added 2026-10-19):** groups `agent` (langgraph, langchain-aws, bedrock-agentcore, mcp, langchain-mcp-adapters), `local` (langchain-ollama), `app` (streamlit). The owner installs Ollama (Homebrew, 0.40.6) and pulls `qwen3.8:27b`.
 - **Steps 1 and 2 built (2026-10-19), not deployed:** the mode, model (Bedrock or Ollama through LangChain) and memory interfaces; the 4 tool handlers with strict schemas, and the per-tool Lambda wrapper. `tracker_update.update_for_status`/`manual_update` and `alerts.build_alert` serve the tools; the reader still uses the old entry points. A live local check classified a fictional Turkish invite correctly with `qwen3.8:27b` (14 s).
 - **Step 3 built (2026-10-19), not deployed:** the batch and chat graphs, the Gateway MCP client and the entry point. The batch path is cloud-only until the Mac worker; in local mode the chat path runs the tool code in-process until the local MCP server (step 7). A live local run on a fictional seeded tracker answered both US-04 questions (and the Turkish one) correctly in 8.5 to 9.4 s. The Runtime ZIP needs a top-level shim to start `inbox_agent.runtime` (step 4).
@@ -183,6 +186,8 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - The log group `/aws/bedrock-agentcore/runtimes/<runtime id>-DEFAULT` exists with 7 days, and the Runtime writes there: `chat_done` and `batch_done` lines only, no question text, no errors. No log group in the account lacks retention.
   - Not yet exercised live: the batch path through the Gateway tools (read_email, upsert, notify_owner), which runs at the cutover; the DLQ alarm email.
 - **Step 6 built (2026-10-19), not committed:** the Mac app's Dashboard and Ask pages (`mac_app/`), backed by `app_backend.py` (finds the tables and the Runtime from the deployed stacks, so no name is written down) and `dashboard.py`. Alert claims now record their kind (`alert_kind`: urgent or possible) for the weekly counts; claims from before that count as "unrecorded". Tests render both pages with Streamlit's AppTest and a fake backend, and check every Dashboard number against a direct count on a seeded table. Live check: the app answers on 127.0.0.1:8501 and a connection to the Mac's LAN address is refused (week 3 exit 5); the Dashboard loaded from the real tables.
+- **Step 8 built (2026-10-19), not committed, not run yet:** `check.yml` (pytest and `cdk synth` in both modes on `ubuntu-24.04`, no secrets; on pull requests and as the deploy's first job) and `deploy.yml` (push to main and manual runs only; the deploy job runs on `[self-hosted, macOS]` with the owner's `aws login` session, masks the account ID and the alert address, and deploys the two app stacks with `--require-approval never`). Actions are pinned to commit SHAs (checkout v7.0.1, setup-uv v10.3.0, setup-node v7.1.0); aws-cdk 2.1145.0. Tests forbid a `pull_request` trigger, secrets and `id-token` in the deploy workflow.
+  - **The owner still has to:** register the self-hosted runner on the Mac (repo Settings → Actions → Runners → New self-hosted runner, macOS ARM64), install it as a launchd service under the owner's user so it sees `~/.aws`, make sure its PATH includes `/opt/homebrew/bin` (uv, aws, cdk), then push. A deploy needs a fresh `aws login`; if the session has expired, the run fails with a hint and can be re-run by hand.
 - **Step 7 built (2026-10-19), not committed:** the local MCP server (`local_mcp_server.py`, the tracker tools over stdio, no port; cedarpy in week 5) and the worker's client (`stdio_tools.py`, one long-lived session on a background event loop). In local mode the worker starts the server as a child process, with the tracker table's name (from `TRACKER_TABLE_NAME` or the deployed stack), `PYTHONPATH`, and MCP's safe environment only. Live check: the worker answered count-only questions from the real tracker through Ollama (14 s first, 5 s after); only the worker listens (127.0.0.1:8080), the child has no socket, and the LAN address is refused (week 3 exit 2, chat path).
 - **Gotchas from step 7:** the project isn't installed as a package, so the worker needs `PYTHONPATH=src` and passes the same to its child. The MCP SDK's own input check would quote bad values in its error, so the server turns it off (`validate_input=False`) and relies on `tools.validate`.
 - **Gotchas from step 4:**

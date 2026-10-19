@@ -1,0 +1,57 @@
+# OPS-1 (OQ-43): deploy from main. The check runs on GitHub's runners; the
+# deploy runs on the self-hosted runner on the owner's Mac, with the owner's
+# `aws login` session, because the account can't hold a GitHub OIDC
+# provider. No AWS credential is stored in GitHub.
+#
+# Never add a pull_request trigger here: the self-hosted runner must not run
+# code from pull requests (§12).
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  check:
+    uses: ./.github/workflows/check.yml
+
+  deploy:
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: AWS session
+        run: |
+          if ! account=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
+            echo "::error::No AWS session on the runner: run 'aws login' on the Mac, then re-run this workflow."
+            exit 1
+          fi
+          # Masked in the logs, which become public with the repo.
+          echo "::add-mask::$account"
+      - run: uv sync --frozen --all-groups
+      - name: Deploy
+        env:
+          JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
+        run: |
+          set -euo pipefail
+          # The alert address comes from the topic's confirmed subscription,
+          # as in a deploy by hand; it is never stored or printed.
+          topic=$(aws cloudformation describe-stack-resources --stack-name InboxAgentAlwaysFree --region eu-north-1 \
+            --query "StackResources[?ResourceType=='AWS::SNS::Topic'].PhysicalResourceId" --output text)
+          ALERT_EMAIL=$(aws sns list-subscriptions-by-topic --topic-arn "$topic" --region eu-north-1 \
+            --query "Subscriptions[?Protocol=='email' && SubscriptionArn!='PendingConfirmation'].Endpoint | [0]" --output text)
+          echo "::add-mask::$ALERT_EMAIL"
+          export ALERT_EMAIL
+          cdk deploy InboxAgentAlwaysFree InboxAgentAgentCore --require-approval never --progress events
