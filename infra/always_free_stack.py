@@ -2,9 +2,10 @@
 
 Contents: the three DynamoDB tables, the one SQS queue with its dead-letter
 queue, the SNS alert topic, the budget alerts, the Gmail poll Lambda with
-its 30-minute EventBridge Scheduler schedule, and the temporary week 2 queue
-reader (OQ-41 e). There is no inbound HTTP endpoint (CHT-2). The DLQ alarm
-arrives in week 3.
+its 30-minute EventBridge Scheduler schedule, the temporary week 2 queue
+reader (OQ-41 e), and the agent's four tool Lambdas, which the Gateway in
+the AgentCore stack serves (OQ-42 c). There is no inbound HTTP endpoint
+(CHT-2).
 """
 
 from pathlib import Path
@@ -40,9 +41,13 @@ MAX_RECEIVE_COUNT = 3  # ING-3
 LOG_RETENTION = logs.RetentionDays.ONE_WEEK  # NFR-PRIV-4
 POLL_RATE = "rate(30 minutes)"  # ING-1
 READER_TIMEOUT = Duration.seconds(60)
-# AWS's advice for a Lambda reading SQS: visibility at least 6 x the timeout,
-# so a slow attempt isn't handed to a second reader mid-run.
-QUEUE_VISIBILITY = Duration.seconds(6 * 60)
+# The week 3 queue consumer (AgentCore stack) waits for the agent, up to 5
+# emails a batch (OQ-42 a).
+CONSUMER_TIMEOUT = Duration.seconds(180)
+# AWS's advice for a Lambda reading SQS: visibility at least 6 x the timeout
+# of the slowest reader, so a slow attempt isn't handed to a second one.
+QUEUE_VISIBILITY = Duration.seconds(6 * 180)
+TOOL_TIMEOUT = Duration.seconds(30)
 READER_BATCH_SIZE = 5
 READER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
 # Turned on by the owner on 2026-10-18, after a deploy and a clean dry run.
@@ -63,6 +68,12 @@ def queue_reader_enabled(agent_mode: str) -> bool:
     return QUEUE_READER_ON and agent_mode == "cloud"
 
 
+def agent_code() -> lambda_.Code:
+    """The `inbox_agent` package alone: the Lambdas need only the standard
+    library and the runtime's boto3, never the agent's dependencies."""
+    return lambda_.Code.from_asset(str(SRC), exclude=["*", f"!{AGENT_PACKAGE}", f"!{AGENT_PACKAGE}/*.py"])
+
+
 class AlwaysFreeStack(Stack):
     def __init__(
         self, scope: Construct, construct_id: str, *, alert_email: str, agent_mode: str = "cloud", **kwargs
@@ -76,6 +87,7 @@ class AlwaysFreeStack(Stack):
         self._budgets(alert_email)
         self._poller()
         self._reader()
+        self._tool_functions()
         self._alerts(alert_email, publisher=self.reader_function.role)
 
     def _tables(self) -> None:
@@ -304,7 +316,7 @@ class AlwaysFreeStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_13,
             architecture=lambda_.Architecture.ARM_64,
             handler=f"{AGENT_PACKAGE}.poll.handler",
-            code=lambda_.Code.from_asset(str(SRC), exclude=["*", f"!{AGENT_PACKAGE}", f"!{AGENT_PACKAGE}/*.py"]),
+            code=agent_code(),
             role=role,
             log_group=log_group,
             memory_size=256,
@@ -410,7 +422,7 @@ class AlwaysFreeStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_13,
             architecture=lambda_.Architecture.ARM_64,
             handler=f"{AGENT_PACKAGE}.reader.handler",
-            code=lambda_.Code.from_asset(str(SRC), exclude=["*", f"!{AGENT_PACKAGE}", f"!{AGENT_PACKAGE}/*.py"]),
+            code=agent_code(),
             role=role,
             log_group=log_group,
             memory_size=256,
@@ -432,3 +444,65 @@ class AlwaysFreeStack(Stack):
                 enabled=queue_reader_enabled(self.agent_mode),
             )
         )
+
+    def _tool_functions(self) -> None:
+        """TOOL-1, OQ-42 (c): one Lambda and one role per tool, so each holds
+        only what its tool needs. The Gateway invokes them; TOOL_NAME pins
+        which tool a function serves (tool_lambda.py)."""
+        self.tool_functions: dict[str, lambda_.Function] = {}
+        tracker = self.applications_table.table_arn
+        grants = {
+            "read_email": ("Gmail read token only", self._grant_gmail_read),
+            "upsert_application": (
+                "tracker read and write only",
+                lambda role: role.add_to_policy(
+                    iam.PolicyStatement(
+                        actions=["dynamodb:Scan", "dynamodb:GetItem", "dynamodb:PutItem"], resources=[tracker]
+                    )
+                ),
+            ),
+            "list_applications": (
+                "tracker read only",
+                lambda role: role.add_to_policy(
+                    iam.PolicyStatement(actions=["dynamodb:Scan", "dynamodb:GetItem"], resources=[tracker])
+                ),
+            ),
+            "notify_owner": (
+                "publish to the alert topic only",
+                lambda role: role.add_to_policy(
+                    iam.PolicyStatement(actions=["sns:Publish"], resources=[self.alert_topic.topic_arn])
+                ),
+            ),
+        }
+        environment = {
+            "read_email": {},
+            "upsert_application": {"TRACKER_TABLE_NAME": self.applications_table.table_name},
+            "list_applications": {"TRACKER_TABLE_NAME": self.applications_table.table_name},
+            "notify_owner": {"ALERT_TOPIC_ARN": self.alert_topic.topic_arn},
+        }
+        for name, (purpose, grant) in grants.items():
+            construct = "".join(part.title() for part in name.split("_"))
+            log_group = logs.LogGroup(
+                self, f"{construct}ToolLogGroup", retention=LOG_RETENTION, removal_policy=RemovalPolicy.DESTROY
+            )
+            role = iam.Role(
+                self,
+                f"{construct}ToolRole",
+                assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+                description=f"Tool {name}: {purpose}",
+            )
+            log_group.grant_write(role)
+            grant(role)
+            self.tool_functions[name] = lambda_.Function(
+                self,
+                f"{construct}ToolFunction",
+                runtime=lambda_.Runtime.PYTHON_3_13,
+                architecture=lambda_.Architecture.ARM_64,
+                handler=f"{AGENT_PACKAGE}.tool_lambda.handler",
+                code=agent_code(),
+                role=role,
+                log_group=log_group,
+                memory_size=256,
+                timeout=TOOL_TIMEOUT,
+                environment={"TOOL_NAME": name, **environment[name]},
+            )

@@ -69,3 +69,13 @@ GOOGLE_CLIENT_SECRET_NAME = "bedrock-agentcore-identity!default/oauth2/inbox-age
 CLASSIFIER_MODEL_ID = "eu.amazon.nova-micro-v1:0"
 CLASSIFIER_FOUNDATION_MODEL = "amazon.nova-micro-v1:0"
 CLASSIFIER_PROFILE_REGIONS = ("eu-central-1", "eu-north-1", "eu-west-1", "eu-west-3")
+
+# Chat on the Ask page (CHT-1): Nova Lite through the same `eu.` route. Its
+# profile routes to the same Regions as Micro (`aws bedrock
+# get-inference-profile`, 2026-10-19).
+CHAT_MODEL_ID = "eu.amazon.nova-lite-v1:0"
+CHAT_FOUNDATION_MODEL = "amazon.nova-lite-v1:0"
+
+# Week 3 agent (OQ-42). Runtime names allow letters, digits and underscores.
+RUNTIME_NAME = "inbox_agent"
+GATEWAY_NAME = "inbox-agent"

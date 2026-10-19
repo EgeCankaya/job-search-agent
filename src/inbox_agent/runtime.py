@@ -145,10 +145,16 @@ def _app():
     return app
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """The process AgentCore Runtime starts (the ZIP's main.py), or the local
+    worker on the Mac: `AGENT_MODE=local uv run python -m inbox_agent.runtime`."""
     logging.basicConfig(level=logging.INFO)
     app = _app()
     if agent_mode() == "local":
         app.run(port=LOCAL_PORT, host=LOCAL_HOST)
     else:
         app.run(port=LOCAL_PORT)
+
+
+if __name__ == "__main__":
+    main()

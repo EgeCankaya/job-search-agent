@@ -22,7 +22,9 @@ def build(app: App) -> dict[str, Stack]:
         )
     }
     if mode == "cloud":
-        stacks[AGENTCORE_STACK] = AgentCoreStack(app, AGENTCORE_STACK, env=env)
+        stacks[AGENTCORE_STACK] = AgentCoreStack(
+            app, AGENTCORE_STACK, env=env, free=stacks[ALWAYS_FREE_STACK], agent_mode=mode
+        )
     else:
         Annotations.of(stacks[ALWAYS_FREE_STACK]).add_warning_v2(
             "inbox-agent:local-mode-incomplete",

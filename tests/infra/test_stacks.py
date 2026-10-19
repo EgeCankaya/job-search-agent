@@ -31,7 +31,8 @@ FORBIDDEN_PREFIXES = (
 
 
 def synth(mode="cloud"):
-    app = App(context={"alert_email": TEST_EMAIL, "agent_mode": mode})
+    # No bundling: the Runtime ZIP would download its dependencies.
+    app = App(context={"alert_email": TEST_EMAIL, "agent_mode": mode, "aws:cdk:bundling-stacks": []})
     stacks = build(app)
     return {name: Template.from_stack(stack) for name, stack in stacks.items()}
 
@@ -96,10 +97,11 @@ def test_every_log_group_keeps_7_days(templates):
         assert group["Properties"]["RetentionInDays"] == 7
 
 
-def test_every_function_uses_a_managed_log_group(free):
+def test_every_function_uses_a_managed_log_group(templates):
     # A function without LoggingConfig would create its own log group with no retention.
-    for logical_id, fn in resources(free, "AWS::Lambda::Function").items():
-        assert "LogGroup" in fn["Properties"].get("LoggingConfig", {}), logical_id
+    for template in templates.values():
+        for logical_id, fn in resources(template, "AWS::Lambda::Function").items():
+            assert "LogGroup" in fn["Properties"].get("LoggingConfig", {}), logical_id
 
 
 def test_no_log_retention_custom_resource(templates):
@@ -232,13 +234,18 @@ def test_alert_topic_policy_lets_only_the_reader_role_publish(free):
     assert no_tls["Condition"] == {"Bool": {"aws:SecureTransport": "false"}}
 
 
-def test_no_other_role_may_publish(free):
+def test_no_other_role_may_publish(templates):
+    # The reader until the cutover, and the notify_owner tool (OQ-42 f).
     publishers = {
         role_id
-        for role_id in resources(free, "AWS::IAM::Role")
-        if any("sns:Publish" in as_list(s["Action"]) for s in policy_statements(free, role_id))
+        for template in templates.values()
+        for role_id in resources(template, "AWS::IAM::Role")
+        if any("sns:Publish" in as_list(s["Action"]) for s in policy_statements(template, role_id))
     }
-    assert publishers == {reader_role_id(free)}
+    reader = reader_role_id(templates[ALWAYS_FREE_STACK])
+    assert reader in publishers
+    [tool] = publishers - {reader}
+    assert tool.startswith("NotifyOwnerToolRole")
 
 
 def test_resource_policies_open_to_anyone_only_deny(templates):
@@ -280,26 +287,30 @@ def test_no_vpc_or_always_on_resources(templates):
 # Least-privilege IAM
 
 
-def test_roles_have_no_managed_policies(free):
-    for role in resources(free, "AWS::IAM::Role").values():
-        assert not role["Properties"].get("ManagedPolicyArns")
+def test_roles_have_no_managed_policies(templates):
+    for template in templates.values():
+        for role in resources(template, "AWS::IAM::Role").values():
+            assert not role["Properties"].get("ManagedPolicyArns")
 
 
-def test_no_wildcard_actions_or_resources(free):
-    for logical_id, policy in resources(free, "AWS::IAM::Policy").items():
-        for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
-            actions = statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]]
-            assert all("*" not in action for action in actions), logical_id
-            assert statement["Resource"] != "*", logical_id
+def test_no_wildcard_actions_or_resources(templates):
+    for template in templates.values():
+        for logical_id, policy in resources(template, "AWS::IAM::Policy").items():
+            for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
+                actions = statement["Action"] if isinstance(statement["Action"], list) else [statement["Action"]]
+                assert all("*" not in action for action in actions), logical_id
+                assert statement["Resource"] != "*", logical_id
+                assert "*" not in as_list(statement["Resource"]), logical_id
 
 
 # Functions
 
 
-def test_functions_use_python_313_arm64(free):
-    for logical_id, fn in resources(free, "AWS::Lambda::Function").items():
-        assert fn["Properties"]["Runtime"] == "python3.13", logical_id
-        assert fn["Properties"]["Architectures"] == ["arm64"], logical_id
+def test_functions_use_python_313_arm64(templates):
+    for template in templates.values():
+        for logical_id, fn in resources(template, "AWS::Lambda::Function").items():
+            assert fn["Properties"]["Runtime"] == "python3.13", logical_id
+            assert fn["Properties"]["Architectures"] == ["arm64"], logical_id
 
 
 # Runtime mode (MODE-1, MODE-2)
@@ -319,7 +330,7 @@ def test_unknown_mode_is_rejected():
 
 
 def test_stacks_target_home_region():
-    app = App(context={"alert_email": TEST_EMAIL})
+    app = App(context={"alert_email": TEST_EMAIL, "aws:cdk:bundling-stacks": []})
     for stack in build(app).values():
         assert stack.region == "eu-north-1"
 

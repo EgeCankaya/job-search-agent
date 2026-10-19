@@ -50,7 +50,8 @@ import_applications.py       TRK-3 import, run by the owner (wraps src/inbox_age
 infra/config.py              settings: tag, region, AGENT_MODE, alert email
 infra/app.py                 builds the stacks for the configured mode
 infra/always_free_stack.py   tables, queues, alert topic, budgets, poll Lambda + schedule
-infra/agentcore_stack.py     empty until week 3
+infra/agentcore_stack.py     Runtime (CfnRuntime), Gateway + 4 Lambda targets, queue consumer (cloud only)
+infra/runtime_bundle.py      the Runtime ZIP: uv installs the agent group for arm64 at synth, no Docker
 src/budgets/budgets_resource.py   deploy-time custom resource that creates the budgets
 src/inbox_agent/             runtime code (packaged into the poll Lambda):
   settings.py                ATS domains, subject keywords, alert sender, alias list
@@ -71,6 +72,7 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   gateway_tools.py           the tools through AgentCore Gateway: MCP over HTTPS, SigV4-signed (OQ-42 e)
   batch_path.py, chat_path.py  the LangGraph graphs: fixed batch path (OQ-42 b); chat with list_applications only
   runtime.py                 the Runtime entry point (new_email, chat); local worker on 127.0.0.1:8080
+  consumer.py                the queue consumer Lambda: one InvokeAgentRuntime per new email (OQ-42 a)
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
 tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
 tests/unit/                  handler, import, query, poll, reader, trim and classifier tests
@@ -165,6 +167,13 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
 - **Dependencies (approved 2026-10-18, added 2026-10-19):** groups `agent` (langgraph, langchain-aws, bedrock-agentcore, mcp, langchain-mcp-adapters), `local` (langchain-ollama), `app` (streamlit). The owner installs Ollama (Homebrew, 0.40.6) and pulls `qwen3.8:27b`.
 - **Steps 1 and 2 built (2026-10-19), not deployed:** the mode, model (Bedrock or Ollama through LangChain) and memory interfaces; the 4 tool handlers with strict schemas, and the per-tool Lambda wrapper. `tracker_update.update_for_status`/`manual_update` and `alerts.build_alert` serve the tools; the reader still uses the old entry points. A live local check classified a fictional Turkish invite correctly with `qwen3.8:27b` (14 s).
 - **Step 3 built (2026-10-19), not deployed:** the batch and chat graphs, the Gateway MCP client and the entry point. The batch path is cloud-only until the Mac worker; in local mode the chat path runs the tool code in-process until the local MCP server (step 7). A live local run on a fictional seeded tracker answered both US-04 questions (and the Turkish one) correctly in 8.5 to 9.4 s. The Runtime ZIP needs a top-level shim to start `inbox_agent.runtime` (step 4).
+- **Step 4 built (2026-10-19), not deployed:** the 4 tool Lambdas (always-free stack, a role each), the Gateway (IAM auth, no semantic search, 4 Lambda targets), the Runtime (raw `CfnRuntime`, hand-built role, its 7-day log group made in CDK), and the consumer (mapping off: `CONSUMER_ON` in `infra/agentcore_stack.py`). Queue visibility is now 18 min (6 x the consumer's 180 s). A read-only `cdk diff` (2026-10-19) shows no replacements: 16 new resources in the free stack, 17 in the AgentCore stack, in-place updates to the queue and the poll and reader functions.
+- **Gotchas from step 4:**
+  - The AgentCore `Runtime` construct adds wildcard X-Ray, CloudWatch and S3 grants to the role you pass, so the Runtime is the raw `CfnRuntime`. The `Gateway` construct is fine, but its default semantic search adds a search tool; the stack deletes `SearchType`.
+  - numpy has no `aarch64-manylinux2014` wheel: the bundle targets `manylinux_2_28`. Check at the first deploy that the Runtime starts.
+  - The CDK forces colour, and `uv export` to stdout then writes escape codes into the requirements; the bundler has uv write the file with `--color never`.
+  - Tests set the `aws:cdk:bundling-stacks: []` context, so they never bundle. A real `cdk synth` bundles (about 155 MB unzipped).
+  - The Runtime's log group name `/aws/bedrock-agentcore/runtimes/<runtime id>-DEFAULT` is AWS's convention, not checked yet: after the first deploy, confirm the Runtime writes there.
 - **Nova Lite profile (looked up 2026-10-19):** `eu.amazon.nova-lite-v1:0` is `ACTIVE` and routes to `amazon.nova-lite-v1:0` in the same 4 Regions as Micro (eu-central-1, eu-north-1, eu-west-1, eu-west-3). The Runtime role names both profiles and these 8 model ARNs.
 
 ## AWS Free plan (decided 2026-10-17)
