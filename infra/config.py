@@ -84,4 +84,4 @@ GATEWAY_NAME = "inbox-agent"
 # and publishes the alerts. True hands both to the agent in one deploy: the
 # reader's mapping off, the queue consumer's on, and the alert topic's only
 # publisher becomes the `notify_owner` tool's role (OQ-41 e, OQ-42 a, f).
-AGENT_CUTOVER = False
+AGENT_CUTOVER = True

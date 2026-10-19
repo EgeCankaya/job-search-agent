@@ -112,4 +112,14 @@ class GatewayTools:
         checked = validate(TOOL_SPECS[name], arguments)
         # The Runtime runs synchronous handlers in worker threads, which have
         # no event loop of their own.
-        return asyncio.run(self._call(name, checked))
+        try:
+            return asyncio.run(self._call(name, checked))
+        except ExceptionGroup as group:
+            # The MCP client's task groups wrap a single failure in a group;
+            # callers get the failure itself.
+            error = group
+            while isinstance(error, ExceptionGroup) and len(error.exceptions) == 1:
+                error = error.exceptions[0]
+            if error is group:
+                raise
+            raise error from None

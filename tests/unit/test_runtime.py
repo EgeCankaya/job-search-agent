@@ -161,3 +161,15 @@ def test_calls_are_checked_before_they_leave():
 def test_the_gateway_url_must_be_https():
     with pytest.raises(ValueError):
         GatewayTools("http://gw.example.com/mcp")
+
+
+def test_a_tool_failure_reaches_the_caller_unwrapped(monkeypatch):
+    # The MCP client's task groups wrap one failure in an ExceptionGroup.
+    tools = GatewayTools(GATEWAY, credentials=object(), names=("list_applications",))
+
+    async def failing(name, arguments):
+        raise ExceptionGroup("task group", [ExceptionGroup("session", [GatewayToolError("the tool failed behind the Gateway")])])
+
+    monkeypatch.setattr(tools, "_call", failing)
+    with pytest.raises(GatewayToolError, match="failed behind the Gateway"):
+        tools.call("list_applications", {})

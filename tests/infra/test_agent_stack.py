@@ -240,10 +240,10 @@ def consumer(agent):
     return logical_id, fn
 
 
-def test_the_consumer_reads_the_queue_like_the_reader_but_is_off(agent):
+def test_the_consumer_reads_the_queue_like_the_reader_and_follows_the_cutover(agent):
     _, mapping = one(agent, "AWS::Lambda::EventSourceMapping")
     properties = mapping["Properties"]
-    assert properties["Enabled"] is False  # until the cutover
+    assert properties["Enabled"] is config.AGENT_CUTOVER
     assert properties["BatchSize"] == 5
     assert properties["FunctionResponseTypes"] == ["ReportBatchItemFailures"]
     assert properties["ScalingConfig"] == {"MaximumConcurrency": 2}

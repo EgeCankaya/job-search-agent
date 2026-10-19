@@ -712,8 +712,13 @@ def test_queue_visibility_outlasts_the_reader(free):
 
 
 @pytest.mark.parametrize(("mode", "enabled"), [("cloud", True), ("local", False)])
-def test_the_reader_runs_only_in_cloud_mode(mode, enabled):
+def test_the_reader_runs_only_in_cloud_mode_and_before_the_cutover(monkeypatch, mode, enabled):
+    from infra import config
+
+    monkeypatch.setattr(config, "AGENT_CUTOVER", False)
     assert event_source(synth(mode)[ALWAYS_FREE_STACK])["Enabled"] is enabled
+    monkeypatch.setattr(config, "AGENT_CUTOVER", True)
+    assert event_source(synth(mode)[ALWAYS_FREE_STACK])["Enabled"] is False
 
 
 def test_the_reader_is_off_while_the_owner_switch_is_off(monkeypatch):
