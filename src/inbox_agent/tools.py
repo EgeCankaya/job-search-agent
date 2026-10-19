@@ -201,3 +201,23 @@ def validate(spec: ToolSpec, arguments) -> dict:
             continue  # an optional input left empty
         _check(key, schema["properties"][key], value)
     return {key: value for key, value in arguments.items() if value is not None}
+
+
+class RestrictedTools:
+    """Any tool set narrowed to `names`, whatever serves it: the chat path
+    gets `list_applications` only (OQ-42 h)."""
+
+    def __init__(self, tools: Tools, names: tuple[str, ...]) -> None:
+        available = {spec.name for spec in tools.specs()}
+        if not set(names) <= available:
+            raise ToolNotAllowed("can only narrow the tool set")
+        self._tools = tools
+        self._names = tuple(names)
+
+    def specs(self) -> tuple[ToolSpec, ...]:
+        return tuple(spec for spec in self._tools.specs() if spec.name in self._names)
+
+    def call(self, name: str, arguments: Mapping) -> dict:
+        if name not in self._names:
+            raise ToolNotAllowed(f"{name} is not available here")
+        return self._tools.call(name, arguments)

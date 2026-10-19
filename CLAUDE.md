@@ -68,6 +68,9 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   tools.py                   the week 3 tool specs, fixed input schemas and validation (OQ-42 d)
   tool_handlers.py           read_email, upsert_application, list_applications, notify_owner; InProcessTools
   tool_lambda.py             one tool per Lambda behind the Gateway (TOOL_NAME pins which)
+  gateway_tools.py           the tools through AgentCore Gateway: MCP over HTTPS, SigV4-signed (OQ-42 e)
+  batch_path.py, chat_path.py  the LangGraph graphs: fixed batch path (OQ-42 b); chat with list_applications only
+  runtime.py                 the Runtime entry point (new_email, chat); local worker on 127.0.0.1:8080
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
 tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
 tests/unit/                  handler, import, query, poll, reader, trim and classifier tests
@@ -161,6 +164,7 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (k) timing as log fields now, OpenTelemetry in week 6; (l) an `InboxAgentCi` stack (OIDC provider, deploy role) deployed once by hand; (m) pytest + synth gate the deploy until Tier 1.
 - **Dependencies (approved 2026-10-18, added 2026-10-19):** groups `agent` (langgraph, langchain-aws, bedrock-agentcore, mcp, langchain-mcp-adapters), `local` (langchain-ollama), `app` (streamlit). The owner installs Ollama (Homebrew, 0.40.6) and pulls `qwen3.8:27b`.
 - **Steps 1 and 2 built (2026-10-19), not deployed:** the mode, model (Bedrock or Ollama through LangChain) and memory interfaces; the 4 tool handlers with strict schemas, and the per-tool Lambda wrapper. `tracker_update.update_for_status`/`manual_update` and `alerts.build_alert` serve the tools; the reader still uses the old entry points. A live local check classified a fictional Turkish invite correctly with `qwen3.8:27b` (14 s).
+- **Step 3 built (2026-10-19), not deployed:** the batch and chat graphs, the Gateway MCP client and the entry point. The batch path is cloud-only until the Mac worker; in local mode the chat path runs the tool code in-process until the local MCP server (step 7). A live local run on a fictional seeded tracker answered both US-04 questions (and the Turkish one) correctly in 8.5 to 9.4 s. The Runtime ZIP needs a top-level shim to start `inbox_agent.runtime` (step 4).
 - **Nova Lite profile (looked up 2026-10-19):** `eu.amazon.nova-lite-v1:0` is `ACTIVE` and routes to `amazon.nova-lite-v1:0` in the same 4 Regions as Micro (eu-central-1, eu-north-1, eu-west-1, eu-west-3). The Runtime role names both profiles and these 8 model ARNs.
 
 ## AWS Free plan (decided 2026-10-17)
