@@ -16,7 +16,8 @@ from it, so it can always be removed.
   no semantic search (it would add a tool), and one Lambda target per tool.
   Its role may invoke those four functions only.
 - **Queue consumer** (OQ-42 a): reads the agent queue and calls the Runtime.
-  Its event source mapping stays off until the cutover (CONSUMER_ON).
+  Its event source mapping stays off until the cutover
+  (config.AGENT_CUTOVER), when the week 2 reader's goes off.
 """
 
 from aws_cdk import (
@@ -45,15 +46,14 @@ from infra.always_free_stack import (
 )
 from infra.runtime_bundle import ENTRYPOINT, runtime_bundling
 
-# Off until the cutover (week 3 plan, step 9): the temporary reader still
-# reads the queue, and two readers would race.
-CONSUMER_ON = False
 RUNTIME_ENDPOINT = "DEFAULT"
 AGENTCORE_SERVICE = "bedrock-agentcore.amazonaws.com"
 
 
 def consumer_enabled(agent_mode: str) -> bool:
-    return CONSUMER_ON and agent_mode == "cloud"
+    """On after the cutover, in cloud mode only; until then the week 2
+    reader reads the queue, and two readers would race."""
+    return config.AGENT_CUTOVER and agent_mode == "cloud"
 
 
 def _property_schema(rule: dict) -> agentcore.SchemaDefinition:

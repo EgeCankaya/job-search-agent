@@ -3,9 +3,9 @@
 Contents: the three DynamoDB tables, the one SQS queue with its dead-letter
 queue, the SNS alert topic, the budget alerts, the Gmail poll Lambda with
 its 30-minute EventBridge Scheduler schedule, the temporary week 2 queue
-reader (OQ-41 e), and the agent's four tool Lambdas, which the Gateway in
-the AgentCore stack serves (OQ-42 c). There is no inbound HTTP endpoint
-(CHT-2).
+reader (OQ-41 e), the agent's four tool Lambdas, which the Gateway in the
+AgentCore stack serves (OQ-42 c), and the dead-letter alarm (ING-3). There
+is no inbound HTTP endpoint (CHT-2).
 """
 
 from pathlib import Path
@@ -17,6 +17,8 @@ from aws_cdk import (
     Duration,
     RemovalPolicy,
     Stack,
+    aws_cloudwatch as cloudwatch,
+    aws_cloudwatch_actions as cloudwatch_actions,
     aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_lambda as lambda_,
@@ -64,8 +66,9 @@ def poll_schedule_state(agent_mode: str) -> str:
 
 
 def queue_reader_enabled(agent_mode: str) -> bool:
-    """Cloud mode only: its Gmail token lives in AgentCore Identity (ING-4)."""
-    return QUEUE_READER_ON and agent_mode == "cloud"
+    """Cloud mode only: its Gmail token lives in AgentCore Identity (ING-4).
+    Off after the cutover, when the agent's queue consumer reads instead."""
+    return QUEUE_READER_ON and not config.AGENT_CUTOVER and agent_mode == "cloud"
 
 
 def agent_code() -> lambda_.Code:
@@ -88,7 +91,9 @@ class AlwaysFreeStack(Stack):
         self._poller()
         self._reader()
         self._tool_functions()
-        self._alerts(alert_email, publisher=self.reader_function.role)
+        publisher = self.tool_functions["notify_owner"] if config.AGENT_CUTOVER else self.reader_function
+        self._dead_letter_alarm()
+        self._alerts(alert_email, publisher=publisher.role)
 
     def _tables(self) -> None:
         # Tracker rows are kept until the project ends (NFR-PRIV-4), so the
@@ -145,15 +150,36 @@ class AlwaysFreeStack(Stack):
             ),
         )
 
+    def _dead_letter_alarm(self) -> None:
+        """ING-3: an email to the owner when the dead-letter queue holds 1 or
+        more messages. The alarm email carries the alarm's name and numbers,
+        never email text."""
+        self.dead_letter_alarm = cloudwatch.Alarm(
+            self,
+            "DeadLetterAlarm",
+            alarm_description=(
+                "A queue message failed 3 times and waits in the inbox agent's dead-letter queue. "
+                "Fix the cause, then redrive it (ING-3)."
+            ),
+            metric=self.dead_letter_queue.metric_approximate_number_of_messages_visible(
+                period=Duration.minutes(5), statistic=cloudwatch.Stats.MAXIMUM
+            ),
+            threshold=1,
+            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+            evaluation_periods=1,
+            treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+        )
+        self.dead_letter_alarm.add_alarm_action(cloudwatch_actions.SnsAction(self.alert_topic))
+
     def _alerts(self, owner_email: str, *, publisher: iam.IRole) -> None:
         # ALR-3: alerts reach only the owner, through the topic's single email
         # subscription. The publisher takes no recipient.
         self.alert_topic.add_subscription(subscriptions.EmailSubscription(owner_email))
 
-        # Only the publisher's role may publish: in week 2 the temporary queue
-        # reader, from week 3 the agent (OQ-41 e). The Deny also stops other
-        # principals in this account, such as the owner's `aws login` session,
-        # whose own policy would otherwise allow it.
+        # Only the publisher's role may publish: the temporary queue reader
+        # until the cutover, then the `notify_owner` tool (OQ-41 e, OQ-42 f).
+        # The Deny also stops other principals in this account, such as the
+        # owner's `aws login` session, whose own policy would otherwise allow it.
         topic_arn = [self.alert_topic.topic_arn]
         self.alert_topic.add_to_resource_policy(
             iam.PolicyStatement(
@@ -163,10 +189,27 @@ class AlwaysFreeStack(Stack):
                 resources=topic_arn,
             )
         )
+        # The dead-letter alarm (ING-3, OQ-42 g). CloudWatch publishes as a
+        # service, with no aws:PrincipalArn, so it needs its own Allow, for
+        # this one alarm in this account only.
+        alarm_arn = self.dead_letter_alarm.alarm_arn
+        self.alert_topic.add_to_resource_policy(
+            iam.PolicyStatement(
+                sid="AllowPublishFromTheDeadLetterAlarm",
+                actions=["sns:Publish"],
+                principals=[iam.ServicePrincipal("cloudwatch.amazonaws.com")],
+                resources=topic_arn,
+                conditions={
+                    "ArnEquals": {"aws:SourceArn": alarm_arn},
+                    "StringEquals": {"aws:SourceAccount": self.account},
+                },
+            )
+        )
         # Explicit denies use Principal "*" with a condition: that is how a
         # resource policy names "everyone else". No action or resource wildcards.
-        # A service principal carries no aws:PrincipalArn, so it is denied too;
-        # the week 3 DLQ alarm needs its own exception.
+        # Both conditions must hold to deny, so the alarm's call (no principal
+        # ARN, but its own source ARN) passes. An IAM principal can't set
+        # aws:SourceArn; without it, the negated condition matches and denies.
         self.alert_topic.add_to_resource_policy(
             iam.PolicyStatement(
                 sid="DenyPublishFromOtherPrincipals",
@@ -174,7 +217,10 @@ class AlwaysFreeStack(Stack):
                 actions=["sns:Publish"],
                 principals=[iam.AnyPrincipal()],
                 resources=topic_arn,
-                conditions={"ArnNotEquals": {"aws:PrincipalArn": publisher.role_arn}},
+                conditions={
+                    "ArnNotEquals": {"aws:PrincipalArn": publisher.role_arn},
+                    "StringNotEquals": {"aws:SourceArn": alarm_arn},
+                },
             )
         )
         self.alert_topic.add_to_resource_policy(

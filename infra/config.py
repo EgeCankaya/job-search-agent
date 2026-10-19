@@ -79,3 +79,9 @@ CHAT_FOUNDATION_MODEL = "amazon.nova-lite-v1:0"
 # Week 3 agent (OQ-42). Runtime names allow letters, digits and underscores.
 RUNTIME_NAME = "inbox_agent"
 GATEWAY_NAME = "inbox-agent"
+
+# The week 3 cutover (plan step 9). False: the week 2 reader reads the queue
+# and publishes the alerts. True hands both to the agent in one deploy: the
+# reader's mapping off, the queue consumer's on, and the alert topic's only
+# publisher becomes the `notify_owner` tool's role (OQ-41 e, OQ-42 a, f).
+AGENT_CUTOVER = False

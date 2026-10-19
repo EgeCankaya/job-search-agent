@@ -203,14 +203,35 @@ def test_alert_topic_has_one_email_subscription_to_the_owner(templates):
     assert subscription["Properties"]["TopicArn"] == {"Ref": topic_id}
 
 
-def test_alert_topic_policy_lets_only_the_reader_role_publish(free):
-    # ALR-3, OQ-41 (e): in week 2 the temporary queue reader is the only publisher.
-    [topic_id] = resources(free, "AWS::SNS::Topic")
-    [policy] = resources(free, "AWS::SNS::TopicPolicy").values()
+def topic_policy(template):
+    [topic_id] = resources(template, "AWS::SNS::Topic")
+    [policy] = resources(template, "AWS::SNS::TopicPolicy").values()
     assert policy["Properties"]["Topics"] == [{"Ref": topic_id}]
-    statements = {s["Sid"]: s for s in policy["Properties"]["PolicyDocument"]["Statement"]}
+    return topic_id, {s["Sid"]: s for s in policy["Properties"]["PolicyDocument"]["Statement"]}
+
+
+def dead_letter_alarm_id(template):
+    [alarm_id] = resources(template, "AWS::CloudWatch::Alarm")
+    return alarm_id
+
+
+def notify_owner_role_id(template):
+    [role_id] = [r for r in resources(template, "AWS::IAM::Role") if r.startswith("NotifyOwnerToolRole")]
+    return role_id
+
+
+@pytest.mark.parametrize("cutover", [False, True])
+def test_alert_topic_policy_lets_only_the_publisher_and_the_alarm_publish(monkeypatch, cutover):
+    # ALR-3: the reader until the cutover, then the notify_owner tool
+    # (OQ-41 e, OQ-42 f); the dead-letter alarm in both (OQ-42 g).
+    from infra import config
+
+    monkeypatch.setattr(config, "AGENT_CUTOVER", cutover)
+    free = synth()[ALWAYS_FREE_STACK]
+    topic_id, statements = topic_policy(free)
     assert set(statements) == {
         "AllowPublishFromThePublisher",
+        "AllowPublishFromTheDeadLetterAlarm",
         "DenyPublishFromOtherPrincipals",
         "DenyPublishWithoutTls",
     }
@@ -218,20 +239,52 @@ def test_alert_topic_policy_lets_only_the_reader_role_publish(free):
         assert statement["Action"] == "sns:Publish"
         assert statement["Resource"] == {"Ref": topic_id}
 
-    reader_role = {"Fn::GetAtt": [reader_role_id(free), "Arn"]}
+    publisher_id = notify_owner_role_id(free) if cutover else reader_role_id(free)
+    publisher = {"Fn::GetAtt": [publisher_id, "Arn"]}
+    alarm = {"Fn::GetAtt": [dead_letter_alarm_id(free), "Arn"]}
+
     allow = statements["AllowPublishFromThePublisher"]
     assert allow["Effect"] == "Allow"
-    assert allow["Principal"] == {"AWS": reader_role}
+    assert allow["Principal"] == {"AWS": publisher}
     assert "Condition" not in allow
+
+    from_alarm = statements["AllowPublishFromTheDeadLetterAlarm"]
+    assert from_alarm["Effect"] == "Allow"
+    assert from_alarm["Principal"] == {"Service": "cloudwatch.amazonaws.com"}
+    assert from_alarm["Condition"] == {
+        "ArnEquals": {"aws:SourceArn": alarm},
+        "StringEquals": {"aws:SourceAccount": {"Ref": "AWS::AccountId"}},
+    }
 
     others = statements["DenyPublishFromOtherPrincipals"]
     assert others["Effect"] == "Deny"
     assert others["Principal"] == {"AWS": "*"}
-    assert others["Condition"] == {"ArnNotEquals": {"aws:PrincipalArn": reader_role}}
+    assert others["Condition"] == {
+        "ArnNotEquals": {"aws:PrincipalArn": publisher},
+        "StringNotEquals": {"aws:SourceArn": alarm},
+    }
 
     no_tls = statements["DenyPublishWithoutTls"]
     assert no_tls["Effect"] == "Deny"
     assert no_tls["Condition"] == {"Bool": {"aws:SecureTransport": "false"}}
+
+
+def test_the_dead_letter_alarm_emails_through_the_alert_topic(free):
+    # ING-3: 1 or more dead letters, within one 5-minute period.
+    [topic_id] = resources(free, "AWS::SNS::Topic")
+    [dlq_id] = [k for k, q in resources(free, "AWS::SQS::Queue").items() if "RedrivePolicy" not in q["Properties"]]
+    alarm = resources(free, "AWS::CloudWatch::Alarm")[dead_letter_alarm_id(free)]["Properties"]
+    assert alarm["MetricName"] == "ApproximateNumberOfMessagesVisible"
+    assert alarm["Namespace"] == "AWS/SQS"
+    assert alarm["Dimensions"] == [{"Name": "QueueName", "Value": {"Fn::GetAtt": [dlq_id, "QueueName"]}}]
+    assert alarm["Statistic"] == "Maximum"
+    assert alarm["Period"] == 300
+    assert alarm["Threshold"] == 1
+    assert alarm["ComparisonOperator"] == "GreaterThanOrEqualToThreshold"
+    assert alarm["EvaluationPeriods"] == 1
+    assert alarm["TreatMissingData"] == "notBreaching"
+    assert alarm["AlarmActions"] == [{"Ref": topic_id}]
+    assert "OKActions" not in alarm and "InsufficientDataActions" not in alarm
 
 
 def test_no_other_role_may_publish(templates):
@@ -492,11 +545,16 @@ def test_the_poll_schedule_is_off_while_the_owner_switch_is_off(monkeypatch):
     assert schedule(synth("cloud")[ALWAYS_FREE_STACK])["State"] == "DISABLED"
 
 
-def test_the_poll_never_runs_without_the_reader():
-    # A live poll marks emails processed; with no reader they would sit unread.
-    from infra import always_free_stack
+@pytest.mark.parametrize("cutover", [False, True])
+def test_exactly_one_reader_takes_the_queue(monkeypatch, cutover):
+    # A live poll marks emails processed; with no reader they would sit
+    # unread, and two readers would race (OQ-41 e, OQ-42 a).
+    from infra import agentcore_stack, always_free_stack, config
 
-    assert not always_free_stack.POLL_SCHEDULE_ON or always_free_stack.QUEUE_READER_ON
+    monkeypatch.setattr(config, "AGENT_CUTOVER", cutover)
+    readers = [always_free_stack.queue_reader_enabled("cloud"), agentcore_stack.consumer_enabled("cloud")]
+    assert readers == [not cutover, cutover]
+    assert not always_free_stack.POLL_SCHEDULE_ON or any(readers)
 
 
 def test_schedule_sits_in_the_tagged_group(free):

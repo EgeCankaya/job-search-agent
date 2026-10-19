@@ -265,11 +265,13 @@ def test_queue_visibility_outlasts_the_consumer(free, agent):
     assert queue["Properties"]["VisibilityTimeout"] >= 6 * fn["Properties"]["Timeout"]
 
 
-def test_the_consumer_switch_turns_the_mapping_on_in_cloud_mode_only(monkeypatch):
-    monkeypatch.setattr(agentcore_stack, "CONSUMER_ON", True)
+def test_the_cutover_turns_the_consumer_on_and_the_reader_off(monkeypatch):
+    monkeypatch.setattr(config, "AGENT_CUTOVER", True)
     assert agentcore_stack.consumer_enabled("cloud") is True
     assert agentcore_stack.consumer_enabled("local") is False
     app = App(context={"alert_email": TEST_EMAIL, "agent_mode": "cloud", "aws:cdk:bundling-stacks": []})
-    stack = build(app)[AGENTCORE_STACK]
-    [mapping] = resources(Template.from_stack(stack), "AWS::Lambda::EventSourceMapping").values()
-    assert mapping["Properties"]["Enabled"] is True
+    stacks = build(app)
+    [consumer_mapping] = resources(Template.from_stack(stacks[AGENTCORE_STACK]), "AWS::Lambda::EventSourceMapping").values()
+    [reader_mapping] = resources(Template.from_stack(stacks[ALWAYS_FREE_STACK]), "AWS::Lambda::EventSourceMapping").values()
+    assert consumer_mapping["Properties"]["Enabled"] is True
+    assert reader_mapping["Properties"]["Enabled"] is False
