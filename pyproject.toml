@@ -8,9 +8,22 @@ dependencies = [
 ]
 
 [dependency-groups]
+agent = [
+    "bedrock-agentcore>=1.24.1",
+    "langchain-aws>=1.9.0",
+    "langchain-mcp-adapters>=0.3.2",
+    "langgraph>=1.2.16",
+    "mcp>=1.30.0",
+]
+app = [
+    "streamlit>=1.66.0",
+]
 dev = [
     "boto3[crt]>=1.43.114",
     "pytest>=9.1.1",
+]
+local = [
+    "langchain-ollama>=1.1.0",
 ]
 
 [tool.pytest.ini_options]

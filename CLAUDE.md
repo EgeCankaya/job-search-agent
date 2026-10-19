@@ -11,16 +11,16 @@ repo is **public**.
 
 1. **Design doc** owns architecture: services, models, modes, data flow. The
    live version is the Claude Doc https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9
-   (revision 98). `Job search inbox agent design.pdf` is still the export of revision 90;
+   (revision 105). `Job search inbox agent design.pdf` is still the export of revision 90;
    the owner re-exports it.
-2. **`Job search inbox agent PRD.md`** (v0.4.1) owns requirements and targets:
+2. **`Job search inbox agent PRD.md`** (v0.4.2) owns requirements and targets:
    FRs §9, NFRs §10, metrics §11, CI gates §12, milestones §14, dependencies §16a.
 3. **The code follows both.** Never add tools, tool inputs, endpoints or
    capabilities beyond PRD §9, or architecture beyond the design doc.
 4. **Changes to the design doc go through an OQ-style item** that the owner
    accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`,
-   `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md` and
-   `Design doc edits for OQ-41.md`, all accepted and applied to the PRD and
+   `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md`,
+   `Design doc edits for OQ-41.md` and `Design doc edits for OQ-42.md`, all accepted and applied to the PRD and
    the design doc.
 
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
@@ -73,7 +73,7 @@ tests/infra/                 CDK assertion tests
 ### Commands
 
 ```bash
-uv sync
+uv sync                # dev group only; add --all-groups for agent, local and app
 uv run pytest
 cdk synth -c alert_email=alerts@example.com
 cdk synth -c alert_email=alerts@example.com -c agent_mode=local
@@ -145,6 +145,18 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (f) `CLASSIFIER_MODEL_ID=eu.amazon.nova-micro-v1:0` lives in `infra/config.py`. Only the reader's role has `bedrock:InvokeModel`: on the profile ARN, plus `amazon.nova-micro-v1:0` in eu-central-1, eu-north-1, eu-west-1 and eu-west-3 with a `bedrock:InferenceProfileArn` condition.
   - A read-only `cdk diff` (2026-10-18) showed no replacements: 5 new reader resources, plus in-place updates to the queue, the topic policy, and the poll role and function.
 - **`boto3[crt]` is a dev dependency** (owner approved 2026-10-18), for the import script on the Mac. The `crt` extra is required: boto3 can't read `aws login` credentials without it (`MissingDependencyException`). The Lambda runtime brings its own boto3, and tests use fakes, never AWS.
+
+## Week 3 (started 2026-10-19)
+
+- **Plan:** `Week 3 plan.md` (exit checks, 10 steps, what the owner does by hand).
+- **OQ-42, accepted 2026-10-18 (all items, (a) to (n)), applied 2026-10-19** to PRD v0.4.2 and design-doc revision 105:
+  - (a) a cloud-only queue consumer Lambda calls `InvokeAgentRuntime` per message (it is APR-3's consumer; OQ-36's path is decided); (b) the batch path is a fixed sequence, the model only classifies, and the processed-email log is graph bookkeeping, not a tool;
+  - (c) one Lambda and role per tool, in the always-free stack; week 3 builds `read_email`, `upsert_application`, `list_applications`, `notify_owner`; (d) the tool inputs are fixed in PRD §9 conventions (`notify_owner` has no free-text input);
+  - (e) IAM (SigV4) at the Gateway and the Runtime; (f) only the `notify_owner` role publishes to the topic; (g) the DLQ alarm gets an exception scoped to its own ARN;
+  - (h) the chat path binds only `list_applications`; (i) the AgentCore constructs in aws-cdk-lib 2.273 with hand-built roles, Runtime ZIP built by uv for arm64, no Docker; (j) local mode uses `qwen3:32b`, a stdio MCP server, the worker on 127.0.0.1:8080, and the week 3 local check covers the chat path only;
+  - (k) timing as log fields now, OpenTelemetry in week 6; (l) an `InboxAgentCi` stack (OIDC provider, deploy role) deployed once by hand; (m) pytest + synth gate the deploy until Tier 1.
+- **Dependencies (approved 2026-10-18, added 2026-10-19):** groups `agent` (langgraph, langchain-aws, bedrock-agentcore, mcp, langchain-mcp-adapters), `local` (langchain-ollama), `app` (streamlit). The owner installs Ollama and pulls `qwen3:32b`.
+- **Still to look up before coding the Runtime role:** the Regions behind `eu.amazon.nova-lite-v1:0` (`aws bedrock get-inference-profile`).
 
 ## AWS Free plan (decided 2026-10-17)
 
