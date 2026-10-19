@@ -8,6 +8,10 @@ The poller logs a message when it queues it. The queue reader adds two
 marks to the same item: an alert claim, taken with a conditional write
 before it publishes, so a second delivery can't send a second alert; and
 "handled", once everything is done, so a second delivery stops early.
+
+The claim also records the alert's kind (urgent or possible), so the Mac
+app's Dashboard can count this week's alerts (DASH-1). It reads the log and
+never writes.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -15,6 +19,8 @@ from datetime import UTC, datetime, timedelta
 LOG_TTL = timedelta(days=30)
 TTL_ATTRIBUTE = "expires_at"
 ALERT_CLAIMED = "alert_claimed_at"
+ALERT_KIND = "alert_kind"
+ALERT_KINDS = ("urgent", "possible")
 HANDLED = "handled_at"
 
 # The last-poll time is one item in the same table. Gmail message IDs are hex,
@@ -54,14 +60,17 @@ class ProcessedLog:
         item = self._table.get_item(Key={"message_id": message_id}, ConsistentRead=True).get("Item")
         return bool(item and HANDLED in item)
 
-    def claim_alert(self, message_id: str, now: datetime) -> bool:
+    def claim_alert(self, message_id: str, now: datetime, kind: str | None = None) -> bool:
         """True for exactly one caller per message, even when two run at once."""
+        if kind is not None and kind not in ALERT_KINDS:
+            raise ValueError(f"alert kind must be one of {ALERT_KINDS}")
         item = self._item(message_id, now)
         if ALERT_CLAIMED in item:
             return False
+        claim = {ALERT_CLAIMED: _epoch(now), **({ALERT_KIND: kind} if kind else {})}
         try:
             self._table.put_item(
-                Item={**item, ALERT_CLAIMED: _epoch(now)},
+                Item={**item, **claim},
                 ConditionExpression=f"attribute_not_exists({ALERT_CLAIMED})",
             )
         except Exception as error:
@@ -74,6 +83,7 @@ class ProcessedLog:
         """After a failed publish, so the retry can alert."""
         item = self._item(message_id, now)
         item.pop(ALERT_CLAIMED, None)
+        item.pop(ALERT_KIND, None)
         self._table.put_item(Item=item)
 
     def mark_handled(self, message_id: str, now: datetime) -> None:
@@ -85,3 +95,18 @@ class ProcessedLog:
 
     def mark_successful_poll(self, started_at: datetime) -> None:
         self._table.put_item(Item={"message_id": POLL_STATE_KEY, "last_success": _epoch(started_at)})
+
+
+def alert_claims(table, since: datetime) -> list[tuple[datetime, str | None]]:
+    """Every alert claimed at or after `since`: its time and kind (None for
+    claims made before kinds were recorded). Scans only (DASH-1)."""
+    claims: list[tuple[datetime, str | None]] = []
+    kwargs: dict = {}
+    while True:
+        page = table.scan(**kwargs)
+        for item in page.get("Items", []):
+            if ALERT_CLAIMED in item and int(item[ALERT_CLAIMED]) >= _epoch(since):
+                claims.append((datetime.fromtimestamp(int(item[ALERT_CLAIMED]), UTC), item.get(ALERT_KIND)))
+        if "LastEvaluatedKey" not in page:
+            return claims
+        kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]

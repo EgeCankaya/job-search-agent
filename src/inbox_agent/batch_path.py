@@ -117,10 +117,11 @@ def build_batch_graph(deps: BatchDeps):
         if not (result.urgent or result.possible):
             return {"alerted": False}
         message_id = state["message_id"]
-        if not deps.log.claim_alert(message_id, deps.now()):
+        kind = "possible" if result.possible else "urgent"
+        if not deps.log.claim_alert(message_id, deps.now(), kind):
             return {"alerted": False}
         arguments = {
-            "kind": "possible" if result.possible else "urgent",
+            "kind": kind,
             "email_class": result.email_class.value,
             "company": state["company"] or UNNAMED_COMPANY,
         }

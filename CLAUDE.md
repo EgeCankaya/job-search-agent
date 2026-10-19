@@ -73,7 +73,10 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   batch_path.py, chat_path.py  the LangGraph graphs: fixed batch path (OQ-42 b); chat with list_applications only
   runtime.py                 the Runtime entry point (new_email, chat); local worker on 127.0.0.1:8080
   consumer.py                the queue consumer Lambda: one InvokeAgentRuntime per new email (OQ-42 a)
+  dashboard.py, app_backend.py  DASH-1 numbers; the Mac app's AWS calls (stack discovery, scans, Ask)
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
+mac_app/                     the Streamlit Mac app: app.py (navigation), dashboard_page.py, ask_page.py, common.py
+.streamlit/config.toml       the app binds 127.0.0.1:8501 and sends no usage stats (CHT-2)
 tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
 tests/unit/                  handler, import, query, poll, reader, trim and classifier tests
 tests/infra/                 CDK assertion tests
@@ -87,6 +90,8 @@ uv run pytest
 cdk synth -c alert_email=alerts@example.com
 cdk synth -c alert_email=alerts@example.com -c agent_mode=local
 uv run python import_applications.py data/applications.csv --table <ApplicationsTableName>
+uv run streamlit run mac_app/app.py              # the Mac app, from the repo root
+AGENT_MODE=local uv run python -m inbox_agent.runtime   # the local worker on 127.0.0.1:8080
 ```
 
 The import uses boto3 from the dev group and your `aws login` session.
@@ -176,6 +181,7 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - The batch path given an already-handled message ID returned `duplicate: true` in 5.0 s, and the log entry was unchanged.
   - The log group `/aws/bedrock-agentcore/runtimes/<runtime id>-DEFAULT` exists with 7 days, and the Runtime writes there: `chat_done` and `batch_done` lines only, no question text, no errors. No log group in the account lacks retention.
   - Not yet exercised live: the batch path through the Gateway tools (read_email, upsert, notify_owner), which runs at the cutover; the DLQ alarm email.
+- **Step 6 built (2026-10-19), not committed:** the Mac app's Dashboard and Ask pages (`mac_app/`), backed by `app_backend.py` (finds the tables and the Runtime from the deployed stacks, so no name is written down) and `dashboard.py`. Alert claims now record their kind (`alert_kind`: urgent or possible) for the weekly counts; claims from before that count as "unrecorded". Tests render both pages with Streamlit's AppTest and a fake backend, and check every Dashboard number against a direct count on a seeded table. Live check: the app answers on 127.0.0.1:8501 and a connection to the Mac's LAN address is refused (week 3 exit 5); the Dashboard loaded from the real tables.
 - **Gotchas from step 4:**
   - The AgentCore `Runtime` construct adds wildcard X-Ray, CloudWatch and S3 grants to the role you pass, so the Runtime is the raw `CfnRuntime`. The `Gateway` construct is fine, but its default semantic search adds a search tool; the stack deletes `SearchType`.
   - numpy has no `aarch64-manylinux2014` wheel: the bundle targets `manylinux_2_28`. Check at the first deploy that the Runtime starts.

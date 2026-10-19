@@ -109,7 +109,7 @@ def handle_email(
 
     alert = alert_for(result, company=company or UNNAMED_COMPANY, role=role, key_date=when)
     alerted = False
-    if alert is not None and log.claim_alert(message_id, now):
+    if alert is not None and log.claim_alert(message_id, now, "possible" if result.possible else "urgent"):
         try:
             topic.publish(alert)
         except Exception:
