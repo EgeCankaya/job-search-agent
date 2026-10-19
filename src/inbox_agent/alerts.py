@@ -6,7 +6,7 @@ along in it. Company and role are flattened to one short line each, so they
 can't add lines to the body either.
 
 In week 2 the temporary queue reader publishes it to the SNS topic
-(reader.py); from week 3, `notify_owner` does.
+(reader.py); from week 3, `notify_owner` does (tool_handlers.py).
 """
 
 import unicodedata
@@ -36,6 +36,17 @@ FIELD_LIMIT = 100
 class Alert:
     subject: str
     body: str
+
+
+@dataclass(frozen=True)
+class AlertTopic:
+    """`notify_owner`'s one destination: one topic, no recipient (ALR-3)."""
+
+    client: object  # boto3 SNS client
+    arn: str
+
+    def publish(self, alert: Alert) -> None:
+        self.client.publish(TopicArn=self.arn, Subject=alert.subject, Message=alert.body)
 
 
 def _field(value: str | None) -> str:
@@ -78,11 +89,25 @@ def alert_for(
     """
     if not (classification.urgent or classification.possible):
         return None
+    return build_alert(
+        classification.email_class, possible=classification.possible, company=company, role=role, key_date=key_date
+    )
+
+
+def build_alert(
+    email_class: EmailClass,
+    *,
+    possible: bool,
+    company: str,
+    role: str | None,
+    key_date: date | datetime | None,
+) -> Alert:
+    """An urgent alert, or with `possible` a "Possible:" one (ALR-1)."""
     if key_date is not None and not isinstance(key_date, date):
         raise TypeError("key_date must be a date or datetime")
-    name = CLASS_NAMES[classification.email_class]
+    name = CLASS_NAMES[email_class]
     company, role = _field(company), _field(role)
-    prefix = POSSIBLE_PREFIX if classification.possible else ""
+    prefix = POSSIBLE_PREFIX if possible else ""
 
     subject = f"{prefix}{name}: {company}" + (f", {role}" if role else "")
     body = "\n".join(

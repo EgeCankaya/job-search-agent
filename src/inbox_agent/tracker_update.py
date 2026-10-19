@@ -38,17 +38,34 @@ class RowUpdate:
     created: bool
 
 
+# Statuses that only name a new row's starting point. An automatic update
+# never sets them on an existing row (TRK-1: outreach sets
+# `recruiter_contact` "for a new row only").
+NEW_ROW_STATUSES = frozenset({"applied", "recruiter_contact"})
+
+
+def status_for_class(email_class: EmailClass) -> str | None:
+    """The status an email of this class asks for, or None ("other": only
+    last contact changes). Outreach asks for `recruiter_contact`, which
+    takes effect on a new row only."""
+    if email_class is EmailClass.RECRUITER_OUTREACH:
+        return "recruiter_contact"
+    return STATUS_FOR_CLASS.get(email_class)
+
+
 def new_row_status(email_class: EmailClass) -> str:
     """A new row starts as `recruiter_contact` for outreach and `applied`
     otherwise; the mapping then moves it forward (an invite starts it at
     `interviewing`)."""
-    base = "recruiter_contact" if email_class is EmailClass.RECRUITER_OUTREACH else "applied"
-    return STATUS_FOR_CLASS.get(email_class, base)
+    return status_for_class(email_class) or "applied"
 
 
 def updated_status(current: str, email_class: EmailClass) -> str:
-    target = STATUS_FOR_CLASS.get(email_class)
-    if target is None:
+    return _automatic_status(current, STATUS_FOR_CLASS.get(email_class))
+
+
+def _automatic_status(current: str, target: str | None) -> str:
+    if target is None or target in NEW_ROW_STATUSES:
         return current
     if current in FINAL_STATUSES and target in EARLIER_STAGES:
         return current
@@ -71,23 +88,44 @@ def update_for_email(
 
     Processing the same message twice gives the same row.
     """
+    return update_for_status(
+        rows,
+        status=status_for_class(email_class),
+        company=company,
+        role=role,
+        message_id=message_id,
+        received_on=received_on,
+        key_date=key_date,
+        key_date_type=KEY_DATE_TYPES.get(email_class),
+        aliases=aliases,
+    )
+
+
+def update_for_status(
+    rows: Iterable[Mapping],
+    *,
+    status: str | None,
+    company: str,
+    role: str | None,
+    message_id: str,
+    received_on: date,
+    key_date: date | datetime | None = None,
+    key_date_type: str | None = None,
+    aliases: Mapping[str, str] | None = None,
+) -> RowUpdate:
+    """An automatic update from one email, as `upsert_application` gets it:
+    the status the email's class maps to (None for "other"), never moving a
+    row back from a final status (TRK-1)."""
     if isinstance(received_on, datetime):
         # Which day a timestamp falls on depends on the time zone, so the
         # caller picks it; a timestamp would also break the date comparison.
         raise TypeError("received_on must be a date, not a datetime")
     existing = match_application(rows, company, role, aliases)
     if existing is None:
-        item = {
-            "company_key": company_key(company, aliases),
-            "role_key": role_key(role),
-            "company": company.strip(),
-            "status": new_row_status(email_class),
-        }
-        if role and role.strip():
-            item["role"] = role.strip()
+        item = _new_row(company, role, status or "applied", aliases)
     else:
         item = dict(existing)
-        item["status"] = updated_status(item.get("status", "applied"), email_class)
+        item["status"] = _automatic_status(item.get("status", "applied"), status)
 
     # Last contact is the latest inbound email, so an older email processed
     # late doesn't move it back. ISO dates compare as strings.
@@ -100,8 +138,48 @@ def update_for_email(
 
     # A key date only when the email's status took effect: a late assessment
     # on a rejected row must not put a deadline on the dashboard.
-    if key_date is not None and email_class in KEY_DATE_TYPES and item["status"] == STATUS_FOR_CLASS[email_class]:
+    if key_date is not None and key_date_type is not None and status is not None and item["status"] == status:
         item["key_date"] = key_date.isoformat()
-        item["key_date_type"] = KEY_DATE_TYPES[email_class]
+        item["key_date_type"] = key_date_type
 
     return RowUpdate(item=item, created=existing is None)
+
+
+def manual_update(
+    rows: Iterable[Mapping],
+    *,
+    company: str,
+    role: str | None,
+    status: str | None = None,
+    last_contact: date | None = None,
+    next_step: str | None = None,
+    key_date: date | datetime | None = None,
+    key_date_type: str | None = None,
+    aliases: Mapping[str, str] | None = None,
+) -> RowUpdate:
+    """A change I ask for on the Ask page: any status, in any direction
+    (TRK-1). Only the fields given change."""
+    existing = match_application(rows, company, role, aliases)
+    item = _new_row(company, role, status or "applied", aliases) if existing is None else dict(existing)
+    if status is not None:
+        item["status"] = status
+    if last_contact is not None:
+        item["last_contact"] = last_contact.isoformat()
+    if next_step is not None:
+        item["next_step"] = next_step
+    if key_date is not None:
+        item["key_date"] = key_date.isoformat()
+        item["key_date_type"] = key_date_type
+    return RowUpdate(item=item, created=existing is None)
+
+
+def _new_row(company: str, role: str | None, status: str, aliases: Mapping[str, str] | None) -> dict:
+    item = {
+        "company_key": company_key(company, aliases),
+        "role_key": role_key(role),
+        "company": company.strip(),
+        "status": status,
+    }
+    if role and role.strip():
+        item["role"] = role.strip()
+    return item

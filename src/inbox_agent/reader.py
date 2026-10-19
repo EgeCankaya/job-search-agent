@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from inbox_agent import settings
-from inbox_agent.alerts import Alert, alert_for
+from inbox_agent.alerts import AlertTopic, alert_for
 from inbox_agent.calendar_invite import key_date
 from inbox_agent.classify import classify
 from inbox_agent.gmail import GmailClient, gmail_client
@@ -43,17 +43,6 @@ logger.setLevel(logging.INFO)
 
 # The alert names a company even when the email didn't.
 UNNAMED_COMPANY = "Company not named"
-
-
-@dataclass(frozen=True)
-class AlertTopic:
-    """`notify_owner` in miniature: one topic, no recipient (ALR-3)."""
-
-    client: object  # boto3 SNS client
-    arn: str
-
-    def publish(self, alert: Alert) -> None:
-        self.client.publish(TopicArn=self.arn, Subject=alert.subject, Message=alert.body)
 
 
 @dataclass(frozen=True)

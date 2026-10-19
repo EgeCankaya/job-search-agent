@@ -63,7 +63,11 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   trim.py, classify.py       CLS-3 trimming and prompt; CLS-1 classes and precedence, CLS-2 extraction
   reader.py                  the temporary week 2 queue reader Lambda (OQ-41 e)
   tracker_update.py, alerts.py  TRK-1 row update; ALR-1 alert text
-  classes.py, model.py       the 6 classes; Model interface + Bedrock Converse adapter
+  classes.py, model.py       the 6 classes; Model interface, Bedrock Converse adapter, chat_model() per AGENT_MODE
+  mode.py, memory.py         AGENT_MODE for the runtime; the Memory interface (no-op until week 4)
+  tools.py                   the week 3 tool specs, fixed input schemas and validation (OQ-42 d)
+  tool_handlers.py           read_email, upsert_application, list_applications, notify_owner; InProcessTools
+  tool_lambda.py             one tool per Lambda behind the Gateway (TOOL_NAME pins which)
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
 tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
 tests/unit/                  handler, import, query, poll, reader, trim and classifier tests
@@ -156,6 +160,7 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (h) the chat path binds only `list_applications`; (i) the AgentCore constructs in aws-cdk-lib 2.273 with hand-built roles, Runtime ZIP built by uv for arm64, no Docker; (j) local mode uses `qwen3.8:27b` (the owner's pick 2026-10-19, replacing `qwen3:32b`), a stdio MCP server, the worker on 127.0.0.1:8080, and the week 3 local check covers the chat path only;
   - (k) timing as log fields now, OpenTelemetry in week 6; (l) an `InboxAgentCi` stack (OIDC provider, deploy role) deployed once by hand; (m) pytest + synth gate the deploy until Tier 1.
 - **Dependencies (approved 2026-10-18, added 2026-10-19):** groups `agent` (langgraph, langchain-aws, bedrock-agentcore, mcp, langchain-mcp-adapters), `local` (langchain-ollama), `app` (streamlit). The owner installs Ollama (Homebrew, 0.40.6) and pulls `qwen3.8:27b`.
+- **Steps 1 and 2 built (2026-10-19), not deployed:** the mode, model (Bedrock or Ollama through LangChain) and memory interfaces; the 4 tool handlers with strict schemas, and the per-tool Lambda wrapper. `tracker_update.update_for_status`/`manual_update` and `alerts.build_alert` serve the tools; the reader still uses the old entry points. A live local check classified a fictional Turkish invite correctly with `qwen3.8:27b` (14 s).
 - **Nova Lite profile (looked up 2026-10-19):** `eu.amazon.nova-lite-v1:0` is `ACTIVE` and routes to `amazon.nova-lite-v1:0` in the same 4 Regions as Micro (eu-central-1, eu-north-1, eu-west-1, eu-west-3). The Runtime role names both profiles and these 8 model ARNs.
 
 ## AWS Free plan (decided 2026-10-17)

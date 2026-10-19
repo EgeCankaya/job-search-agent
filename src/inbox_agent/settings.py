@@ -8,6 +8,11 @@ from datetime import timedelta, timezone
 
 AWS_REGION = "eu-north-1"
 
+# MacBook mode's model (OQ-42 j): Ollama on the Mac, loopback only
+# (NFR-REL-4). The owner picked Qwen 3.8 27B on 2026-10-19.
+LOCAL_MODEL_ID = "qwen3.8:27b"
+OLLAMA_URL = "http://127.0.0.1:11434"
+
 # The day an email counts for in the tracker (TRK-1 last contact). Turkey has
 # kept UTC+3 all year since 2016; a fixed offset needs no tz database.
 OWNER_TIMEZONE = timezone(timedelta(hours=3), "Europe/Istanbul")
