@@ -239,3 +239,17 @@ class PendingDrafts:
             ExpressionAttributeNames={"#state": STATE, "#claimed": DRAFT_CLAIMED_AT},
             ExpressionAttributeValues={":approved": APPROVED},
         )
+
+
+def awaiting(table) -> list[dict]:
+    """Every draft waiting for my decision, oldest proposal first, for the
+    Follow-ups page (APR-2). A scan: there are at most a few."""
+    found: list[dict] = []
+    kwargs: dict = {}
+    while True:
+        page = table.scan(**kwargs)
+        found += [item for item in page.get("Items", []) if item.get(STATE) == AWAITING_DECISION]
+        if "LastEvaluatedKey" not in page:
+            break
+        kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+    return sorted(found, key=lambda item: (int(item.get(PROPOSED_AT, 0)), item["approval_id"]))

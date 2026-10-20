@@ -125,6 +125,8 @@ class FakeCloudFormation:
             ("ApplicationsTable9F7E3B91", "AWS::DynamoDB::Table", "tracker-table"),
             ("ProcessedEmailsTable5DBDE874", "AWS::DynamoDB::Table", "log-table"),
             ("PendingDraftsTableABC", "AWS::DynamoDB::Table", "drafts-table"),
+            ("AgentDeadLetterQueue7E3A", "AWS::SQS::Queue", "https://sqs.eu-north-1.amazonaws.com/111122223333/dlq"),
+            ("AgentQueue9C2B", "AWS::SQS::Queue", "https://sqs.eu-north-1.amazonaws.com/111122223333/agent"),
         ],
         "InboxAgentAgentCore": [("Runtime", "AWS::BedrockAgentCore::Runtime", "inbox_agent-abc")],
     }
@@ -153,6 +155,8 @@ class FakeControl:
 def test_discovery_finds_the_tables_and_the_runtime():
     resources = discover(FakeCloudFormation(), FakeControl())
     assert (resources.tracker_table, resources.processed_table) == ("tracker-table", "log-table")
+    assert resources.pending_table == "drafts-table"
+    assert resources.queue_url.endswith("/agent")
     assert resources.runtime_arn.endswith("runtime/inbox_agent-abc")
     assert discover(FakeCloudFormation(), mode="local").runtime_arn is None
 
@@ -216,6 +220,22 @@ def test_the_app_listens_on_loopback_only_and_sends_no_usage_stats():
     assert config["browser"]["gatherUsageStats"] is False
 
 
+DRAFT_TEXT = "Merhaba Ayşe Hanım,\n\n**1 Ekim 2026** tarihli Backend Engineer başvurum hakkında bir gelişme var mı?\n"
+
+
+def follow_up(approval_id="a" * 32, to_address="ayse@kuzey.example.com"):
+    return app_backend.FollowUp(
+        approval_id=approval_id,
+        company="Kuzey Yazılım A.Ş.",
+        role="Backend Engineer",
+        to_address=to_address,
+        subject="Re: Başvurunuz",
+        language="tr",
+        text=DRAFT_TEXT,
+        proposed_on="2026-10-21",
+    )
+
+
 class FakeBackend:
     mode = "cloud"
 
@@ -223,6 +243,14 @@ class FakeBackend:
         tracker, log = seeded()
         self.data = load_dashboard(tracker, log, now=NOW)
         self.questions = []
+        self.drafts = [follow_up(), follow_up("b" * 32, to_address="")]
+        self.decisions = []
+
+    def follow_ups(self):
+        return self.drafts
+
+    def decide(self, draft, decision):
+        self.decisions.append((draft.approval_id, decision))
 
     def dashboard(self):
         return self.data
@@ -273,3 +301,71 @@ def test_a_failing_backend_shows_the_login_hint(monkeypatch):
     test.run()
     assert "aws login" in test.error[0].value
     assert "ExpiredToken" not in test.error[0].value
+
+
+
+# Follow-ups (APR-2, APR-3)
+
+
+def open_follow_ups(app):
+    app.run()
+    app.switch_page("followups_page.py")
+    app.run()
+    assert not app.exception
+
+
+def test_each_draft_shows_its_full_text_and_exactly_two_buttons(app):
+    open_follow_ups(app)
+    # Plain text, not rendered (Streamlit drops the final line break).
+    assert [t.value for t in app.text] == [DRAFT_TEXT.rstrip("\n")] * 2
+    labels = [b.label for b in app.button]
+    assert labels == ["Approve", "Skip", "Approve", "Skip"]
+    assert any("To field is empty" in w.value for w in app.warning)
+
+
+def test_approve_sends_one_decision_and_replaces_the_buttons(app):
+    open_follow_ups(app)
+    app.button(key="approve-" + "a" * 32).click().run()
+    assert not app.exception
+    assert app.fake.decisions == [("a" * 32, "approve")]
+    assert [b.label for b in app.button] == ["Approve", "Skip"]  # only the other draft's
+    assert "Approve sent" in app.success[0].value
+
+
+def test_no_drafts_shows_a_plain_note(app):
+    app.fake.drafts = []
+    open_follow_ups(app)
+    assert app.info[0].value == "No follow-up drafts are waiting." and not app.button
+
+
+class FakeSqs:
+    def __init__(self):
+        self.sent = []
+
+    def send_message(self, QueueUrl, MessageBody):
+        self.sent.append((QueueUrl, json.loads(MessageBody)))
+        return {"MessageId": "m-1"}
+
+
+def test_a_decision_carries_the_hash_of_the_shown_text():
+    from inbox_agent.pending_drafts import text_hash
+
+    sqs = FakeSqs()
+    app_backend.send_decision(sqs, "https://sqs.example/agent", follow_up(), "approve")
+    [(url, body)] = sqs.sent
+    assert body == {"type": "decision", "approval_id": "a" * 32, "decision": "approve", "text_hash": text_hash(DRAFT_TEXT)}
+    with pytest.raises(ValueError):
+        app_backend.send_decision(sqs, "https://sqs.example/agent", follow_up(), "send")
+
+
+def test_the_page_lists_only_drafts_waiting_for_a_decision():
+    from inbox_agent.pending_drafts import PendingDrafts
+
+    table = ReadOnlyTable("approval_id")
+    for n, (approval_id, state) in enumerate([("c" * 32, "awaiting_decision"), ("d" * 32, "approved"), ("e" * 32, "awaiting_decision")]):
+        table.items[(approval_id,)] = {
+            "approval_id": approval_id, "draft_state": state, "draft_text": DRAFT_TEXT, "company": "Kuzey", "proposed_at": 100 - n,
+        }
+    listed = app_backend.load_follow_ups(table)
+    assert [f.approval_id for f in listed] == ["e" * 32, "c" * 32]  # oldest proposal first
+    assert listed[0].text == DRAFT_TEXT

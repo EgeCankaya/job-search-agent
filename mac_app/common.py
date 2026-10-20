@@ -1,4 +1,4 @@
-"""What both pages share: the backend for this browser session, and the
+"""What the pages share: the backend for this browser session, and the
 hint shown when AWS refuses (usually an expired `aws login`)."""
 
 import sys

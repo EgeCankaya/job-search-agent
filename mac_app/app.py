@@ -1,5 +1,5 @@
-"""The Mac app (OQ-40): Dashboard (DASH-1) and Ask (CHT-1) on 127.0.0.1.
-Week 4 adds the Follow-ups page (APR-2, APR-3).
+"""The Mac app (OQ-40) on 127.0.0.1: Dashboard (DASH-1), Ask (CHT-1) and
+Follow-ups (APR-2, APR-3).
 
 Start it from the repo root, so Streamlit reads .streamlit/config.toml:
 
@@ -22,5 +22,6 @@ st.navigation(
     [
         st.Page("dashboard_page.py", title="Dashboard", default=True),
         st.Page("ask_page.py", title="Ask"),
+        st.Page("followups_page.py", title="Follow-ups"),
     ]
 ).run()
