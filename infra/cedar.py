@@ -8,8 +8,8 @@ the role ARN form is matched too, in case the Gateway reports that one.
 - The agent (the Runtime's role) may call its five tools.
 - The approval workflow's role may call `create_gmail_draft`, and only with
   an `approval_id`.
-- Nobody else may call `create_gmail_draft`: an explicit forbid, which wins
-  over any permit.
+- No other IAM caller may call `create_gmail_draft`: an explicit forbid,
+  which wins over any permit. Any other kind of caller is denied by default.
 
 The engine denies everything not permitted. Week 5 adds the never-send forbid
 (TOOL-2), the recipient forbid (ALR-3), and the same files for cedarpy
@@ -55,11 +55,15 @@ def policies(*, gateway_arn: str, account: str, runtime_role: str, approval_role
             f"  resource == {gateway}\n"
             f") when {{ {caller_is(approval_role, account)} && context.input has approval_id }};"
         ),
+        # Scoped to IAM callers, the only kind this Gateway accepts: an
+        # unscoped forbid also covers OAuth users, for whom it denies every
+        # request, and AgentCore's validation refuses that as "overly
+        # restrictive" (first deploy, 2026-10-20). Default deny covers the rest.
         "OnlyTheWorkflowDrafts": (
             "forbid(\n"
-            "  principal,\n"
+            "  principal is AgentCore::IamEntity,\n"
             f"  action == {action(DRAFT_TOOL)},\n"
             f"  resource == {gateway}\n"
-            f") unless {{ principal is AgentCore::IamEntity && {caller_is(approval_role, account)} }};"
+            f") unless {{ {caller_is(approval_role, account)} }};"
         ),
     }

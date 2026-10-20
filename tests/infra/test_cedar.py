@@ -23,7 +23,8 @@ def test_only_the_workflow_may_draft_and_only_with_an_approval_id():
     assert "context.input has approval_id" in permit
     assert 'assumed-role/ApprovalRole456/*' in permit and "RuntimeRole123" not in permit
     forbid = TEXTS["OnlyTheWorkflowDrafts"]
-    assert forbid.startswith("forbid(\n  principal,") and action(DRAFT_TOOL) in forbid
+    # Scoped to IAM callers: an unscoped forbid fails AgentCore's validation.
+    assert forbid.startswith("forbid(\n  principal is AgentCore::IamEntity,") and action(DRAFT_TOOL) in forbid
     assert "unless" in forbid and "ApprovalRole456" in forbid and "RuntimeRole123" not in forbid
 
 
