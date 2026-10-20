@@ -5,8 +5,7 @@ email. The date is a date object, never text, so no email wording can ride
 along in it. Company and role are flattened to one short line each, so they
 can't add lines to the body either.
 
-In week 2 the temporary queue reader publishes it to the SNS topic
-(reader.py); from week 3, `notify_owner` does (tool_handlers.py).
+`notify_owner` publishes it to the SNS topic (tool_handlers.py).
 """
 
 import unicodedata

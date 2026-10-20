@@ -4,7 +4,7 @@ Each logged Gmail message ID expires 30 days after it is logged (NFR-PRIV-4),
 longer than the 14-day queue retention plus the 1-hour poll overlap. The
 table object is a boto3 DynamoDB Table resource, or a fake.
 
-The poller logs a message when it queues it. The queue reader adds two
+The poller logs a message when it queues it. The agent's batch path adds two
 marks to the same item: an alert claim, taken with a conditional write
 before it publishes, so a second delivery can't send a second alert; and
 "handled", once everything is done, so a second delivery stops early.
@@ -52,7 +52,7 @@ class ProcessedLog:
 
     def _item(self, message_id: str, now: datetime) -> dict:
         # A message queued by a poll that crashed before logging it has no
-        # item yet; the reader creates it, with the same TTL.
+        # item yet; the batch path creates it, with the same TTL.
         item = self._table.get_item(Key={"message_id": message_id}, ConsistentRead=True).get("Item")
         return item if item is not None else self._new_item(message_id, now)
 

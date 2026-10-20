@@ -144,7 +144,7 @@ def test_gmail_errors_name_the_status_only():
         AgentCoreGmailClient(FakeIdentity(), opener=FakeGmailApi([[]], error=403)).search("q")
 
 
-# fetch: one queued message, read in full (the temporary queue reader)
+# fetch: one queued message, read in full (read_email)
 
 
 def test_fetch_reads_one_message_with_the_read_grant():

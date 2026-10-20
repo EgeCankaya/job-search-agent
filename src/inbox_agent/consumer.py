@@ -6,7 +6,7 @@ Lambda does: a `new_email` message becomes one InvokeAgentRuntime call with
 the message's IDs and times, in a session of its own. Week 4 adds the daily
 check, and takes Approve and Skip decisions straight to the approval
 workflow, never to the model (APR-3). Until then any other type is dropped,
-as the week 2 reader did: nothing produces one.
+as nothing produces one yet.
 
 A failed call puts the message back on the queue (partial batch response);
 after 3 receives it goes to the dead-letter queue (ING-3). Logs carry IDs

@@ -6,8 +6,8 @@ CLASSIFIER_MODEL_ID to the `eu.` Nova Micro profile and CHAT_MODEL_ID to the
 them, so each ID lives in one place. In MacBook mode both purposes use the
 local Ollama model (settings.LOCAL_MODEL_ID). Tests use a fake model.
 
-LangChain is imported only inside the functions that need it, so the poll
-Lambda and the week 2 reader, which ship without it, can still import this.
+LangChain is imported only inside the functions that need it, so the
+Lambdas, which ship without it, can still import this.
 """
 
 import os
@@ -30,31 +30,6 @@ class Model(Protocol):
     def complete(self, system: str, prompt: str) -> str:
         """One system rule, one user message, the text of the reply."""
         ...
-
-
-@dataclass(frozen=True)
-class BedrockConverseModel:
-    client: object  # boto3 bedrock-runtime client
-    model_id: str
-    max_tokens: int = 300  # the classes, the yes/no answer, company, role and date
-
-    def complete(self, system: str, prompt: str) -> str:
-        response = self.client.converse(
-            modelId=self.model_id,
-            system=[{"text": system}],
-            messages=[{"role": "user", "content": [{"text": prompt}]}],
-            inferenceConfig={"maxTokens": self.max_tokens, "temperature": 0},
-        )
-        return "".join(block.get("text", "") for block in response["output"]["message"]["content"])
-
-
-def classifier_model(environ=os.environ) -> Model:
-    model_id = environ.get(CLASSIFIER_MODEL_ID_ENV, "").strip()
-    if not model_id:
-        raise ValueError(f"Set {CLASSIFIER_MODEL_ID_ENV}; the model route (OQ-39 b) picks the ID.")
-    import boto3
-
-    return BedrockConverseModel(boto3.client("bedrock-runtime", region_name=settings.AWS_REGION), model_id)
 
 
 def chat_model(purpose: str, environ=os.environ):

@@ -220,14 +220,8 @@ def notify_owner_role_id(template):
     return role_id
 
 
-@pytest.mark.parametrize("cutover", [False, True])
-def test_alert_topic_policy_lets_only_the_publisher_and_the_alarm_publish(monkeypatch, cutover):
-    # ALR-3: the reader until the cutover, then the notify_owner tool
-    # (OQ-41 e, OQ-42 f); the dead-letter alarm in both (OQ-42 g).
-    from infra import config
-
-    monkeypatch.setattr(config, "AGENT_CUTOVER", cutover)
-    free = synth()[ALWAYS_FREE_STACK]
+def test_alert_topic_policy_lets_only_the_notify_owner_tool_and_the_alarm_publish(free):
+    # ALR-3: the notify_owner tool (OQ-42 f), and the dead-letter alarm (OQ-42 g).
     topic_id, statements = topic_policy(free)
     assert set(statements) == {
         "AllowPublishFromThePublisher",
@@ -239,8 +233,7 @@ def test_alert_topic_policy_lets_only_the_publisher_and_the_alarm_publish(monkey
         assert statement["Action"] == "sns:Publish"
         assert statement["Resource"] == {"Ref": topic_id}
 
-    publisher_id = notify_owner_role_id(free) if cutover else reader_role_id(free)
-    publisher = {"Fn::GetAtt": [publisher_id, "Arn"]}
+    publisher = {"Fn::GetAtt": [notify_owner_role_id(free), "Arn"]}
     alarm = {"Fn::GetAtt": [dead_letter_alarm_id(free), "Arn"]}
 
     allow = statements["AllowPublishFromThePublisher"]
@@ -288,17 +281,14 @@ def test_the_dead_letter_alarm_emails_through_the_alert_topic(free):
 
 
 def test_no_other_role_may_publish(templates):
-    # The reader until the cutover, and the notify_owner tool (OQ-42 f).
+    # Only the notify_owner tool's role holds sns:Publish (OQ-42 f).
     publishers = {
         role_id
         for template in templates.values()
         for role_id in resources(template, "AWS::IAM::Role")
         if any("sns:Publish" in as_list(s["Action"]) for s in policy_statements(template, role_id))
     }
-    reader = reader_role_id(templates[ALWAYS_FREE_STACK])
-    assert reader in publishers
-    [tool] = publishers - {reader}
-    assert tool.startswith("NotifyOwnerToolRole")
+    assert publishers == {notify_owner_role_id(templates[ALWAYS_FREE_STACK])}
 
 
 def test_resource_policies_open_to_anyone_only_deny(templates):
@@ -545,16 +535,12 @@ def test_the_poll_schedule_is_off_while_the_owner_switch_is_off(monkeypatch):
     assert schedule(synth("cloud")[ALWAYS_FREE_STACK])["State"] == "DISABLED"
 
 
-@pytest.mark.parametrize("cutover", [False, True])
-def test_exactly_one_reader_takes_the_queue(monkeypatch, cutover):
-    # A live poll marks emails processed; with no reader they would sit
-    # unread, and two readers would race (OQ-41 e, OQ-42 a).
-    from infra import agentcore_stack, always_free_stack, config
+def test_the_poll_never_runs_without_the_consumer():
+    # A live poll marks emails processed; with nothing reading the queue
+    # they would sit unread (OQ-42 a).
+    from infra import agentcore_stack, always_free_stack
 
-    monkeypatch.setattr(config, "AGENT_CUTOVER", cutover)
-    readers = [always_free_stack.queue_reader_enabled("cloud"), agentcore_stack.consumer_enabled("cloud")]
-    assert readers == [not cutover, cutover]
-    assert not always_free_stack.POLL_SCHEDULE_ON or any(readers)
+    assert not always_free_stack.POLL_SCHEDULE_ON or agentcore_stack.consumer_enabled("cloud")
 
 
 def test_schedule_sits_in_the_tagged_group(free):
@@ -583,149 +569,31 @@ def test_schedules_survive_a_mode_switch_and_only_the_state_changes(templates):
     assert without_state(local) == without_state(templates[ALWAYS_FREE_STACK])
 
 
-# Temporary queue reader (OQ-41 e, ING-2, CLS-1, TOOL-3)
-
-
-def reader_function(template):
-    [(logical_id, fn)] = [
-        (lid, r)
-        for lid, r in resources(template, "AWS::Lambda::Function").items()
-        if r["Properties"]["Handler"] == "inbox_agent.reader.handler"
-    ]
-    return logical_id, fn
-
-
-def reader_role_id(template):
-    return reader_function(template)[1]["Properties"]["Role"]["Fn::GetAtt"][0]
+# The queue and the agent's model access (ING-3, TOOL-3)
 
 
 def agent_queue_id(template):
     return [lid for lid, r in resources(template, "AWS::SQS::Queue").items() if "RedrivePolicy" in r["Properties"]][0]
 
 
-def test_reader_gets_tables_topic_and_model_from_config(free):
-    _, fn = reader_function(free)
-    [topic_id] = resources(free, "AWS::SNS::Topic")
-    assert fn["Properties"]["Environment"]["Variables"] == {
-        "TRACKER_TABLE_NAME": {"Ref": logical_id_by_key(free, "company_key")},
-        "PROCESSED_EMAILS_TABLE_NAME": {"Ref": logical_id_by_key(free, "message_id")},
-        "ALERT_TOPIC_ARN": {"Ref": topic_id},
-        "CLASSIFIER_MODEL_ID": "eu.amazon.nova-micro-v1:0",
-    }
+def test_the_week_2_reader_is_gone(free):
+    # Replaced by the agent at the cutover (OQ-41 e, 2026-10-19).
+    handlers = {f["Properties"]["Handler"] for f in resources(free, "AWS::Lambda::Function").values()}
+    assert "inbox_agent.reader.handler" not in handlers
+    assert not resources(free, "AWS::Lambda::EventSourceMapping")  # the consumer's lives in the AgentCore stack
 
 
-def test_reader_role_is_least_privilege(free):
-    _, fn = reader_function(free)
-    granted = {}
-    conditions = {}
-    for statement in policy_statements(free, reader_role_id(free)):
-        assert statement["Effect"] == "Allow"
-        for action in as_list(statement["Action"]):
-            granted.setdefault(action, []).extend(render_arn(r) for r in as_list(statement["Resource"]))
-            if "Condition" in statement:
-                conditions[action] = statement["Condition"]
-    granted = {action: sorted(arns) for action, arns in granted.items()}
-
-    tracker = f"<{logical_id_by_key(free, 'company_key')}>"
-    processed = f"<{logical_id_by_key(free, 'message_id')}>"
-    queue = f"<{agent_queue_id(free)}>"
-    [topic_id] = resources(free, "AWS::SNS::Topic")
-    log_group = f"<{fn['Properties']['LoggingConfig']['LogGroup']['Ref']}>"
-    agentcore = "arn:${Partition}:bedrock-agentcore:eu-north-1:${AccountId}"
-    directory = f"{agentcore}:workload-identity-directory/default"
-    workload = f"{directory}/workload-identity/inbox-agent-poller"
-    vault = f"{agentcore}:token-vault/default"
-    provider = f"{vault}/oauth2credentialprovider/inbox-agent-google"
-    secret = (
-        "arn:${Partition}:secretsmanager:eu-north-1:${AccountId}:secret:"
-        "bedrock-agentcore-identity!default/oauth2/inbox-agent-google-1ed2e5b8-NDkbRv"
-    )
-    profile = "arn:${Partition}:bedrock:eu-north-1:${AccountId}:inference-profile/eu.amazon.nova-micro-v1:0"
-    models = [
-        f"arn:${{Partition}}:bedrock:{region}::foundation-model/amazon.nova-micro-v1:0"
-        for region in ("eu-central-1", "eu-north-1", "eu-west-1", "eu-west-3")
-    ]
-    assert granted == {
-        "dynamodb:Scan": [tracker],
-        "dynamodb:GetItem": sorted([tracker, processed]),
-        "dynamodb:PutItem": sorted([tracker, processed]),
-        "sqs:ReceiveMessage": [queue],
-        "sqs:ChangeMessageVisibility": [queue],
-        "sqs:GetQueueUrl": [queue],
-        "sqs:DeleteMessage": [queue],
-        "sqs:GetQueueAttributes": [queue],
-        "sns:Publish": [f"${{{topic_id}}}"],
-        "logs:CreateLogStream": [log_group],
-        "logs:PutLogEvents": [log_group],
-        "bedrock-agentcore:GetWorkloadAccessTokenForUserId": sorted([directory, workload]),
-        "bedrock-agentcore:GetResourceOauth2Token": sorted([directory, workload, vault, provider]),
-        "secretsmanager:GetSecretValue": [secret],
-        "bedrock:InvokeModel": sorted([profile, *models]),
-    }
+def test_no_role_in_the_free_stack_calls_bedrock(free):
+    # Only the agent's Runtime role may (TOOL-3).
+    for role_id in resources(free, "AWS::IAM::Role"):
+        assert not any(a.startswith("bedrock:") for s in policy_statements(free, role_id) for a in as_list(s["Action"]))
 
 
-def test_reader_reaches_the_regional_models_only_through_the_profile(free):
-    statements = [
-        s for s in policy_statements(free, reader_role_id(free)) if "foundation-model" in json.dumps(s["Resource"])
-    ]
-    [statement] = statements
-    [(operator, values)] = statement["Condition"].items()
-    assert operator == "StringEquals"
-    assert render_arn(values["bedrock:InferenceProfileArn"]) == (
-        "arn:${Partition}:bedrock:eu-north-1:${AccountId}:inference-profile/eu.amazon.nova-micro-v1:0"
-    )
-
-
-def test_only_the_reader_may_call_bedrock(free):
-    callers = {
-        role_id
-        for role_id in resources(free, "AWS::IAM::Role")
-        if any(a.startswith("bedrock:") for s in policy_statements(free, role_id) for a in as_list(s["Action"]))
-    }
-    assert callers == {reader_role_id(free)}
-
-
-def test_reader_role_cannot_reach_the_drafts_identity(free):
-    text = json.dumps([render_arn(r) for s in policy_statements(free, reader_role_id(free)) for r in as_list(s["Resource"])])
+def test_the_read_email_role_cannot_reach_the_drafts_identity(free):
+    [role_id] = [r for r in resources(free, "AWS::IAM::Role") if r.startswith("ReadEmailToolRole")]
+    text = json.dumps([render_arn(r) for s in policy_statements(free, role_id) for r in as_list(s["Resource"])])
+    assert "inbox-agent-poller" in text
     assert "inbox-agent-drafts" not in text
-
-
-def event_source(template):
-    [mapping] = resources(template, "AWS::Lambda::EventSourceMapping").values()
-    return mapping["Properties"]
-
-
-def test_reader_reads_the_agent_queue_with_partial_failures(free):
-    reader_id, fn = reader_function(free)
-    props = event_source(free)
-    assert props["FunctionName"] == {"Ref": reader_id}
-    assert props["EventSourceArn"] == {"Fn::GetAtt": [agent_queue_id(free), "Arn"]}
-    assert props["BatchSize"] == 5
-    assert props["FunctionResponseTypes"] == ["ReportBatchItemFailures"]
-    assert props["ScalingConfig"] == {"MaximumConcurrency": 2}
-
-
-def test_queue_visibility_outlasts_the_reader(free):
-    _, fn = reader_function(free)
-    queue = resources(free, "AWS::SQS::Queue")[agent_queue_id(free)]
-    assert queue["Properties"]["VisibilityTimeout"] >= 6 * fn["Properties"]["Timeout"]
-
-
-@pytest.mark.parametrize(("mode", "enabled"), [("cloud", True), ("local", False)])
-def test_the_reader_runs_only_in_cloud_mode_and_before_the_cutover(monkeypatch, mode, enabled):
-    from infra import config
-
-    monkeypatch.setattr(config, "AGENT_CUTOVER", False)
-    assert event_source(synth(mode)[ALWAYS_FREE_STACK])["Enabled"] is enabled
-    monkeypatch.setattr(config, "AGENT_CUTOVER", True)
-    assert event_source(synth(mode)[ALWAYS_FREE_STACK])["Enabled"] is False
-
-
-def test_the_reader_is_off_while_the_owner_switch_is_off(monkeypatch):
-    from infra import always_free_stack
-
-    monkeypatch.setattr(always_free_stack, "QUEUE_READER_ON", False)
-    assert event_source(synth("cloud")[ALWAYS_FREE_STACK])["Enabled"] is False
 
 
 def test_model_id_lives_in_config_only():
@@ -734,5 +602,6 @@ def test_model_id_lives_in_config_only():
     from infra import config
 
     assert config.CLASSIFIER_MODEL_ID == f"eu.{config.CLASSIFIER_FOUNDATION_MODEL}"
+    assert config.CHAT_MODEL_ID == f"eu.{config.CHAT_FOUNDATION_MODEL}"
     with pytest.raises(ValueError):
-        model.classifier_model({})
+        model.chat_model("classify", {})

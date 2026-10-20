@@ -17,7 +17,7 @@ from inbox_agent.classify import (
     classify,
     parse_response,
 )
-from inbox_agent.model import BedrockConverseModel, classifier_model
+from inbox_agent.model import LangChainModel, chat_model
 from inbox_agent.trim import BODY_LIMIT, trim_email
 
 DATE = datetime(2026, 10, 18, 9, 0, tzinfo=UTC)
@@ -233,31 +233,32 @@ def test_silent_class_with_yes_is_a_possible_alert(name):
 # Model config (MODE-1)
 
 
-class FakeBedrock:
+class RecordingChat:
+    """A LangChain chat model that records what it is sent."""
+
     def __init__(self):
-        self.requests = []
+        self.calls = []
 
-    def converse(self, **request):
-        self.requests.append(request)
-        return {"output": {"message": {"role": "assistant", "content": [{"text": '{"classes": '}, {"text": '["offer"], "asks_by_date": "no"}'}]}}}
+    def invoke(self, messages):
+        from langchain_core.messages import AIMessage
+
+        self.calls.append(messages)
+        return AIMessage(content='{"classes": ["offer"], "asks_by_date": "no"}')
 
 
-def test_bedrock_model_sends_one_system_rule_and_one_user_message():
-    bedrock = FakeBedrock()
-    model = BedrockConverseModel(bedrock, "example.model-id-v1:0")
-    result = classify(email(), model)
+def test_the_model_gets_one_system_rule_and_one_user_message():
+    chat = RecordingChat()
+    result = classify(email(), LangChainModel(chat))
 
-    [request] = bedrock.requests
-    assert request["modelId"] == "example.model-id-v1:0"
-    assert request["system"] == [{"text": SYSTEM_RULE}]
-    [message] = request["messages"]
-    assert message["role"] == "user" and OPEN_DELIMITER in message["content"][0]["text"]
-    assert request["inferenceConfig"]["temperature"] == 0
+    [messages] = chat.calls
+    system, user = messages
+    assert (system.type, system.content) == ("system", SYSTEM_RULE)
+    assert user.type == "human" and OPEN_DELIMITER in user.content
     assert result.email_class is EmailClass.OFFER
 
 
 def test_model_id_has_no_default():
     with pytest.raises(ValueError, match="CLASSIFIER_MODEL_ID"):
-        classifier_model({})
+        chat_model("classify", {})
     with pytest.raises(ValueError, match="CLASSIFIER_MODEL_ID"):
-        classifier_model({"CLASSIFIER_MODEL_ID": "  "})
+        chat_model("classify", {"CLASSIFIER_MODEL_ID": "  "})

@@ -6,15 +6,15 @@ The edges are code, not the model's choice: the model only classifies and
 extracts (CLS-1, CLS-2), so a hostile email can't add, drop or reorder a
 tool call (NFR-SEC-2). The tracker write and the alert go through the tools
 (TOOL-1), so the Gateway, and from week 5 Cedar, sees them. The
-processed-email log is the graph's own bookkeeping, reached directly, as the
-week 2 reader did (ING-2):
+processed-email log is the graph's own bookkeeping, reached directly (ING-2):
 
 - a message already marked handled stops at the first node;
 - the tool skips an email the row already lists, so a retry writes once;
 - the alert is claimed in the log before `notify_owner`, and released if the
   call fails, so a retry can alert, and at most 1 alert goes out.
 
-These are the steps of reader.handle_email, which this replaces in week 3.
+These were the steps of the week 2 queue reader, which this replaced at the
+cutover (2026-10-19).
 """
 
 from collections.abc import Callable
@@ -31,7 +31,7 @@ from inbox_agent.tools import Tools, parse_date_or_datetime
 from inbox_agent.tracker_update import KEY_DATE_TYPES, status_for_class
 from inbox_agent.trim import TrimmedEmail
 
-# The alert names a company even when the email didn't (as in reader.py).
+# The alert names a company even when the email didn't.
 UNNAMED_COMPANY = "Company not named"
 
 

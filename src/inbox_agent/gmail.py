@@ -1,4 +1,4 @@
-"""The Gmail interface the poller and the queue reader use (ING-1), and its
+"""The Gmail interface the poller and `read_email` use (ING-1), and its
 real client (ING-4).
 
 The real client gets a `gmail.readonly` token from AgentCore Identity for the

@@ -2,10 +2,11 @@
 
 Contents: the three DynamoDB tables, the one SQS queue with its dead-letter
 queue, the SNS alert topic, the budget alerts, the Gmail poll Lambda with
-its 30-minute EventBridge Scheduler schedule, the temporary week 2 queue
-reader (OQ-41 e), the agent's four tool Lambdas, which the Gateway in the
-AgentCore stack serves (OQ-42 c), and the dead-letter alarm (ING-3). There
-is no inbound HTTP endpoint (CHT-2).
+its 30-minute EventBridge Scheduler schedule, the agent's four tool
+Lambdas, which the Gateway in the AgentCore stack serves (OQ-42 c), and the
+dead-letter alarm (ING-3). The queue's reader is the agent's queue consumer,
+in the AgentCore stack (OQ-42 a); the week 2 reader it replaced is gone.
+There is no inbound HTTP endpoint (CHT-2).
 """
 
 from pathlib import Path
@@ -22,7 +23,6 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_lambda as lambda_,
-    aws_lambda_event_sources as event_sources,
     aws_logs as logs,
     aws_scheduler as scheduler,
     aws_sns as sns,
@@ -42,20 +42,15 @@ QUEUE_RETENTION = Duration.days(14)  # NFR-REL-2 and ING-3
 MAX_RECEIVE_COUNT = 3  # ING-3
 LOG_RETENTION = logs.RetentionDays.ONE_WEEK  # NFR-PRIV-4
 POLL_RATE = "rate(30 minutes)"  # ING-1
-READER_TIMEOUT = Duration.seconds(60)
-# The week 3 queue consumer (AgentCore stack) waits for the agent, up to 5
+# The queue consumer (AgentCore stack) waits for the agent, up to 5
 # emails a batch (OQ-42 a).
 CONSUMER_TIMEOUT = Duration.seconds(180)
-# AWS's advice for a Lambda reading SQS: visibility at least 6 x the timeout
-# of the slowest reader, so a slow attempt isn't handed to a second one.
+# AWS's advice for a Lambda reading SQS: visibility at least 6 x its
+# timeout, so a slow attempt isn't handed to a second invocation.
 QUEUE_VISIBILITY = Duration.seconds(6 * 180)
 TOOL_TIMEOUT = Duration.seconds(30)
-READER_BATCH_SIZE = 5
-READER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
-# Turned on by the owner on 2026-10-18, after a deploy and a clean dry run.
-QUEUE_READER_ON = True
-# Turned on by the owner on 2026-10-18, with the queue reader: a live poll
-# marks emails processed, so it must never run without a reader.
+# Turned on by the owner on 2026-10-18. A live poll marks emails processed,
+# so it must never run without the queue consumer (agentcore_stack.CONSUMER_ON).
 POLL_SCHEDULE_ON = True
 
 
@@ -63,12 +58,6 @@ def poll_schedule_state(agent_mode: str) -> str:
     """ENABLED only in cloud mode. In MacBook mode the Mac worker polls, with
     the read token in the Keychain (ING-1, MODE-2, OQ-41 c)."""
     return "ENABLED" if POLL_SCHEDULE_ON and agent_mode == "cloud" else "DISABLED"
-
-
-def queue_reader_enabled(agent_mode: str) -> bool:
-    """Cloud mode only: its Gmail token lives in AgentCore Identity (ING-4).
-    Off after the cutover, when the agent's queue consumer reads instead."""
-    return QUEUE_READER_ON and not config.AGENT_CUTOVER and agent_mode == "cloud"
 
 
 def agent_code() -> lambda_.Code:
@@ -89,11 +78,9 @@ class AlwaysFreeStack(Stack):
         self.alert_topic = sns.Topic(self, "AlertTopic", display_name="Inbox agent")
         self._budgets(alert_email)
         self._poller()
-        self._reader()
         self._tool_functions()
-        publisher = self.tool_functions["notify_owner"] if config.AGENT_CUTOVER else self.reader_function
         self._dead_letter_alarm()
-        self._alerts(alert_email, publisher=publisher.role)
+        self._alerts(alert_email, publisher=self.tool_functions["notify_owner"].role)
 
     def _tables(self) -> None:
         # Tracker rows are kept until the project ends (NFR-PRIV-4), so the
@@ -176,8 +163,8 @@ class AlwaysFreeStack(Stack):
         # subscription. The publisher takes no recipient.
         self.alert_topic.add_subscription(subscriptions.EmailSubscription(owner_email))
 
-        # Only the publisher's role may publish: the temporary queue reader
-        # until the cutover, then the `notify_owner` tool (OQ-41 e, OQ-42 f).
+        # Only the publisher's role may publish: the `notify_owner` tool's
+        # (OQ-42 f; the week 2 reader's until the cutover, OQ-41 e).
         # The Deny also stops other principals in this account, such as the
         # owner's `aws login` session, whose own policy would otherwise allow it.
         topic_arn = [self.alert_topic.topic_arn]
@@ -407,89 +394,6 @@ class AlwaysFreeStack(Stack):
             ),
         )
         schedule.add_resource_dependency(group)
-
-    def _reader(self) -> None:
-        # OQ-41 (e): the temporary week 2 queue reader. The week 3 agent
-        # replaces it, and the topic policy moves to the agent's role.
-        log_group = logs.LogGroup(
-            self,
-            "ReaderLogGroup",
-            retention=LOG_RETENTION,
-            removal_policy=RemovalPolicy.DESTROY,
-        )
-        role = iam.Role(
-            self,
-            "ReaderRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            description="Queue reader: Gmail read token, Nova Micro, tracker, processed-email log, alert topic",
-        )
-        log_group.grant_write(role)
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=["dynamodb:Scan", "dynamodb:GetItem", "dynamodb:PutItem"],
-                resources=[self.applications_table.table_arn],
-            )
-        )
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=["dynamodb:GetItem", "dynamodb:PutItem"],
-                resources=[self.processed_emails_table.table_arn],
-            )
-        )
-        role.add_to_policy(iam.PolicyStatement(actions=["sns:Publish"], resources=[self.alert_topic.topic_arn]))
-        self._grant_gmail_read(role)
-
-        # TOOL-3, route 1: the `eu.` Nova Micro profile, and its Regions'
-        # model only when the call comes through that profile.
-        profile = self.format_arn(
-            service="bedrock", resource="inference-profile", resource_name=config.CLASSIFIER_MODEL_ID
-        )
-        role.add_to_policy(iam.PolicyStatement(actions=["bedrock:InvokeModel"], resources=[profile]))
-        role.add_to_policy(
-            iam.PolicyStatement(
-                actions=["bedrock:InvokeModel"],
-                resources=[
-                    self.format_arn(
-                        service="bedrock",
-                        region=region,
-                        account="",
-                        resource="foundation-model",
-                        resource_name=config.CLASSIFIER_FOUNDATION_MODEL,
-                    )
-                    for region in config.CLASSIFIER_PROFILE_REGIONS
-                ],
-                conditions={"StringEquals": {"bedrock:InferenceProfileArn": profile}},
-            )
-        )
-
-        self.reader_function = lambda_.Function(
-            self,
-            "ReaderFunction",
-            runtime=lambda_.Runtime.PYTHON_3_13,
-            architecture=lambda_.Architecture.ARM_64,
-            handler=f"{AGENT_PACKAGE}.reader.handler",
-            code=agent_code(),
-            role=role,
-            log_group=log_group,
-            memory_size=256,
-            timeout=READER_TIMEOUT,
-            environment={
-                "TRACKER_TABLE_NAME": self.applications_table.table_name,
-                "PROCESSED_EMAILS_TABLE_NAME": self.processed_emails_table.table_name,
-                "ALERT_TOPIC_ARN": self.alert_topic.topic_arn,
-                "CLASSIFIER_MODEL_ID": config.CLASSIFIER_MODEL_ID,
-            },
-        )
-        # Failed messages go back one by one; after 3 receives, to the DLQ (ING-3).
-        self.reader_function.add_event_source(
-            event_sources.SqsEventSource(
-                self.agent_queue,
-                batch_size=READER_BATCH_SIZE,
-                report_batch_item_failures=True,
-                max_concurrency=READER_MAX_CONCURRENCY,
-                enabled=queue_reader_enabled(self.agent_mode),
-            )
-        )
 
     def _tool_functions(self) -> None:
         """TOOL-1, OQ-42 (c): one Lambda and one role per tool, so each holds

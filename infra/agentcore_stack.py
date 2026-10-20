@@ -15,9 +15,9 @@ from it, so it can always be removed.
 - **Gateway** (TOOL-1, OQ-42 c, e): the construct, with IAM inbound auth,
   no semantic search (it would add a tool), and one Lambda target per tool.
   Its role may invoke those four functions only.
-- **Queue consumer** (OQ-42 a): reads the agent queue and calls the Runtime.
-  Its event source mapping stays off until the cutover
-  (config.AGENT_CUTOVER), when the week 2 reader's goes off.
+- **Queue consumer** (OQ-42 a): the agent queue's only reader; it calls
+  the Runtime once per new email. It replaced the week 2 reader at the
+  cutover (2026-10-19).
 """
 
 from aws_cdk import (
@@ -39,8 +39,6 @@ from infra.always_free_stack import (
     AGENT_PACKAGE,
     CONSUMER_TIMEOUT,
     LOG_RETENTION,
-    READER_BATCH_SIZE,
-    READER_MAX_CONCURRENCY,
     AlwaysFreeStack,
     agent_code,
 )
@@ -50,10 +48,16 @@ RUNTIME_ENDPOINT = "DEFAULT"
 AGENTCORE_SERVICE = "bedrock-agentcore.amazonaws.com"
 
 
+CONSUMER_BATCH_SIZE = 5
+CONSUMER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
+# The owner's switch. The poll schedule must never run with it off: polled
+# emails would be marked processed and sit unread (always_free_stack).
+CONSUMER_ON = True
+
+
 def consumer_enabled(agent_mode: str) -> bool:
-    """On after the cutover, in cloud mode only; until then the week 2
-    reader reads the queue, and two readers would race."""
-    return config.AGENT_CUTOVER and agent_mode == "cloud"
+    """Cloud mode only; in MacBook mode the Mac worker reads the queue."""
+    return CONSUMER_ON and agent_mode == "cloud"
 
 
 def _property_schema(rule: dict) -> agentcore.SchemaDefinition:
@@ -281,13 +285,13 @@ class AgentCoreStack(Stack):
             timeout=CONSUMER_TIMEOUT,
             environment={"AGENT_RUNTIME_ARN": runtime_arn},
         )
-        # As the reader: partial batch failures, 5 a batch, 2 at a time (OQ-42 a).
+        # Partial batch failures, 5 a batch, 2 at a time (OQ-42 a).
         self.consumer_function.add_event_source(
             event_sources.SqsEventSource(
                 free.agent_queue,
-                batch_size=READER_BATCH_SIZE,
+                batch_size=CONSUMER_BATCH_SIZE,
                 report_batch_item_failures=True,
-                max_concurrency=READER_MAX_CONCURRENCY,
+                max_concurrency=CONSUMER_MAX_CONCURRENCY,
                 enabled=consumer_enabled(self.agent_mode),
             )
         )

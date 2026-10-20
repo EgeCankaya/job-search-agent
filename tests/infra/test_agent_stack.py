@@ -14,7 +14,6 @@ from tests.infra.test_stacks import (
     agent_queue_id,
     as_list,
     policy_statements,
-    reader_role_id,
     render_arn,
     resources,
     synth,
@@ -216,14 +215,14 @@ def test_the_runtime_log_group_is_made_with_7_days(agent):
     assert group["Properties"]["RetentionInDays"] == 7
 
 
-def test_only_the_reader_and_the_runtime_call_bedrock(templates):
+def test_only_the_runtime_calls_bedrock(templates):
     callers = {
         role_id
         for template in templates.values()
         for role_id in resources(template, "AWS::IAM::Role")
         if any(a.startswith("bedrock:") for s in policy_statements(template, role_id) for a in as_list(s["Action"]))
     }
-    assert callers == {reader_role_id(templates[ALWAYS_FREE_STACK]), runtime_role_id(templates[AGENTCORE_STACK])}
+    assert callers == {runtime_role_id(templates[AGENTCORE_STACK])}
 
 
 def test_the_zip_starts_the_entry_point():
@@ -240,10 +239,10 @@ def consumer(agent):
     return logical_id, fn
 
 
-def test_the_consumer_reads_the_queue_like_the_reader_and_follows_the_cutover(agent):
+def test_the_consumer_reads_the_queue(agent):
     _, mapping = one(agent, "AWS::Lambda::EventSourceMapping")
     properties = mapping["Properties"]
-    assert properties["Enabled"] is config.AGENT_CUTOVER
+    assert properties["Enabled"] is True
     assert properties["BatchSize"] == 5
     assert properties["FunctionResponseTypes"] == ["ReportBatchItemFailures"]
     assert properties["ScalingConfig"] == {"MaximumConcurrency": 2}
@@ -265,13 +264,9 @@ def test_queue_visibility_outlasts_the_consumer(free, agent):
     assert queue["Properties"]["VisibilityTimeout"] >= 6 * fn["Properties"]["Timeout"]
 
 
-def test_the_cutover_turns_the_consumer_on_and_the_reader_off(monkeypatch):
-    monkeypatch.setattr(config, "AGENT_CUTOVER", True)
-    assert agentcore_stack.consumer_enabled("cloud") is True
-    assert agentcore_stack.consumer_enabled("local") is False
+def test_the_owner_switch_turns_the_consumer_off(monkeypatch):
+    monkeypatch.setattr(agentcore_stack, "CONSUMER_ON", False)
+    assert agentcore_stack.consumer_enabled("cloud") is False
     app = App(context={"alert_email": TEST_EMAIL, "agent_mode": "cloud", "aws:cdk:bundling-stacks": []})
-    stacks = build(app)
-    [consumer_mapping] = resources(Template.from_stack(stacks[AGENTCORE_STACK]), "AWS::Lambda::EventSourceMapping").values()
-    [reader_mapping] = resources(Template.from_stack(stacks[ALWAYS_FREE_STACK]), "AWS::Lambda::EventSourceMapping").values()
-    assert consumer_mapping["Properties"]["Enabled"] is True
-    assert reader_mapping["Properties"]["Enabled"] is False
+    [mapping] = resources(Template.from_stack(build(app)[AGENTCORE_STACK]), "AWS::Lambda::EventSourceMapping").values()
+    assert mapping["Properties"]["Enabled"] is False
