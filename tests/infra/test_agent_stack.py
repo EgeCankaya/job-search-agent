@@ -1,11 +1,13 @@
 """Week 3 infrastructure (OQ-42 a, c, e, i): the tool Lambdas, the Gateway,
 the Runtime and the queue consumer."""
 
+import json
+
 import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Template
 
-from inbox_agent.tools import TOOL_SPECS, WEEK3_TOOLS
+from inbox_agent.tools import GATEWAY_TOOLS, TOOL_SPECS
 from infra import agentcore_stack, config
 from infra.app import AGENTCORE_STACK, ALWAYS_FREE_STACK, build
 from infra.runtime_bundle import ENTRYPOINT, MAIN
@@ -64,12 +66,12 @@ def tool_functions(free):
     }
 
 
-def test_one_function_per_week_3_tool(free):
+def test_one_function_per_tool(free):
     functions = tool_functions(free)
-    assert set(functions) == set(WEEK3_TOOLS)
+    assert set(functions) == set(GATEWAY_TOOLS)
     for fn in functions.values():
         assert fn["Properties"]["Handler"] == "inbox_agent.tool_lambda.handler"
-    assert len({role_of(free, fn) for fn in functions.values()}) == 4  # a role each
+    assert len({role_of(free, fn) for fn in functions.values()}) == 6  # a role each
 
 
 @pytest.mark.parametrize(
@@ -82,6 +84,27 @@ def test_one_function_per_week_3_tool(free):
         ("upsert_application", {"dynamodb:Scan", "dynamodb:GetItem", "dynamodb:PutItem"}),
         ("list_applications", {"dynamodb:Scan", "dynamodb:GetItem"}),
         ("notify_owner", {"sns:Publish"}),
+        (
+            "search_gmail",
+            {
+                "bedrock-agentcore:GetWorkloadAccessTokenForUserId",
+                "bedrock-agentcore:GetResourceOauth2Token",
+                "secretsmanager:GetSecretValue",
+                "dynamodb:Scan",
+                "dynamodb:GetItem",
+            },
+        ),
+        (
+            "create_gmail_draft",
+            {
+                "bedrock-agentcore:GetWorkloadAccessTokenForUserId",
+                "bedrock-agentcore:GetResourceOauth2Token",
+                "secretsmanager:GetSecretValue",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "iam:GetRole",
+            },
+        ),
     ],
 )
 def test_each_tool_role_holds_only_its_tool(free, tool, expected):
@@ -103,7 +126,7 @@ def test_only_the_tracker_tools_reach_the_tracker(free):
 
 def test_tool_lambdas_stay_in_local_mode():
     # MacBook mode keeps the free stack whole; the Lambdas sit idle there.
-    assert set(tool_functions(synth("local")[ALWAYS_FREE_STACK])) == set(WEEK3_TOOLS)
+    assert set(tool_functions(synth("local")[ALWAYS_FREE_STACK])) == set(GATEWAY_TOOLS)
 
 
 # The Gateway
@@ -117,7 +140,7 @@ def test_the_gateway_takes_iam_calls_and_has_no_search_tool(agent):
     assert "SearchType" not in properties["ProtocolConfiguration"]["Mcp"]
 
 
-def test_the_gateway_serves_exactly_the_week_3_tools(agent):
+def test_the_gateway_serves_exactly_the_prds_six_tools(agent):
     targets = resources(agent, "AWS::BedrockAgentCore::GatewayTarget").values()
     served = {}
     for target in targets:
@@ -125,8 +148,9 @@ def test_the_gateway_serves_exactly_the_week_3_tools(agent):
         [tool] = lambda_target["ToolSchema"]["InlinePayload"]
         served[target["Properties"]["Name"]] = tool
     assert {name: tool["Name"] for name, tool in served.items()} == {
-        agentcore_stack.target_name(name): name for name in WEEK3_TOOLS
+        agentcore_stack.target_name(name): name for name in GATEWAY_TOOLS
     }
+    assert len(served) == 6  # TOOL-1
     for tool in served.values():
         spec = TOOL_SPECS[tool["Name"]]
         assert set(tool["InputSchema"]["Properties"]) == set(spec.input_schema["properties"])
@@ -143,8 +167,8 @@ def test_the_gateway_role_may_only_invoke_the_tool_functions(agent):
     role_id = one(agent, "AWS::BedrockAgentCore::Gateway")[1]["Properties"]["RoleArn"]["Fn::GetAtt"][0]
     assert actions(agent, role_id, skip_logs=False) == {"lambda:InvokeFunction"}
     targets = {str(r) for s in policy_statements(agent, role_id) for r in as_list(s["Resource"])}
-    assert len(targets) == 8  # 4 functions and their versions
-    assert all(any(f"{tool.title().replace('_', '')}ToolFunction" in t for tool in WEEK3_TOOLS) for t in targets)
+    assert len(targets) == 12  # 6 functions and their versions
+    assert all(any(f"{tool.title().replace('_', '')}ToolFunction" in t for tool in GATEWAY_TOOLS) for t in targets)
 
 
 # The Runtime
@@ -270,3 +294,19 @@ def test_the_owner_switch_turns_the_consumer_off(monkeypatch):
     app = App(context={"alert_email": TEST_EMAIL, "agent_mode": "cloud", "aws:cdk:bundling-stacks": []})
     [mapping] = resources(Template.from_stack(build(app)[AGENTCORE_STACK]), "AWS::Lambda::EventSourceMapping").values()
     assert mapping["Properties"]["Enabled"] is False
+
+
+def test_only_the_draft_tool_holds_the_compose_grant(free):
+    for tool, fn in tool_functions(free).items():
+        text = json.dumps([render_arn(r) for s in policy_statements(free, role_of(free, fn)) for r in as_list(s["Resource"])])
+        assert ("inbox-agent-drafts" in text) == (tool == "create_gmail_draft"), tool
+        assert ("inbox-agent-poller" in text) == (tool in ("read_email", "search_gmail")), tool
+
+
+def test_the_draft_tool_reads_only_the_owners_role_and_the_pending_drafts(free):
+    role_id = role_of(free, tool_functions(free)["create_gmail_draft"])
+    statements = policy_statements(free, role_id)
+    [get_role] = [s for s in statements if "iam:GetRole" in as_list(s["Action"])]
+    assert render_arn(get_role["Resource"]).endswith(":role/managed/AccountFullAccessRole")
+    tables = {render_arn(r) for s in statements if any(a.startswith("dynamodb:") for a in as_list(s["Action"])) for r in as_list(s["Resource"])}
+    assert len(tables) == 1 and "PendingDraftsTable" in tables.pop()

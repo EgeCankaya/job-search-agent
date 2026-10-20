@@ -6,8 +6,10 @@ others: a call with an unknown key, such as a recipient, is refused here,
 whoever makes it. The same specs serve the Gateway's Lambda targets (cloud)
 and the local MCP server (MacBook mode).
 
-Week 3 serves four tools; `search_gmail` and `create_gmail_draft` arrive in
-week 4 with the follow-up drafts (OQ-42 c).
+Week 3 served four tools; week 4 adds `search_gmail` and `create_gmail_draft`
+for the follow-up drafts (OQ-42 c), with the inputs of OQ-44 (e). The
+Gateway then serves the PRD's six. The agent may call five of them; only the
+approval workflow calls `create_gmail_draft` (APR-3, TOOL-4).
 """
 
 import re
@@ -24,6 +26,8 @@ NAME_LIMIT = 100
 NEXT_STEP_LIMIT = 200
 MAX_DAYS = 3650
 MESSAGE_ID_PATTERN = r"^[0-9A-Za-z_-]{1,64}$"
+APPROVAL_ID_PATTERN = r"^[0-9a-f]{32}$"
+SEARCH_LIMIT = 5
 KEY_DATE_TYPES = ("interview", "assessment_deadline")
 ALERT_KINDS = ("urgent", "possible")
 OPEN = "open"
@@ -128,10 +132,45 @@ NOTIFY_OWNER = ToolSpec(
     },
 )
 
+SEARCH_GMAIL = ToolSpec(
+    name="search_gmail",
+    description=(
+        f"Find the newest job-search emails (at most {SEARCH_LIMIT}) from one company in the applications "
+        "tracker. Returns for each its message ID, thread ID, sender address, received time and Message-ID "
+        "header, newest first; never the subject or the text. Read one with read_email."
+    ),
+    input_schema={
+        "type": "object",
+        "properties": {"company": _string(NAME_LIMIT)},
+        "required": ["company"],
+        "additionalProperties": False,
+    },
+)
+
+CREATE_GMAIL_DRAFT = ToolSpec(
+    name="create_gmail_draft",
+    description=(
+        "Save one approved follow-up as a Gmail draft. Takes only the approval ID; the recipient, thread, "
+        "subject and text come from the approved record. Only the approval workflow may call it; it never sends."
+    ),
+    input_schema={
+        "type": "object",
+        "properties": {"approval_id": {"type": "string", "pattern": APPROVAL_ID_PATTERN}},
+        "required": ["approval_id"],
+        "additionalProperties": False,
+    },
+)
+
 TOOL_SPECS: dict[str, ToolSpec] = {
-    spec.name: spec for spec in (READ_EMAIL, UPSERT_APPLICATION, LIST_APPLICATIONS, NOTIFY_OWNER)
+    spec.name: spec
+    for spec in (READ_EMAIL, UPSERT_APPLICATION, LIST_APPLICATIONS, NOTIFY_OWNER, SEARCH_GMAIL, CREATE_GMAIL_DRAFT)
 }
-WEEK3_TOOLS = tuple(TOOL_SPECS)
+WEEK3_TOOLS = ("read_email", "upsert_application", "list_applications", "notify_owner")
+# TOOL-1: from week 4 the Gateway serves the PRD's six.
+GATEWAY_TOOLS = tuple(TOOL_SPECS)
+# The agent's five (OQ-44 j); the approval workflow's one (APR-3, TOOL-4).
+AGENT_TOOLS = (*WEEK3_TOOLS, "search_gmail")
+APPROVAL_TOOLS = ("create_gmail_draft",)
 
 
 class Tools(Protocol):

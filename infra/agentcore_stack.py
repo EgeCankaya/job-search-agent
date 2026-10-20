@@ -33,7 +33,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from inbox_agent.tools import TOOL_SPECS, WEEK3_TOOLS, ToolSpec
+from inbox_agent.tools import APPROVAL_ID_PATTERN, GATEWAY_TOOLS, MESSAGE_ID_PATTERN, TOOL_SPECS, ToolSpec
 from infra import config
 from infra.always_free_stack import (
     AGENT_PACKAGE,
@@ -72,8 +72,10 @@ def _property_schema(rule: dict) -> agentcore.SchemaDefinition:
         notes.append("An ISO date, YYYY-MM-DD.")
     if rule.get("format") == "date-time-or-date":
         notes.append("An ISO date, or an ISO date and time.")
-    if "pattern" in rule:
+    if rule.get("pattern") == MESSAGE_ID_PATTERN:
         notes.append("A Gmail message ID.")
+    elif rule.get("pattern") == APPROVAL_ID_PATTERN:
+        notes.append("An approval ID: 32 lowercase hex characters.")
     if rule["type"] == "integer":
         notes.append(f"A whole number from {rule['minimum']} to {rule['maximum']}.")
     kind = agentcore.SchemaDefinitionType.INTEGER if rule["type"] == "integer" else agentcore.SchemaDefinitionType.STRING
@@ -129,7 +131,7 @@ class AgentCoreStack(Stack):
         )
         # Semantic search adds a search tool to the list, and TOOL-1 fixes the list.
         self.gateway.node.default_child.add_property_deletion_override("ProtocolConfiguration.Mcp.SearchType")
-        for name in WEEK3_TOOLS:
+        for name in GATEWAY_TOOLS:
             self.gateway.add_lambda_target(
                 f"{''.join(part.title() for part in name.split('_'))}Target",
                 gateway_target_name=target_name(name),

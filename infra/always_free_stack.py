@@ -2,7 +2,7 @@
 
 Contents: the three DynamoDB tables, the one SQS queue with its dead-letter
 queue, the SNS alert topic, the budget alerts, the Gmail poll Lambda with
-its 30-minute EventBridge Scheduler schedule, the agent's four tool
+its 30-minute EventBridge Scheduler schedule, the agent's six tool
 Lambdas, which the Gateway in the AgentCore stack serves (OQ-42 c), and the
 dead-letter alarm (ING-3). The queue's reader is the agent's queue consumer,
 in the AgentCore stack (OQ-42 a); the week 2 reader it replaced is gone.
@@ -282,10 +282,26 @@ class AlwaysFreeStack(Stack):
         # ING-4: the Gmail read token, from AgentCore Identity, as the poller's
         # workload identity, from the one Google provider (exact ARNs only).
         # Never the drafts identity, which holds the compose grant.
+        self._grant_gmail_token(role, config.POLLER_WORKLOAD_IDENTITY)
+
+    def _grant_gmail_compose(self, role: iam.Role) -> None:
+        # ING-4, TOOL-4: the compose token, as the drafts identity; only the
+        # draft tool's role ever gets this.
+        self._grant_gmail_token(role, config.DRAFTS_WORKLOAD_IDENTITY)
+
+    def owner_role_arn(self) -> str:
+        return self.format_arn(
+            service="iam",
+            region="",
+            resource="role",
+            resource_name=f"{config.OWNER_ROLE_PATH}{config.OWNER_ROLE_NAME}",
+        )
+
+    def _grant_gmail_token(self, role: iam.Role, workload_identity: str) -> None:
         directory = self.format_arn(
             service="bedrock-agentcore", resource="workload-identity-directory", resource_name="default"
         )
-        workload = f"{directory}/workload-identity/{config.POLLER_WORKLOAD_IDENTITY}"
+        workload = f"{directory}/workload-identity/{workload_identity}"
         vault = self.format_arn(service="bedrock-agentcore", resource="token-vault", resource_name="default")
         provider = f"{vault}/oauth2credentialprovider/{config.GOOGLE_CREDENTIAL_PROVIDER}"
         role.add_to_policy(
@@ -395,6 +411,23 @@ class AlwaysFreeStack(Stack):
         )
         schedule.add_resource_dependency(group)
 
+    def _grant_search(self, role: iam.Role) -> None:
+        self._grant_gmail_read(role)
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:Scan", "dynamodb:GetItem"], resources=[self.applications_table.table_arn]
+            )
+        )
+
+    def _grant_draft(self, role: iam.Role) -> None:
+        self._grant_gmail_compose(role)
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:GetItem", "dynamodb:PutItem"], resources=[self.pending_drafts_table.table_arn]
+            )
+        )
+        role.add_to_policy(iam.PolicyStatement(actions=["iam:GetRole"], resources=[self.owner_role_arn()]))
+
     def _tool_functions(self) -> None:
         """TOOL-1, OQ-42 (c): one Lambda and one role per tool, so each holds
         only what its tool needs. The Gateway invokes them; TOOL_NAME pins
@@ -423,12 +456,22 @@ class AlwaysFreeStack(Stack):
                     iam.PolicyStatement(actions=["sns:Publish"], resources=[self.alert_topic.topic_arn])
                 ),
             ),
+            "search_gmail": ("Gmail read token and tracker read only", self._grant_search),
+            "create_gmail_draft": (
+                "Gmail compose token, pending drafts and the owner's role ID only",
+                self._grant_draft,
+            ),
         }
         environment = {
             "read_email": {},
             "upsert_application": {"TRACKER_TABLE_NAME": self.applications_table.table_name},
             "list_applications": {"TRACKER_TABLE_NAME": self.applications_table.table_name},
             "notify_owner": {"ALERT_TOPIC_ARN": self.alert_topic.topic_arn},
+            "search_gmail": {"TRACKER_TABLE_NAME": self.applications_table.table_name},
+            "create_gmail_draft": {
+                "PENDING_DRAFTS_TABLE_NAME": self.pending_drafts_table.table_name,
+                "OWNER_ROLE_NAME": config.OWNER_ROLE_NAME,
+            },
         }
         for name, (purpose, grant) in grants.items():
             construct = "".join(part.title() for part in name.split("_"))

@@ -1,9 +1,10 @@
-"""The four week 3 tools (TOOL-1, OQ-42 c and d), and the in-process `Tools`
-that runs them.
+"""The six tools (TOOL-1, OQ-42 c and d, OQ-44 e), and the in-process
+`Tools` that runs them.
 
 Each handler gets only the dependency it needs: `read_email` the Gmail read
-grant, `upsert_application` and `list_applications` the tracker,
-`notify_owner` the alert topic. In cloud mode each runs in its own Lambda
+grant, `search_gmail` the read grant and the tracker, `upsert_application`
+and `list_applications` the tracker, `notify_owner` the alert topic, and
+`create_gmail_draft` the pending-draft records and the drafts-only client. In cloud mode each runs in its own Lambda
 with a role to match (tool_lambda.py); in MacBook mode the local MCP server
 runs the same code.
 
@@ -18,10 +19,13 @@ from datetime import date, datetime
 from inbox_agent import settings
 from inbox_agent.alerts import AlertTopic, build_alert
 from inbox_agent.classes import URGENT_CLASSES, EmailClass
-from inbox_agent.gmail import GmailClient
+from inbox_agent.gmail import DraftsOnlyGmail, GmailClient, GmailError, draft_message
 from inbox_agent.matching import company_key, is_open, match_application
+from inbox_agent.pending_drafts import PendingDrafts, check_approved
+from inbox_agent.query import build_query, company_search_query
 from inbox_agent.tools import (
     OPEN,
+    SEARCH_LIMIT,
     TOOL_SPECS,
     WEEK3_TOOLS,
     ToolInputError,
@@ -51,6 +55,10 @@ class ToolDeps:
     tracker: TrackerTable | None = None
     gmail: GmailClient | None = None
     topic: AlertTopic | None = None
+    pending: PendingDrafts | None = None
+    drafts_gmail: DraftsOnlyGmail | None = None
+    # The owner's IAM role ID, which the consumer records on an Approve (OQ-44 d).
+    owner_role_id: Callable[[], str] = field(default=lambda: "")
     today: Callable[[], date] = field(default=_today)
 
 
@@ -211,11 +219,65 @@ def notify_owner(
     return {"published": True}
 
 
+def search_gmail(deps: ToolDeps, *, company: str) -> dict:
+    """One tracker company's newest job-search emails: IDs, thread, sender,
+    time and Message-ID only (OQ-44 e). Only a company in the tracker can be
+    searched, and always within the job-search query."""
+    try:
+        wanted = company_key(company, deps.tracker.aliases())
+    except ValueError:
+        raise ToolInputError("company is empty after normalization") from None
+    rows = deps.tracker.rows()
+    company_rows = [row for row in rows if row["company_key"] == wanted]
+    if not company_rows:
+        raise ToolInputError("no tracker row has that company")
+    # `after:` isn't used, so any time will do for the job-search part.
+    query = company_search_query(
+        build_query(rows, datetime.now(settings.OWNER_TIMEZONE)), company_rows, company_rows[0]["company"]
+    )
+    found = deps.gmail.search_metadata(query, SEARCH_LIMIT) if query else []
+    return {
+        "count": len(found),
+        "messages": [
+            {
+                "message_id": meta.message_id,
+                "thread_id": meta.thread_id,
+                "sender": meta.sender,
+                "received_at": meta.received_at.isoformat(),
+                "rfc822_message_id": meta.rfc822_message_id,
+            }
+            for meta in found
+        ],
+    }
+
+
+def create_gmail_draft(deps: ToolDeps, *, approval_id: str) -> dict:
+    """TOOL-4: a draft only for a record I approved, with the text I
+    approved, once. Everything but the ID comes from the record (OQ-44 e)."""
+    record = deps.pending.get(approval_id)
+    approved = check_approved(record, deps.owner_role_id())
+    message = draft_message(
+        to_address=approved.to_address, subject=approved.subject, text=approved.text, in_reply_to=approved.in_reply_to
+    )
+    deps.pending.claim_for_draft(record)
+    claimed = deps.pending.get(approval_id)
+    try:
+        draft_id = deps.drafts_gmail.create_draft(message, approved.thread_id)
+    except GmailError:
+        # Nothing was saved; the workflow's retry may try again.
+        deps.pending.release_claim(claimed)
+        raise
+    deps.pending.mark_draft_saved(claimed, draft_id)
+    return {"approval_id": approval_id, "draft_id": draft_id, "saved": True}
+
+
 HANDLERS: dict[str, Callable[..., dict]] = {
     "read_email": read_email,
     "upsert_application": upsert_application,
     "list_applications": list_applications,
     "notify_owner": notify_owner,
+    "search_gmail": search_gmail,
+    "create_gmail_draft": create_gmail_draft,
 }
 
 

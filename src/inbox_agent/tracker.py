@@ -71,7 +71,8 @@ class TrackerTable:
             condition = {"ConditionExpression": f"attribute_not_exists({FOLLOW_UP})"}
         else:
             condition = {
-                "ConditionExpression": f"{FOLLOW_UP}.{VERSION} = :version",
+                "ConditionExpression": "#follow_up.#version = :version",
+                "ExpressionAttributeNames": {"#follow_up": FOLLOW_UP, "#version": VERSION},
                 "ExpressionAttributeValues": {":version": read[FOLLOW_UP].get(VERSION, 0)},
             }
         try:

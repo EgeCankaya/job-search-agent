@@ -12,6 +12,7 @@ results, which can hold email text or tracker data (NFR-PRIV-3).
 import json
 import logging
 import os
+from functools import cache
 
 from inbox_agent import settings
 from inbox_agent.alerts import AlertTopic
@@ -47,14 +48,45 @@ def _deps(name: str) -> ToolDeps:
     if name == "notify_owner":
         sns = boto3.client("sns", region_name=settings.AWS_REGION)
         return ToolDeps(topic=AlertTopic(sns, os.environ["ALERT_TOPIC_ARN"]))
+    if name == "search_gmail":
+        from inbox_agent.gmail import gmail_client
+        from inbox_agent.tracker import TrackerTable
+
+        table = boto3.resource("dynamodb", region_name=settings.AWS_REGION).Table(os.environ["TRACKER_TABLE_NAME"])
+        return ToolDeps(gmail=gmail_client(), tracker=TrackerTable(table))
+    if name == "create_gmail_draft":
+        from datetime import UTC, datetime
+
+        from inbox_agent.gmail import drafts_client
+        from inbox_agent.pending_drafts import PendingDrafts
+
+        table = boto3.resource("dynamodb", region_name=settings.AWS_REGION).Table(
+            os.environ["PENDING_DRAFTS_TABLE_NAME"]
+        )
+        return ToolDeps(
+            pending=PendingDrafts(table, now=lambda: datetime.now(UTC)),
+            drafts_gmail=drafts_client(),
+            owner_role_id=lambda: owner_role_id(os.environ["OWNER_ROLE_NAME"]),
+        )
     raise ValueError(f"unknown tool {name}")
+
+
+@cache
+def owner_role_id(role_name: str) -> str:
+    """The unique ID of the owner's role, which SQS reports as a message's
+    sender (OQ-44 d). Looked up once per cold start."""
+    import boto3
+
+    return boto3.client("iam").get_role(RoleName=role_name)["Role"]["RoleId"]
 
 
 def _log_fields(name: str, arguments: object, result: dict) -> dict:
     fields: dict = {"event": "tool_done", "tool": name}
     if isinstance(arguments, dict) and isinstance(arguments.get("message_id"), str):
         fields["message_id"] = arguments["message_id"]
-    for key in ("count", "created", "written", "published"):
+    if isinstance(arguments, dict) and isinstance(arguments.get("approval_id"), str):
+        fields["approval_id"] = arguments["approval_id"]
+    for key in ("count", "created", "written", "published", "saved"):
         if key in result:
             fields[key] = result[key]
     return fields

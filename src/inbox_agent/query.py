@@ -71,14 +71,18 @@ class GmailQuery:
     # Gmail knows "me"; a local check of labeled mail needs the address.
     own_addresses: tuple[str, ...] = ()
 
-    def to_gmail(self) -> str:
+    def job_search_group(self) -> str:
+        """The four parts, OR'd, in one group."""
         terms = [f"from:{domain}" for domain in self.sender_domains]
         terms += [f"from:{address}" for address in self.sender_addresses]
         terms += [f"subject:{keyword}" for keyword in self.subject_keywords]
-        return (
-            f"({' OR '.join(terms)}) after:{int(self.after.timestamp())} "
-            f"{settings.OWN_MAIL_EXCLUSION} -from:{self.excluded_sender}"
-        )
+        return f"({' OR '.join(terms)})"
+
+    def exclusions(self) -> str:
+        return f"{settings.OWN_MAIL_EXCLUSION} -from:{self.excluded_sender}"
+
+    def to_gmail(self) -> str:
+        return f"{self.job_search_group()} after:{int(self.after.timestamp())} {self.exclusions()}"
 
     def matches(self, email: EmailHeader) -> bool:
         if email.received_at < self.after or email.sender_address in (self.excluded_sender, *self.own_addresses):
@@ -125,6 +129,28 @@ def build_query(
         after=last_successful_poll - POLL_OVERLAP,
         skipped_values=skipped_domains + skipped_addresses,
     )
+
+
+_NAME_UNSAFE = re.compile(r"[^\w .&-]+")
+
+
+def company_search_query(job_query: GmailQuery, company_rows: Iterable[Mapping], company_name: str) -> str | None:
+    """`search_gmail` (OQ-44 e): one company's mail within the job-search
+    query, with no `after:`. The company part is the rows' domains and saved
+    recruiter senders; a company with neither is searched by its name, as a
+    quoted phrase stripped of anything but letters, digits and . & -. None
+    when nothing safe is left to search for."""
+    rows = list(company_rows)
+    domains, _ = _clean((d for row in rows for d in row.get("company_domains", [])), normalize_domain)
+    addresses, _ = _clean((a for row in rows for a in row.get("recruiter_senders", [])), normalize_address)
+    addresses = {a for a in addresses if a.rpartition("@")[2] not in domains}
+    terms = [f"from:{value}" for value in (*sorted(domains), *sorted(addresses))]
+    if not terms:
+        name = " ".join(_NAME_UNSAFE.sub(" ", company_name).split())
+        if not name:
+            return None
+        terms = [f'"{name}"']
+    return f"({' OR '.join(terms)}) {job_query.job_search_group()} {job_query.exclusions()}"
 
 
 # M8 hook: query coverage on the labeled set (ING-1, §11). Runs later, on the

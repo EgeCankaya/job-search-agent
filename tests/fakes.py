@@ -16,6 +16,40 @@ class FakeConditionalCheckFailed(Exception):
     response = {"Error": {"Code": "ConditionalCheckFailedException"}}
 
 
+_MISSING = object()
+
+
+def _condition_holds(item: dict | None, expression: str, names: dict | None, values: dict | None) -> bool:
+    """Only the forms the runtime code uses: clauses joined by AND, each
+    attribute_exists(path), attribute_not_exists(path) or path = :value,
+    where a path is names or #placeholders joined by dots. A missing item
+    has no attributes, as in DynamoDB."""
+    names, values = names or {}, values or {}
+
+    def value_at(path: str):
+        node = item or {}
+        for part in path.split("."):
+            part = names[part] if part.startswith("#") else part
+            if not isinstance(node, dict) or part not in node:
+                return _MISSING
+            node = node[part]
+        return node
+
+    for clause in expression.split(" AND "):
+        clause = clause.strip()
+        if match := re.fullmatch(r"attribute_not_exists\(([\w#.]+)\)", clause):
+            holds = value_at(match.group(1)) is _MISSING
+        elif match := re.fullmatch(r"attribute_exists\(([\w#.]+)\)", clause):
+            holds = value_at(match.group(1)) is not _MISSING
+        elif match := re.fullmatch(r"([\w#.]+) = (:\w+)", clause):
+            holds = value_at(match.group(1)) == values[match.group(2)]
+        else:
+            raise AssertionError(f"unsupported condition {clause!r}")
+        if not holds:
+            return False
+    return True
+
+
 class FakeTable:
     PAGE_SIZE = 2
 
@@ -49,22 +83,17 @@ class FakeTable:
         return {"Item": copy.deepcopy(item)} if item is not None else {}
 
     def put_item(
-        self, Item: dict, ConditionExpression: str | None = None, ExpressionAttributeValues: dict | None = None
+        self,
+        Item: dict,
+        ConditionExpression: str | None = None,
+        ExpressionAttributeNames: dict | None = None,
+        ExpressionAttributeValues: dict | None = None,
     ) -> dict:
         self._check_types(Item)
-        if ConditionExpression is not None:
-            existing = self.items.get(self._key(Item))
-            # Only the forms the runtime code uses.
-            if match := re.fullmatch(r"attribute_not_exists\((\w+)\)", ConditionExpression):
-                failed = existing is not None and match.group(1) in existing
-            elif match := re.fullmatch(r"(\w+)\.(\w+) = (:\w+)", ConditionExpression):
-                outer, inner, name = match.groups()
-                value = (existing or {}).get(outer, {}).get(inner)
-                failed = value is None or value != ExpressionAttributeValues[name]
-            else:
-                raise AssertionError(f"unsupported condition {ConditionExpression!r}")
-            if failed:
-                raise FakeConditionalCheckFailed()
+        if ConditionExpression is not None and not _condition_holds(
+            self.items.get(self._key(Item)), ConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues
+        ):
+            raise FakeConditionalCheckFailed()
         self.items[self._key(Item)] = copy.deepcopy(Item)
         self.puts += 1
         return {}

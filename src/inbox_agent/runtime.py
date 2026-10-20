@@ -61,7 +61,10 @@ def _tools():
     if agent_mode() == "cloud":
         from inbox_agent.gateway_tools import GatewayTools
 
-        return GatewayTools(os.environ[GATEWAY_URL_ENV])
+        from inbox_agent.tools import AGENT_TOOLS
+
+        # Never create_gmail_draft: only the approval workflow calls it (APR-3).
+        return GatewayTools(os.environ[GATEWAY_URL_ENV], names=AGENT_TOOLS)
     return _local_tools()
 
 
