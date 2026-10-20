@@ -155,3 +155,43 @@ def test_only_the_runtime_reaches_memory_and_never_deletes(templates):
                         "bedrock-agentcore:RetrieveMemoryRecords",
                     }
                     assert as_list(statement["Resource"]) == [{"Fn::GetAtt": ["Memory", "MemoryArn"]}]
+
+
+def test_the_only_question_mark_pattern_is_cdks_gateway_name(templates):
+    """CDK grants the Gateway role AuthorizeAction on its own Gateway by a
+    name pattern, because the Gateway's ID doesn't exist before the role."""
+    seen = []
+    for name, template in templates.items():
+        for logical_id, policy in resources(template, "AWS::IAM::Policy").items():
+            for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
+                for resource in as_list(statement["Resource"]):
+                    if "?" in json.dumps(resource):
+                        seen.append(logical_id)
+                        assert logical_id.startswith("GatewayRole")
+                        assert set(as_list(statement["Action"])) == {
+                            "bedrock-agentcore:AuthorizeAction",
+                            "bedrock-agentcore:PartiallyAuthorizeActions",
+                        }
+                        assert render_arn(resource).endswith(":gateway/inbox-agent-??????????")
+    assert len(seen) == 1
+
+
+def test_the_gateway_enforces_the_week_4_policies(agent):
+    [gateway] = resources(agent, "AWS::BedrockAgentCore::Gateway").values()
+    assert gateway["Properties"]["PolicyEngineConfiguration"]["Mode"] == "ENFORCE"
+    texts = {
+        lid: "".join(p if isinstance(p, str) else "<token>" for p in r["Properties"]["Definition"]["Cedar"]["Statement"]["Fn::Join"][1])
+        for lid, r in resources(agent, "AWS::BedrockAgentCore::Policy").items()
+    }
+    assert len(texts) == 3
+    assert all(r["Properties"]["ValidationMode"] == "FAIL_ON_ANY_FINDINGS" for r in resources(agent, "AWS::BedrockAgentCore::Policy").values())
+    [forbid] = [t for t in texts.values() if t.startswith("forbid")]
+    assert 'create-gmail-draft___create_gmail_draft' in forbid and "unless" in forbid
+
+
+def test_the_committed_config_keeps_the_probe_off(agent):
+    from infra import agentcore_stack
+
+    assert agentcore_stack.POLICY_PROBE_ON is False
+    [runtime] = resources(agent, "AWS::BedrockAgentCore::Runtime").values()
+    assert "POLICY_PROBE" not in runtime["Properties"]["EnvironmentVariables"]

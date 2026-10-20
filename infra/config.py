@@ -90,4 +90,5 @@ APPROVAL_FUNCTION_NAME = "inbox-agent-approval"
 # Week 3 agent (OQ-42). Runtime names allow letters, digits and underscores.
 RUNTIME_NAME = "inbox_agent"
 MEMORY_NAME = "inbox_agent_memory"
+POLICY_ENGINE_NAME = "inbox_agent_policies"
 GATEWAY_NAME = "inbox-agent"

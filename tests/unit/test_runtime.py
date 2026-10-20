@@ -173,3 +173,36 @@ def test_a_tool_failure_reaches_the_caller_unwrapped(monkeypatch):
     monkeypatch.setattr(tools, "_call", failing)
     with pytest.raises(GatewayToolError, match="failed behind the Gateway"):
         tools.call("list_applications", {})
+
+
+# The one-off policy probe (OQ-44 k)
+
+
+class ProbeGateway:
+    def __init__(self, error=None):
+        self.error, self.calls = error, []
+
+    def call_unlisted(self, name, arguments):
+        self.calls.append((name, arguments))
+        if self.error:
+            raise self.error
+        return {"saved": True}
+
+
+def test_the_probe_is_refused_unless_switched_on(monkeypatch):
+    monkeypatch.delenv("POLICY_PROBE", raising=False)
+    with pytest.raises(runtime.PayloadError):
+        runtime.handle({"type": "policy_probe"})
+
+
+def test_the_probe_calls_the_draft_tool_by_its_gateway_name_with_a_made_up_id(monkeypatch):
+    gateway = ProbeGateway(RuntimeError("AccessDeniedException: denied by policy"))
+    monkeypatch.setenv("POLICY_PROBE", "1")
+    monkeypatch.setattr(runtime, "_gateway_for_probe", lambda: gateway)
+    outcome = runtime.handle({"type": "policy_probe"})
+    assert gateway.calls == [("create-gmail-draft___create_gmail_draft", {"approval_id": "0" * 32})]
+    assert outcome == {"tool": "create_gmail_draft", "refused": True, "error": "RuntimeError", "detail": "AccessDeniedException: denied by policy"}
+
+
+def test_a_probe_that_was_not_refused_says_so():
+    assert runtime.policy_probe(ProbeGateway())["refused"] is False

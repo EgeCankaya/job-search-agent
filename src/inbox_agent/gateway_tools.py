@@ -104,6 +104,23 @@ class GatewayTools:
                         raise GatewayToolError(f"the Gateway doesn't serve {name}")
                     return parse_result(await session.call_tool(self._gateway_names[name], arguments))
 
+    async def _call_unlisted(self, gateway_name: str, arguments: dict) -> dict:
+        import httpx
+        from mcp import ClientSession
+        from mcp.client.streamable_http import streamable_http_client
+
+        async with httpx.AsyncClient(auth=self._auth(), timeout=TIMEOUT_SECONDS) as http:
+            async with streamable_http_client(self._url, http_client=http) as (read, write, _):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    return parse_result(await session.call_tool(gateway_name, arguments))
+
+    def call_unlisted(self, gateway_name: str, arguments: dict) -> dict:
+        """A call by the Gateway's own tool name, without listing first, so
+        the Gateway's policy, not a filtered list, decides (exit check 5).
+        Only the Runtime's one-off policy probe uses it."""
+        return _unwrapped(lambda: asyncio.run(self._call_unlisted(gateway_name, dict(arguments))))
+
     def call(self, name: str, arguments: Mapping) -> dict:
         from inbox_agent.tools import ToolNotAllowed
 
@@ -112,14 +129,18 @@ class GatewayTools:
         checked = validate(TOOL_SPECS[name], arguments)
         # The Runtime runs synchronous handlers in worker threads, which have
         # no event loop of their own.
-        try:
-            return asyncio.run(self._call(name, checked))
-        except ExceptionGroup as group:
-            # The MCP client's task groups wrap a single failure in a group;
-            # callers get the failure itself.
-            error = group
-            while isinstance(error, ExceptionGroup) and len(error.exceptions) == 1:
-                error = error.exceptions[0]
-            if error is group:
-                raise
-            raise error from None
+        return _unwrapped(lambda: asyncio.run(self._call(name, checked)))
+
+
+def _unwrapped(run):
+    try:
+        return run()
+    except ExceptionGroup as group:
+        # The MCP client's task groups wrap a single failure in a group;
+        # callers get the failure itself.
+        error = group
+        while isinstance(error, ExceptionGroup) and len(error.exceptions) == 1:
+            error = error.exceptions[0]
+        if error is group:
+            raise
+        raise error from None

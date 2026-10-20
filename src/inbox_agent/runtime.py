@@ -38,6 +38,11 @@ logger.setLevel(logging.INFO)
 
 CHAT_MESSAGE = "chat"
 STALE_CHECK_MESSAGE = "stale_check"
+# Exit check 5 (OQ-44 k): accepted only while the Runtime's environment has
+# POLICY_PROBE=1, which one deploy turns on and the next turns off.
+POLICY_PROBE_MESSAGE = "policy_probe"
+POLICY_PROBE_ENV = "POLICY_PROBE"
+PROBE_APPROVAL_ID = "0" * 32  # never a real approval_id: no record has it
 CHAT_TOOLS = ("list_applications",)  # OQ-42 h
 GATEWAY_URL_ENV = "GATEWAY_URL"
 LOCAL_HOST = "127.0.0.1"  # never another interface (NFR-REL-4)
@@ -198,6 +203,9 @@ def handle(payload, *, batch=None, chat=None, stale=None, today=_today, clock=ti
         logger.info(json.dumps({"event": "chat_done", "seconds": round(clock() - started, 3)}))
         return {"answer": reply}
 
+    if kind == POLICY_PROBE_MESSAGE and os.environ.get(POLICY_PROBE_ENV) == "1":
+        return policy_probe(_gateway_for_probe())
+
     if kind == STALE_CHECK_MESSAGE:
         from inbox_agent.stale_check import run_stale_check
 
@@ -221,6 +229,27 @@ def handle(payload, *, batch=None, chat=None, stale=None, today=_today, clock=ti
         return outcome
 
     raise PayloadError("unknown payload type")
+
+
+def _gateway_for_probe():
+    from inbox_agent.gateway_tools import GatewayTools
+
+    return GatewayTools(os.environ[GATEWAY_URL_ENV])
+
+
+def policy_probe(gateway) -> dict:
+    """Exit check 5: the agent's own role calls create_gmail_draft. Cedar
+    should refuse it; if it didn't, the tool would refuse the made-up
+    approval_id, so nothing is ever drafted. The detail says which refused."""
+    name = "create_gmail_draft"
+    try:
+        gateway.call_unlisted(f"{name.replace('_', '-')}___{name}", {"approval_id": PROBE_APPROVAL_ID})
+    except Exception as error:
+        outcome = {"tool": name, "refused": True, "error": type(error).__name__, "detail": str(error)[:300]}
+    else:
+        outcome = {"tool": name, "refused": False}
+    logger.info(json.dumps({"event": "policy_probe_done", "refused": outcome["refused"], "error": outcome.get("error")}))
+    return outcome
 
 
 def _app():

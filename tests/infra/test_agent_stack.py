@@ -163,10 +163,21 @@ def test_gateway_schemas_name_the_allowed_values():
     assert "open" in status.description and "rejected" in status.description
 
 
-def test_the_gateway_role_may_only_invoke_the_tool_functions(agent):
+def test_the_gateway_role_may_only_invoke_the_tools_and_ask_its_policy_engine(agent):
     role_id = one(agent, "AWS::BedrockAgentCore::Gateway")[1]["Properties"]["RoleArn"]["Fn::GetAtt"][0]
-    assert actions(agent, role_id, skip_logs=False) == {"lambda:InvokeFunction"}
-    targets = {str(r) for s in policy_statements(agent, role_id) for r in as_list(s["Resource"])}
+    assert actions(agent, role_id, skip_logs=False) == {
+        "lambda:InvokeFunction",
+        # CDK's grant when a policy engine is attached (OQ-44 j).
+        "bedrock-agentcore:GetPolicyEngine",
+        "bedrock-agentcore:AuthorizeAction",
+        "bedrock-agentcore:PartiallyAuthorizeActions",
+    }
+    statements = policy_statements(agent, role_id)
+    for statement in statements:
+        if statement["Action"] != "lambda:InvokeFunction":
+            engine = {"Fn::GetAtt": [next(iter(resources(agent, "AWS::BedrockAgentCore::PolicyEngine"))), "PolicyEngineArn"]}
+            assert as_list(statement["Resource"])[0] == engine
+    targets = {str(r) for s in statements if s["Action"] == "lambda:InvokeFunction" for r in as_list(s["Resource"])}
     assert len(targets) == 12  # 6 functions and their versions
     assert all(any(f"{tool.title().replace('_', '')}ToolFunction" in t for tool in GATEWAY_TOOLS) for t in targets)
 
