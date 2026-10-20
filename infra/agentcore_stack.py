@@ -154,13 +154,15 @@ class AgentCoreStack(Stack):
         # Semantic search adds a search tool to the list, and TOOL-1 fixes the list.
         # (The targets are named by cedar.target_name, which the policies use.)
         self.gateway.node.default_child.add_property_deletion_override("ProtocolConfiguration.Mcp.SearchType")
+        self.gateway_targets = []
         for name in GATEWAY_TOOLS:
-            self.gateway.add_lambda_target(
+            target = self.gateway.add_lambda_target(
                 f"{''.join(part.title() for part in name.split('_'))}Target",
                 gateway_target_name=target_name(name),
                 lambda_function=free.tool_functions[name],
                 tool_schema=agentcore.ToolSchema.from_inline([gateway_tool(TOOL_SPECS[name])]),
             )
+            self.gateway_targets.append(target)
 
     def _memory(self) -> None:
         """MEM-1, MEM-2, OQ-44 (h): events expire after 30 days; built-in
@@ -330,7 +332,7 @@ class AgentCoreStack(Stack):
             runtime_role=self.runtime_role.role_name,
             approval_role=self.approval_role.role_name,
         ).items():
-            self.policy_engine.add_policy(
+            policy = self.policy_engine.add_policy(
                 name,
                 statement=agentcore.PolicyStatement.from_cedar(text),
                 description=f"OQ-44 (j): {name}",
@@ -338,6 +340,10 @@ class AgentCoreStack(Stack):
                 # rolls back, instead of denying every call in ENFORCE.
                 validation_mode=agentcore.PolicyValidationMode.FAIL_ON_ANY_FINDINGS,
             )
+            # AgentCore checks each action against the Gateway's tools as
+            # they are at that moment, so every target must exist first
+            # (second deploy, 2026-10-20: "unrecognized action").
+            policy.node.add_dependency(*self.gateway_targets)
 
     def durable_executions_arn(self) -> str:
         """Every durable execution of the approval workflow, on any version:

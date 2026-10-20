@@ -195,3 +195,10 @@ def test_the_committed_config_keeps_the_probe_off(agent):
     assert agentcore_stack.POLICY_PROBE_ON is False
     [runtime] = resources(agent, "AWS::BedrockAgentCore::Runtime").values()
     assert "POLICY_PROBE" not in runtime["Properties"]["EnvironmentVariables"]
+
+
+def test_every_policy_waits_for_every_gateway_target(agent):
+    targets = set(resources(agent, "AWS::BedrockAgentCore::GatewayTarget"))
+    assert len(targets) == 6
+    for logical_id, policy in resources(agent, "AWS::BedrockAgentCore::Policy").items():
+        assert targets <= set(policy.get("DependsOn", [])), logical_id
