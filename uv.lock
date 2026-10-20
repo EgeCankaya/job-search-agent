@@ -112,6 +112,31 @@ wheels = [
 ]
 
 [[package]]
+name = "aws-durable-execution-sdk-python"
+version = "2.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "boto3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/0c/debdd86f78e823964195ae13ea90b800137878f04b826f453211abd479ff/aws_durable_execution_sdk_python-2.0.1.tar.gz", hash = "sha256:2ad9b8748d0f33d258b16a76ab6b7469057a0d1fdacfea153c232465c3f032bd", size = 320348, upload-time = "2026-09-18T22:16:27.302Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/10/c7869c434939b9c57f11b7b02bb59e65542703243a3a1c0aec41a8c7a2d8/aws_durable_execution_sdk_python-2.0.1-py3-none-any.whl", hash = "sha256:2d223b2b5b8aaf97149bde94bcb3472780318ea4dc3a2d17260585a2d5b2368c", size = 132932, upload-time = "2026-09-18T22:16:25.654Z" },
+]
+
+[[package]]
+name = "aws-durable-execution-sdk-python-testing"
+version = "1.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aws-durable-execution-sdk-python" },
+    { name = "boto3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a6/a3/0e4001b9ef983be9ffa4be64674072d72979c7ebf06e9bd726550c0eb118/aws_durable_execution_sdk_python_testing-1.2.1.tar.gz", hash = "sha256:c4e4ff2d729f834393c9f9221eff0718984fae64bf8e6518b7fe0a536efe845f", size = 77106, upload-time = "2026-05-21T02:17:57.995Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dc/ce/c3c8505470ab705407d5a33bbb33abcf2f8af8b7cb5026a7553a396959ac/aws_durable_execution_sdk_python_testing-1.2.1-py3-none-any.whl", hash = "sha256:c6d3de645e55aeb277bdb685a3ebd016fd155b395b984f05cf8dc7fb6100d8f2", size = 101233, upload-time = "2026-05-21T02:17:56.527Z" },
+]
+
+[[package]]
 name = "awscrt"
 version = "0.36.0"
 source = { registry = "https://pypi.org/simple" }
@@ -626,7 +651,11 @@ agent = [
 app = [
     { name = "streamlit" },
 ]
+approval = [
+    { name = "aws-durable-execution-sdk-python" },
+]
 dev = [
+    { name = "aws-durable-execution-sdk-python-testing" },
     { name = "boto3", extra = ["crt"] },
     { name = "pytest" },
 ]
@@ -649,7 +678,9 @@ agent = [
     { name = "mcp", specifier = ">=1.30.0" },
 ]
 app = [{ name = "streamlit", specifier = ">=1.66.0" }]
+approval = [{ name = "aws-durable-execution-sdk-python", specifier = ">=2.0.1" }]
 dev = [
+    { name = "aws-durable-execution-sdk-python-testing", specifier = ">=1.2.1" },
     { name = "boto3", extras = ["crt"], specifier = ">=1.43.114" },
     { name = "pytest", specifier = ">=9.1.1" },
 ]
