@@ -173,7 +173,7 @@ def test_ask_in_cloud_mode_sends_a_chat_payload():
     assert len(session) >= 33
     assert ask_cloud(client, "arn:runtime", session, "Brightpath?") == "Software Engineer: interviewing."
     [call] = client.calls
-    assert json.loads(call["payload"]) == {"type": "chat", "question": "Brightpath?"}
+    assert json.loads(call["payload"]) == {"type": "chat", "question": "Brightpath?", "session_id": session}
     assert call["runtimeSessionId"] == session
 
 

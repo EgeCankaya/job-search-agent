@@ -2,8 +2,9 @@
 the tracker.
 
 The chat model (Nova Lite in cloud mode, the local model in MacBook mode)
-gets the tools it is given, which in week 3 is `list_applications` only
-(OQ-42 h), and a few steps to use them. Tool results are tracker data, given
+gets the tools it is given, which is `list_applications` only (OQ-42 h),
+and a few steps to use them. The conversation's latest turns come from
+memory (MEM-1). Tool results are tracker data, given
 to the model as data. A tool error goes back to the model as a short
 message, which names the field, never its value (tools.py).
 
@@ -97,18 +98,30 @@ def _text(content) -> str:
     )
 
 
-def answer(graph, question: str, *, today: date) -> str:
-    from langchain_core.messages import HumanMessage, SystemMessage
+def answer(graph, question: str, *, today: date, memory=None, session_id: str | None = None) -> str:
+    """With a memory and a session, the conversation's latest turns come
+    first, so a follow-up like "and Copperleaf?" is understood (MEM-1), and both
+    the question and the answer are recorded; preferences are extracted
+    from them in the background (MEM-2)."""
+    from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
     from langgraph.errors import GraphRecursionError
 
     if not isinstance(question, str) or not question.strip():
         raise ChatInputError("the question is empty")
     if len(question) > QUESTION_LIMIT:
         raise ChatInputError(f"the question is longer than {QUESTION_LIMIT} characters")
-    messages = [SystemMessage(content=SYSTEM_PROMPT.format(today=today.isoformat())), HumanMessage(content=question)]
+    remember = memory is not None and session_id is not None
+    earlier = memory.context(session_id) if remember else []
+    messages = [SystemMessage(content=SYSTEM_PROMPT.format(today=today.isoformat()))]
+    messages += [HumanMessage(content=text) if role == "user" else AIMessage(content=text) for role, text in earlier]
+    messages.append(HumanMessage(content=question))
     try:
         # Each step is a model turn plus a tool turn.
         state = graph.invoke({"messages": messages}, {"recursion_limit": 2 * MAX_STEPS + 1})
+        reply = _text(state["messages"][-1].content).strip() or OUT_OF_STEPS
     except GraphRecursionError:
-        return OUT_OF_STEPS
-    return _text(state["messages"][-1].content).strip() or OUT_OF_STEPS
+        reply = OUT_OF_STEPS
+    if remember:
+        memory.record(session_id, "user", question)
+        memory.record(session_id, "assistant", reply)
+    return reply

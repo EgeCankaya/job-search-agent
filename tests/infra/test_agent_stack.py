@@ -192,6 +192,7 @@ def test_the_runtime_is_a_python_313_zip_on_the_public_network(agent):
         "GATEWAY_URL",
         "PROCESSED_EMAILS_TABLE_NAME",
         "TRACKER_TABLE_NAME",
+        "MEMORY_ID",
         "CLASSIFIER_MODEL_ID",
         "CHAT_MODEL_ID",
     }
@@ -210,6 +211,9 @@ def test_the_runtime_role_is_least_privilege(agent):
         "dynamodb:PutItem",
         "dynamodb:DeleteItem",
         "dynamodb:Scan",
+        "bedrock-agentcore:CreateEvent",
+        "bedrock-agentcore:ListEvents",
+        "bedrock-agentcore:RetrieveMemoryRecords",
         "logs:CreateLogStream",
         "logs:PutLogEvents",
         "logs:DescribeLogStreams",

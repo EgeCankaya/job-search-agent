@@ -14,7 +14,9 @@ from it, so it can always be removed.
   processed-email log. Inbound calls are IAM only (OQ-42 e).
 - **Gateway** (TOOL-1, OQ-42 c, e): the construct, with IAM inbound auth,
   no semantic search (it would add a tool), and one Lambda target per tool.
-  Its role may invoke those four functions only.
+  Its role may invoke those six functions only.
+- **Memory** (MEM-1, MEM-2, OQ-44 h): 30-day events, built-in preference and
+  per-company summary strategies.
 - **Queue consumer** (OQ-42 a): the agent queue's only reader; it calls
   the Runtime once per new email. It replaced the week 2 reader at the
   cutover (2026-10-19).
@@ -50,6 +52,7 @@ RUNTIME_ENDPOINT = "DEFAULT"
 AGENTCORE_SERVICE = "bedrock-agentcore.amazonaws.com"
 
 
+MEMORY_EVENT_EXPIRY_DAYS = 30  # MEM-2, NFR-PRIV-4, OQ-30
 CONSUMER_BATCH_SIZE = 5
 CONSUMER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
 # The owner's switch. The poll schedule must never run with it off: polled
@@ -108,6 +111,7 @@ class AgentCoreStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
         self.agent_mode = agent_mode
         self._gateway(free)
+        self._memory()
         self._runtime(free)
         self._approval_workflow(free)
         self._consumer(free)
@@ -141,6 +145,30 @@ class AgentCoreStack(Stack):
                 lambda_function=free.tool_functions[name],
                 tool_schema=agentcore.ToolSchema.from_inline([gateway_tool(TOOL_SPECS[name])]),
             )
+
+    def _memory(self) -> None:
+        """MEM-1, MEM-2, OQ-44 (h): events expire after 30 days; built-in
+        strategies (no execution role) keep my preferences from the Ask
+        sessions and one summary per company session."""
+        self.memory = agentcore.CfnMemory(
+            self,
+            "Memory",
+            name=config.MEMORY_NAME,
+            description="Inbox agent: Ask-page turns, preferences, one summary per company",
+            event_expiry_duration=MEMORY_EVENT_EXPIRY_DAYS,
+            memory_strategies=[
+                agentcore.CfnMemory.MemoryStrategyProperty(
+                    user_preference_memory_strategy=agentcore.CfnMemory.UserPreferenceMemoryStrategyProperty(
+                        name="preferences", namespaces=["/preferences/{actorId}"]
+                    )
+                ),
+                agentcore.CfnMemory.MemoryStrategyProperty(
+                    summary_memory_strategy=agentcore.CfnMemory.SummaryMemoryStrategyProperty(
+                        name="company_summaries", namespaces=["/summaries/{actorId}/{sessionId}"]
+                    )
+                ),
+            ],
+        )
 
     def _runtime(self, free: AlwaysFreeStack) -> None:
         code = s3_assets.Asset(self, "RuntimeCode", **runtime_bundling())
@@ -185,6 +213,17 @@ class AgentCoreStack(Stack):
         self.runtime_role.add_to_policy(
             iam.PolicyStatement(actions=["bedrock-agentcore:InvokeGateway"], resources=[self.gateway.gateway_arn])
         )
+        # MEM-1, MEM-2: events in, turns and records out; never a delete.
+        self.runtime_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "bedrock-agentcore:CreateEvent",
+                    "bedrock-agentcore:ListEvents",
+                    "bedrock-agentcore:RetrieveMemoryRecords",
+                ],
+                resources=[self.memory.attr_memory_arn],
+            )
+        )
         self.runtime_role.add_to_policy(
             iam.PolicyStatement(
                 # DeleteItem releases the drafts-ready notice after a failed publish.
@@ -220,6 +259,7 @@ class AgentCoreStack(Stack):
                 "GATEWAY_URL": self.gateway.gateway_url,
                 "PROCESSED_EMAILS_TABLE_NAME": free.processed_emails_table.table_name,
                 "TRACKER_TABLE_NAME": free.applications_table.table_name,
+                "MEMORY_ID": self.memory.attr_memory_id,
                 "CLASSIFIER_MODEL_ID": config.CLASSIFIER_MODEL_ID,
                 "CHAT_MODEL_ID": config.CHAT_MODEL_ID,
             },

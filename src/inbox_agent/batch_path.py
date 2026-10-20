@@ -18,13 +18,14 @@ cutover (2026-10-19).
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import TypedDict
 
 from inbox_agent import settings
 from inbox_agent.classify import Classification, classify
 from inbox_agent.matching import company_key
+from inbox_agent.memory import Memory, NoMemory
 from inbox_agent.model import Model
 from inbox_agent.processed_log import ProcessedLog
 from inbox_agent.tools import Tools, parse_date_or_datetime
@@ -41,6 +42,7 @@ class BatchDeps:
     model: Model
     log: ProcessedLog
     now: Callable[[], datetime]
+    memory: Memory = field(default_factory=NoMemory)
 
 
 class BatchState(TypedDict, total=False):
@@ -66,6 +68,18 @@ def _names_a_company(company: str | None) -> bool:
     except ValueError:
         return False
     return True
+
+
+def company_event(received_on: date, result: Classification, row: dict, key_date: date | datetime | None) -> str:
+    """One line for the company's summary: the class, the row's status and
+    dates. The extracted role is the only text from the email (NFR-PRIV-3)."""
+    line = f"{received_on.isoformat()}: {result.email_class.value.replace('_', ' ')} email"
+    if row.get("role"):
+        line += f" about {row['role']}"
+    line += f"; status now {row['status']}"
+    if key_date is not None:
+        line += f"; key date {key_date.isoformat()}"
+    return line + "."
 
 
 def build_batch_graph(deps: BatchDeps):
@@ -109,6 +123,9 @@ def build_batch_graph(deps: BatchDeps):
             arguments["key_date"] = state["key_date"].isoformat()
             arguments["key_date_type"] = key_date_type
         row = deps.tools.call("upsert_application", arguments)
+        if row["written"]:
+            # TRK-1: the company's memory summary, from fields only (OQ-44 h).
+            deps.memory.record_company_event(row["company_key"], company_event(received_on, result, row, state["key_date"]))
         # The alert names the row the email landed on (TRK-1).
         return {"company": row["company"], "role": row.get("role"), "row_written": row["written"], "row_created": row["created"]}
 

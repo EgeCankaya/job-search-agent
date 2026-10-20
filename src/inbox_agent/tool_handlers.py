@@ -83,6 +83,9 @@ def read_email(deps: ToolDeps, *, message_id: str) -> dict:
 def _row_summary(item: Mapping, *, created: bool, written: bool) -> dict:
     return {
         "company": item["company"],
+        # The row's key, so the batch path's company memory and the stale
+        # check name the same company, whatever alias matched (OQ-44 h).
+        "company_key": item["company_key"],
         "role": item.get("role"),
         "status": item["status"],
         "created": created,

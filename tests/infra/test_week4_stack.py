@@ -125,3 +125,33 @@ def test_the_check_schedule_may_only_send_to_the_queue(templates):
     role_id = schedule["Properties"]["Target"]["RoleArn"]["Fn::GetAtt"][0]
     [statement] = policy_statements(free, role_id)
     assert statement["Action"] == "sqs:SendMessage" and "AgentQueue" in json.dumps(statement["Resource"])
+
+
+def test_memory_events_expire_after_30_days_with_two_built_in_strategies(agent):
+    [memory] = resources(agent, "AWS::BedrockAgentCore::Memory").values()
+    properties = memory["Properties"]
+    assert properties["EventExpiryDuration"] == 30  # MEM-2 acceptance, NFR-PRIV-4
+    assert "MemoryExecutionRoleArn" not in properties  # built-in strategies, no role (OQ-44 h)
+    strategies = properties["MemoryStrategies"]
+    assert strategies == [
+        {"UserPreferenceMemoryStrategy": {"Name": "preferences", "Namespaces": ["/preferences/{actorId}"]}},
+        {"SummaryMemoryStrategy": {"Name": "company_summaries", "Namespaces": ["/summaries/{actorId}/{sessionId}"]}},
+    ]
+
+
+def test_only_the_runtime_reaches_memory_and_never_deletes(templates):
+    for name, template in templates.items():
+        for logical_id, policy in resources(template, "AWS::IAM::Policy").items():
+            for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
+                memory_actions = {
+                    a for a in as_list(statement["Action"])
+                    if a.startswith("bedrock-agentcore:") and ("Memory" in a or a.endswith(("Event", "Events")))
+                }
+                if memory_actions:
+                    assert logical_id.startswith("RuntimeRole"), (name, logical_id)
+                    assert memory_actions == {
+                        "bedrock-agentcore:CreateEvent",
+                        "bedrock-agentcore:ListEvents",
+                        "bedrock-agentcore:RetrieveMemoryRecords",
+                    }
+                    assert as_list(statement["Resource"]) == [{"Fn::GetAtt": ["Memory", "MemoryArn"]}]

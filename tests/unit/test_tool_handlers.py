@@ -110,7 +110,14 @@ def test_an_invite_moves_the_matched_row_and_records_the_message(tools, table):
             "key_date_type": "interview",
         },
     )
-    assert result == {"company": "Kuzey Yazılım A.Ş.", "role": "Backend Engineer", "status": "interviewing", "created": False, "written": True}
+    assert result == {
+        "company": "Kuzey Yazılım A.Ş.",
+        "company_key": "kuzey yazilim",
+        "role": "Backend Engineer",
+        "status": "interviewing",
+        "created": False,
+        "written": True,
+    }
     row = rows(table)[("kuzey yazilim", "backend engineer")]
     assert row["last_contact"] == "2026-10-19"
     assert row["source_message_ids"] == ["18f2a"]

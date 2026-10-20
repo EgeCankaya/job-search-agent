@@ -87,7 +87,8 @@ def ask_cloud(client, runtime_arn: str, session_id: str, question: str) -> str:
         runtimeSessionId=session_id,
         contentType="application/json",
         accept="application/json",
-        payload=json.dumps({"type": "chat", "question": question}).encode(),
+        # The Runtime's session doubles as the memory session (MEM-1).
+        payload=json.dumps({"type": "chat", "question": question, "session_id": session_id}).encode(),
     )
     status = response.get("statusCode", 200)
     body = response["response"].read()
@@ -96,12 +97,14 @@ def ask_cloud(client, runtime_arn: str, session_id: str, question: str) -> str:
     return _answer(body)
 
 
-def ask_local(question: str, opener=urllib.request.urlopen, url: str = LOCAL_WORKER_URL) -> str:
+def ask_local(
+    question: str, opener=urllib.request.urlopen, url: str = LOCAL_WORKER_URL, session_id: str | None = None
+) -> str:
     if not url.startswith("http://127.0.0.1:"):
         raise AskError("the local worker must be on 127.0.0.1")
     request = urllib.request.Request(
         url,
-        data=json.dumps({"type": "chat", "question": question}).encode(),
+        data=json.dumps({"type": "chat", "question": question, **({"session_id": session_id} if session_id else {})}).encode(),
         headers={"Content-Type": "application/json"},
         method="POST",
     )
@@ -148,7 +151,7 @@ class Backend:
     def ask(self, session_id: str, question: str) -> str:
         if self.mode == "cloud":
             return ask_cloud(self._agentcore, self.resources.runtime_arn, session_id, question)
-        return ask_local(question)
+        return ask_local(question, session_id=session_id)
 
 
 def make_backend() -> Backend:

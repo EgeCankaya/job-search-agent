@@ -16,7 +16,10 @@ def answer(question: str) -> str:
 
 
 st.title("Ask")
-st.caption("Questions about your applications, answered from the tracker. Each question stands alone until memory arrives in week 4.")
+st.caption(
+    "Questions about your applications, answered from the tracker. The agent remembers this conversation, "
+    'so a follow-up like "and Copperleaf?" works, and keeps the preferences you state (for example the tone of follow-ups).'
+)
 history = st.session_state.setdefault("history", [])
 for role, text in history:
     with st.chat_message(role):

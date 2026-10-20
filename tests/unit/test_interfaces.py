@@ -85,9 +85,15 @@ def test_content_blocks_are_reduced_to_their_text():
     assert model.LangChainModel(BlockModel()).complete("system", "prompt") == "{}"
 
 
-@pytest.mark.parametrize("mode", ["cloud", "local"])
-def test_memory_is_empty_in_both_modes_until_week_4(mode):
-    memory = memory_for({"AGENT_MODE": mode})
+def test_cloud_without_a_memory_id_remembers_nothing():
+    memory = memory_for({"AGENT_MODE": "cloud"})
     assert isinstance(memory, NoMemory)
     memory.record("session-1", "user", "Brightpath'da ne açık?")
     assert memory.context("session-1") == []
+
+
+def test_local_mode_uses_sqlite(tmp_path):
+    from inbox_agent.memory import SqliteMemory
+
+    memory = memory_for({"AGENT_MODE": "local", "LOCAL_MEMORY_PATH": str(tmp_path / "m.sqlite")})
+    assert isinstance(memory, SqliteMemory)

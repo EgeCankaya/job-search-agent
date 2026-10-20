@@ -43,6 +43,8 @@ GATEWAY_URL_ENV = "GATEWAY_URL"
 LOCAL_HOST = "127.0.0.1"  # never another interface (NFR-REL-4)
 LOCAL_PORT = 8080
 _MESSAGE_ID = re.compile(r"^[0-9A-Za-z_-]{1,64}$")
+# The Ask page's session (app_backend.new_session_id), also the memory session.
+_SESSION = re.compile(r"^inbox-agent-ask-[0-9a-f-]{36}$")
 
 
 class PayloadError(ValueError):
@@ -114,8 +116,16 @@ def batch_graph():
         model=LangChainModel(chat_model("classify")),
         log=ProcessedLog(_table("PROCESSED_EMAILS_TABLE_NAME")),
         now=lambda: datetime.now(UTC),
+        memory=_memory(),
     )
     return build_batch_graph(deps)
+
+
+@cache
+def _memory():
+    from inbox_agent.memory import memory_for
+
+    return memory_for()
 
 
 @cache
@@ -127,12 +137,16 @@ def stale_check_deps():
     from inbox_agent.stale_check import StaleCheckDeps
     from inbox_agent.tracker import TrackerTable
 
+    memory = _memory()
     return StaleCheckDeps(
         tools=_tools(),
         model=LangChainModel(chat_model("draft")),
         log=ProcessedLog(_table("PROCESSED_EMAILS_TABLE_NAME")),
         tracker_rows=TrackerTable(_table("TRACKER_TABLE_NAME")).rows,
         now=lambda: datetime.now(UTC),
+        # MEM-2: my preferences and the company's summary shape the draft.
+        tone=lambda: "; ".join(memory.preferences()) or None,
+        summary=memory.company_summary,
     )
 
 
@@ -178,7 +192,9 @@ def handle(payload, *, batch=None, chat=None, stale=None, today=_today, clock=ti
     if kind == CHAT_MESSAGE:
         from inbox_agent.chat_path import answer
 
-        reply = answer(chat or chat_graph(), payload.get("question"), today=today())
+        session = payload.get("session_id")
+        memory = _memory() if isinstance(session, str) and _SESSION.match(session) else None
+        reply = answer(chat or chat_graph(), payload.get("question"), today=today(), memory=memory, session_id=session if memory else None)
         logger.info(json.dumps({"event": "chat_done", "seconds": round(clock() - started, 3)}))
         return {"answer": reply}
 

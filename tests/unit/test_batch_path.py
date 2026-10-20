@@ -71,6 +71,14 @@ class RecordingTools:
         return self.tools.call(name, arguments)
 
 
+class RecordingMemory:
+    def __init__(self):
+        self.company_events = []
+
+    def record_company_event(self, company_key, text):
+        self.company_events.append((company_key, text))
+
+
 class Env:
     def __init__(self, gmail=None, model=None, topic=None):
         self.tracker_table = FakeTable("company_key", "role_key")
@@ -86,8 +94,9 @@ class Env:
             topic=AlertTopic(self.topic, self.topic.topic_arn),
         )
         self.tools = RecordingTools(InProcessTools(tool_deps))
+        self.memory = RecordingMemory()
         self.graph = build_batch_graph(
-            BatchDeps(tools=self.tools, model=self.model, log=ProcessedLog(self.log_table), now=lambda: NOW)
+            BatchDeps(tools=self.tools, model=self.model, log=ProcessedLog(self.log_table), now=lambda: NOW, memory=self.memory)
         )
 
     def run(self, message_id="18c0ffee"):
@@ -194,3 +203,13 @@ def test_a_hostile_email_cannot_change_the_tool_sequence():
     assert "attacker" not in json.dumps(env.topic.published)
     # The email reached the model only as quoted data (CLS-3).
     assert "IGNORE ALL PREVIOUS INSTRUCTIONS" in env.model.prompts[0]
+
+
+def test_a_written_row_adds_one_company_event_without_email_text():
+    env = Env(gmail=FakeGmail(body=HOSTILE))
+    env.run()
+    env.run()  # a duplicate delivery writes nothing more
+    [(key, text)] = env.memory.company_events
+    assert key == "kuzey yazilim"
+    assert text.startswith("2026-10-19: interview invite email about Backend Engineer; status now interviewing")
+    assert "IGNORE" not in text and "Mülakat" not in text and SUBJECT not in text
