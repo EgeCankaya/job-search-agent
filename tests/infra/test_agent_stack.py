@@ -281,14 +281,31 @@ def test_the_consumer_reads_the_queue(agent):
     assert properties["ScalingConfig"] == {"MaximumConcurrency": 2}
 
 
-def test_the_consumer_may_only_invoke_the_runtime(agent):
+def test_the_consumer_holds_only_the_runtime_the_workflow_and_the_records(agent):
     _, fn = consumer(agent)
     role_id = role_of(agent, fn)
     assert actions(agent, role_id) - {a for a in actions(agent, role_id) if a.startswith("sqs:")} == {
-        "bedrock-agentcore:InvokeAgentRuntime"
+        "bedrock-agentcore:InvokeAgentRuntime",
+        "lambda:InvokeFunction",
+        "lambda:SendDurableExecutionCallbackSuccess",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "iam:GetRole",
     }
-    [invoke] = [s for s in policy_statements(agent, role_id) if s["Action"] == "bedrock-agentcore:InvokeAgentRuntime"]
+    statements = policy_statements(agent, role_id)
+    [invoke] = [s for s in statements if s["Action"] == "bedrock-agentcore:InvokeAgentRuntime"]
     assert as_list(invoke["Resource"])[0] == {"Fn::GetAtt": ["Runtime", "AgentRuntimeArn"]}
+    [start] = [s for s in statements if s["Action"] == "lambda:InvokeFunction"]
+    assert list(start["Resource"]) == ["Ref"] and "ApprovalFunctionCurrentVersion" in start["Resource"]["Ref"]
+    [tables] = [s for s in statements if "dynamodb:PutItem" in as_list(s["Action"])]
+    assert "PendingDraftsTable" in json.dumps(tables["Resource"]) and "ApplicationsTable" not in json.dumps(tables["Resource"])
+
+
+def test_the_consumer_starts_the_published_version(agent):
+    _, fn = consumer(agent)
+    variables = fn["Properties"]["Environment"]["Variables"]
+    assert "ApprovalFunctionCurrentVersion" in variables["APPROVAL_FUNCTION_ARN"]["Ref"]
+    assert variables["OWNER_ROLE_NAME"] == config.OWNER_ROLE_NAME
 
 
 def test_queue_visibility_outlasts_the_consumer(free, agent):

@@ -12,7 +12,6 @@ results, which can hold email text or tracker data (NFR-PRIV-3).
 import json
 import logging
 import os
-from functools import cache
 
 from inbox_agent import settings
 from inbox_agent.alerts import AlertTopic
@@ -58,6 +57,7 @@ def _deps(name: str) -> ToolDeps:
         from datetime import UTC, datetime
 
         from inbox_agent.gmail import drafts_client
+        from inbox_agent.owner_identity import owner_role_id
         from inbox_agent.pending_drafts import PendingDrafts
 
         table = boto3.resource("dynamodb", region_name=settings.AWS_REGION).Table(
@@ -70,14 +70,6 @@ def _deps(name: str) -> ToolDeps:
         )
     raise ValueError(f"unknown tool {name}")
 
-
-@cache
-def owner_role_id(role_name: str) -> str:
-    """The unique ID of the owner's role, which SQS reports as a message's
-    sender (OQ-44 d). Looked up once per cold start."""
-    import boto3
-
-    return boto3.client("iam").get_role(RoleName=role_name)["Role"]["RoleId"]
 
 
 def _log_fields(name: str, arguments: object, result: dict) -> dict:

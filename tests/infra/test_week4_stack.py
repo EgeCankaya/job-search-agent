@@ -101,3 +101,27 @@ def test_local_mode_has_no_approval_workflow():
         fn["Properties"].get("FunctionName") == config.APPROVAL_FUNCTION_NAME
         for fn in resources(local[ALWAYS_FREE_STACK], "AWS::Lambda::Function").values()
     )
+
+
+def test_the_daily_check_goes_to_the_queue_at_9_istanbul_and_starts_off(templates):
+    free = templates[ALWAYS_FREE_STACK]
+    [schedule] = [s for s in resources(free, "AWS::Scheduler::Schedule").values() if "stale" in s["Properties"]["Description"].lower()]
+    properties = schedule["Properties"]
+    assert properties["ScheduleExpression"] == "cron(0 9 * * ? *)"
+    assert properties["ScheduleExpressionTimezone"] == "Europe/Istanbul"
+    assert properties["State"] == "DISABLED"  # the owner's switch, STALE_CHECK_ON
+    assert json.loads(properties["Target"]["Input"]) == {"type": "stale_check"}
+    assert "AgentQueue" in json.dumps(properties["Target"]["Arn"])
+
+
+def test_the_daily_check_exists_in_local_mode_too():
+    free = synth("local")[ALWAYS_FREE_STACK]
+    assert any("stale" in s["Properties"]["Description"].lower() for s in resources(free, "AWS::Scheduler::Schedule").values())
+
+
+def test_the_check_schedule_may_only_send_to_the_queue(templates):
+    free = templates[ALWAYS_FREE_STACK]
+    [schedule] = [s for s in resources(free, "AWS::Scheduler::Schedule").values() if "stale" in s["Properties"]["Description"].lower()]
+    role_id = schedule["Properties"]["Target"]["RoleArn"]["Fn::GetAtt"][0]
+    [statement] = policy_statements(free, role_id)
+    assert statement["Action"] == "sqs:SendMessage" and "AgentQueue" in json.dumps(statement["Resource"])

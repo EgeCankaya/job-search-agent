@@ -49,6 +49,11 @@ CONSUMER_TIMEOUT = Duration.seconds(180)
 # timeout, so a slow attempt isn't handed to a second invocation.
 QUEUE_VISIBILITY = Duration.seconds(6 * 180)
 TOOL_TIMEOUT = Duration.seconds(30)
+# APR-1: 09:00 in Istanbul, every day (OQ-44 c). Off until the owner turns it
+# on, after the week 4 deploy checks (Week 4 plan, step 9).
+STALE_CHECK_CRON = "cron(0 9 * * ? *)"
+STALE_CHECK_TIMEZONE = "Europe/Istanbul"
+STALE_CHECK_ON = False
 # Turned on by the owner on 2026-10-18. A live poll marks emails processed,
 # so it must never run without the queue consumer (agentcore_stack.CONSUMER_ON).
 POLL_SCHEDULE_ON = True
@@ -406,6 +411,41 @@ class AlwaysFreeStack(Stack):
                 role_arn=schedule_role.role_arn,
                 retry_policy=scheduler.CfnSchedule.RetryPolicyProperty(
                     maximum_event_age_in_seconds=30 * 60, maximum_retry_attempts=2
+                ),
+            ),
+        )
+        schedule.add_resource_dependency(group)
+        self._stale_check_schedule(group)
+
+    def _stale_check_schedule(self, group: scheduler.CfnScheduleGroup) -> None:
+        """APR-1, OQ-44 (c): the daily check goes on the queue in both modes;
+        the consumer (cloud) or the Mac worker (MacBook mode) takes it. In
+        MacBook mode a check that fires while the Mac sleeps waits there."""
+        role = iam.Role(
+            self,
+            "StaleCheckScheduleRole",
+            assumed_by=iam.ServicePrincipal(
+                "scheduler.amazonaws.com",
+                conditions={"StringEquals": {"aws:SourceAccount": self.account}},
+            ),
+            description="EventBridge Scheduler: send the daily stale check to the agent queue only",
+        )
+        role.add_to_policy(iam.PolicyStatement(actions=["sqs:SendMessage"], resources=[self.agent_queue.queue_arn]))
+        schedule = scheduler.CfnSchedule(
+            self,
+            "StaleCheckSchedule",
+            description="Daily stale-application check at 09:00 Istanbul (APR-1)",
+            group_name=group.name,
+            schedule_expression=STALE_CHECK_CRON,
+            schedule_expression_timezone=STALE_CHECK_TIMEZONE,
+            flexible_time_window=scheduler.CfnSchedule.FlexibleTimeWindowProperty(mode="OFF"),
+            state="ENABLED" if STALE_CHECK_ON else "DISABLED",
+            target=scheduler.CfnSchedule.TargetProperty(
+                arn=self.agent_queue.queue_arn,
+                role_arn=role.role_arn,
+                input='{"type": "stale_check"}',
+                retry_policy=scheduler.CfnSchedule.RetryPolicyProperty(
+                    maximum_event_age_in_seconds=3600, maximum_retry_attempts=3
                 ),
             ),
         )

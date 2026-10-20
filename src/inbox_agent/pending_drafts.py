@@ -142,6 +142,49 @@ class PendingDrafts:
             raise
         return item
 
+    def decide(self, approval_id: str, *, approve: bool, shown_text_hash: str, decided_by: str) -> dict | None:
+        """My decision, as the consumer records it (APR-3 step 2, OQ-44 d).
+        Returns the record to resume, or None when the decision changes
+        nothing: no such record, an Approve of a text other than the one
+        waiting, or a record already resolved another way. The same decision
+        delivered again returns the record, so the consumer can resume it."""
+        record = self.get(approval_id)
+        if record is None:
+            return None
+        state = APPROVED if approve else SKIPPED
+        if record.get(STATE) != AWAITING_DECISION:
+            # A redelivery of the decision already recorded: resume again.
+            same = record.get(STATE) == state and record.get(DECIDED_BY) == decided_by
+            return record if same else None
+        if shown_text_hash != record.get(TEXT_HASH):
+            return None
+        now = self._now()
+        # The TTL starts at the decision either way, so an approval whose
+        # draft never comes still goes away (NFR-PRIV-4).
+        decided = {
+            **record,
+            STATE: state,
+            DECIDED_BY: decided_by,
+            DECIDED_AT: _epoch(now),
+            TTL_ATTRIBUTE: _epoch(now + RESOLVED_TTL),
+        }
+        if approve:
+            decided[APPROVED_TEXT_HASH] = shown_text_hash
+        else:
+            decided[RESOLVED_AT] = _epoch(now)
+        try:
+            self._table.put_item(
+                Item=decided,
+                ConditionExpression="#state = :waiting",
+                ExpressionAttributeNames={"#state": STATE},
+                ExpressionAttributeValues={":waiting": AWAITING_DECISION},
+            )
+        except Exception as error:
+            if _condition_failed(error):
+                return None  # decided or expired a moment ago
+            raise
+        return decided
+
     def expire(self, approval_id: str) -> dict | None:
         """The 7-day wait ended with no decision (APR-3). A record already
         resolved keeps its state; one approved in the same moment as the

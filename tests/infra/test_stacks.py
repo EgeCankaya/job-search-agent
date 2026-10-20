@@ -509,7 +509,8 @@ def test_identity_names_match_the_runtime_settings():
 
 
 def schedule(template):
-    [schedule] = resources(template, "AWS::Scheduler::Schedule").values()
+    """The Gmail poll's schedule (week 4 adds the daily check's)."""
+    [schedule] = [s for s in resources(template, "AWS::Scheduler::Schedule").values() if "Gmail poll" in s["Properties"]["Description"]]
     return schedule["Properties"]
 
 

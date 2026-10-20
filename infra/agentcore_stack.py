@@ -350,7 +350,10 @@ class AgentCoreStack(Stack):
             self,
             "ConsumerRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            description="Queue consumer: read the agent queue, invoke the agent Runtime only",
+            description=(
+                "Queue consumer: read the agent queue, invoke the Runtime, start and resume the approval "
+                "workflow, record decisions on pending drafts, read the owner's role ID"
+            ),
         )
         log_group.grant_write(role)
         runtime_arn = self.runtime.attr_agent_runtime_arn
@@ -360,6 +363,21 @@ class AgentCoreStack(Stack):
                 resources=[runtime_arn, Fn.join("", [runtime_arn, f"/runtime-endpoint/{RUNTIME_ENDPOINT}"])],
             )
         )
+        # APR-3, OQ-44 (a) and (d).
+        role.add_to_policy(
+            iam.PolicyStatement(actions=["lambda:InvokeFunction"], resources=[self.approval_version.function_arn])
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["lambda:SendDurableExecutionCallbackSuccess"], resources=[self.durable_executions_arn()]
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:GetItem", "dynamodb:PutItem"], resources=[free.pending_drafts_table.table_arn]
+            )
+        )
+        role.add_to_policy(iam.PolicyStatement(actions=["iam:GetRole"], resources=[free.owner_role_arn()]))
         self.consumer_function = lambda_.Function(
             self,
             "ConsumerFunction",
@@ -371,7 +389,12 @@ class AgentCoreStack(Stack):
             log_group=log_group,
             memory_size=256,
             timeout=CONSUMER_TIMEOUT,
-            environment={"AGENT_RUNTIME_ARN": runtime_arn},
+            environment={
+                "AGENT_RUNTIME_ARN": runtime_arn,
+                "APPROVAL_FUNCTION_ARN": self.approval_version.function_arn,
+                "PENDING_DRAFTS_TABLE_NAME": free.pending_drafts_table.table_name,
+                "OWNER_ROLE_NAME": config.OWNER_ROLE_NAME,
+            },
         )
         # Partial batch failures, 5 a batch, 2 at a time (OQ-42 a).
         self.consumer_function.add_event_source(
