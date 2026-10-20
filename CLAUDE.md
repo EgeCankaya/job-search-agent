@@ -27,6 +27,9 @@ repo is **public**.
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
 scope.**
 
+**Current state, next steps and the session roster live in `Project status.md`.**
+Read it at the start of every session. The head session keeps it current.
+
 `Job search inbox agent PRD review.md` is a private working note. It is
 gitignored and must stay out of the repo.
 
@@ -228,7 +231,7 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (l) the query gains `-from:me -in:drafts`; (m) without a person's email, the draft takes the company's latest email's language, else English; (n) `aws-durable-execution-sdk-python` (group `approval`) and its `-testing` runner (dev), added 2026-10-20.
 - **Step 1 built (2026-10-20), not committed or deployed:** the query's own-mail exclusion (`settings.OWN_MAIL_EXCLUSION`, placed before the alert-sender term, so that term still ends the query); the `follow_up` map's field names in `tracker.py`; `TrackerTable.put_row`, which writes a whole row only if it is still new, or its `follow_up.version` is the one read (`upsert_application` re-reads and retries up to 3 times, so it never undoes the workflow's in-place update); the skip-streak reset on a new message; `eligibility.py`. The workflow must always set `follow_up.version` and raise it on every change.
 
-- **Steps 2 to 8 built (2026-10-20), committed (`dc475eb` to `e34f6c7`), not pushed, so not deployed.** 696 tests pass; `cdk synth` works in both modes. The owner's steps 9 and 10 are a runbook at the end of `Week 4 plan.md`.
+- **Steps 2 to 8 built (2026-10-20), committed (`dc475eb` to `e34f6c7`) and pushed.** The first two deploys failed on Cedar validation and the AgentCore stack rolled back (the always-free stack updated); fixes `b98861a` and `c74e564`. **Run 39483632112 succeeded (2026-10-20 19:33 UTC)**; the step 9.1 checks pass (Memory ACTIVE, Gateway ENFORCE with 6 targets, 3 policies ACTIVE, approval version 2). Live state and next steps: `Project status.md`. 696 tests pass; `cdk synth` works in both modes. The owner's steps 9 and 10 are a runbook at the end of `Week 4 plan.md`.
   - Step 2: `search_gmail` and `create_gmail_draft` (one Lambda and role each; the compose grant only on the draft tool's role, plus `iam:GetRole` on the owner's role); the Gateway serves six; the Runtime's client lists five.
   - Step 3: the stale-check path and drafting, the `drafts_ready` alert (claimed once a day as `#drafts-ready-<date>` in the processed-email log; the Dashboard doesn't count it). The Runtime role gained a read-only tracker `Scan` and `DeleteItem` on the log (to release that claim).
   - Step 4: the approval workflow `inbox-agent-approval` (fixed name, durable 8 days, history 14 days, a published version per deploy) in the AgentCore stack, with its own 58 MB ZIP. Its tracker access is `UpdateItem` limited to `follow_up` by `dynamodb:Attributes`.
