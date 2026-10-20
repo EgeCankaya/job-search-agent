@@ -20,6 +20,7 @@ app = [
 ]
 approval = [
     "aws-durable-execution-sdk-python>=2.0.1",
+    "mcp>=1.30.0",
 ]
 dev = [
     "aws-durable-execution-sdk-python-testing>=1.2.1",

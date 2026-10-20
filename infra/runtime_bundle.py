@@ -1,8 +1,12 @@
-"""The AgentCore Runtime ZIP (OQ-42 i): the `inbox_agent` package, its `agent`
-dependency group for Linux arm64 (glibc 2.28 wheels: numpy publishes no
-older ones) and Python 3.13, and a main.py that starts the entry point. uv builds it on the machine that runs `cdk synth`, so no
-Docker is needed. Wheels only: a package without an arm64 wheel fails the
-synth, not the deploy.
+"""The ZIPs that carry dependencies, built by uv for Linux arm64 (glibc 2.28
+wheels: numpy publishes no older ones) and Python 3.13, on the machine that
+runs `cdk synth`, so no Docker is needed. Wheels only: a package without an
+arm64 wheel fails the synth, not the deploy.
+
+- The AgentCore Runtime (OQ-42 i): the `inbox_agent` package, the `agent`
+  dependency group, and a main.py that starts the entry point.
+- The approval workflow (OQ-44 a, n): the package and the `approval` group
+  (the durable-execution SDK, and the MCP client for the Gateway).
 
 Tests skip bundling (the `aws:cdk:bundling-stacks` context), so they never
 download anything.
@@ -24,6 +28,10 @@ MAIN = "from inbox_agent.runtime import main\n\nmain()\n"
 
 @jsii.implements(ILocalBundling)
 class UvBundling:
+    def __init__(self, group: str = "agent", main: bool = True) -> None:
+        self.group = group
+        self.main = main
+
     def try_bundle(self, output_dir: str, *, image, **kwargs) -> bool:
         with tempfile.TemporaryDirectory() as scratch:
             requirements = Path(scratch) / "requirements.txt"
@@ -31,7 +39,7 @@ class UvBundling:
             # escape codes in the file break the install.
             subprocess.run(
                 [
-                    "uv", "export", "--frozen", "--only-group", "agent", "--no-hashes", "--no-emit-project",
+                    "uv", "export", "--frozen", "--only-group", self.group, "--no-hashes", "--no-emit-project",
                     "--color", "never", "--output-file", str(requirements),
                 ],
                 cwd=ROOT,
@@ -55,7 +63,8 @@ class UvBundling:
             if installed.returncode != 0:
                 raise RuntimeError(f"uv pip install failed:\n{installed.stderr[-2000:]}")
         shutil.copytree(PACKAGE, Path(output_dir) / PACKAGE.name, ignore=shutil.ignore_patterns("__pycache__"))
-        (Path(output_dir) / ENTRYPOINT).write_text(MAIN)
+        if self.main:
+            (Path(output_dir) / ENTRYPOINT).write_text(MAIN)
         return True
 
 
@@ -66,4 +75,18 @@ def runtime_bundling() -> dict:
         "path": str(PACKAGE),
         "asset_hash_type": AssetHashType.OUTPUT,
         "bundling": BundlingOptions(image=DockerImage.from_registry("unused-local-bundling-only"), local=UvBundling()),
+    }
+
+
+def approval_bundling() -> dict:
+    """Code options for the approval workflow's Lambda."""
+    return {
+        "asset_hash_type": AssetHashType.OUTPUT,
+        "bundling": BundlingOptions(
+            image=DockerImage.from_registry("unused-local-bundling-only"),
+            local=UvBundling(group="approval", main=False),
+            # The CDK caches a bundle by its options, not by the local
+            # bundler; without this the Runtime's bundle would be reused.
+            environment={"UV_GROUP": "approval"},
+        ),
     }

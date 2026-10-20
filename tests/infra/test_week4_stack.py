@@ -1,0 +1,103 @@
+"""Week 4 infrastructure (OQ-44 a, b): the approval workflow's durable
+function, its role, and the one named wildcard."""
+
+import json
+
+import pytest
+
+from infra import config
+from infra.app import AGENTCORE_STACK, ALWAYS_FREE_STACK
+from tests.infra.test_stacks import as_list, policy_statements, render_arn, resources, synth
+
+
+@pytest.fixture(scope="module")
+def templates():
+    return synth()
+
+
+@pytest.fixture(scope="module")
+def agent(templates):
+    return templates[AGENTCORE_STACK]
+
+
+def approval_function(agent):
+    [(logical_id, fn)] = [
+        (lid, fn) for lid, fn in resources(agent, "AWS::Lambda::Function").items()
+        if fn["Properties"].get("FunctionName") == config.APPROVAL_FUNCTION_NAME
+    ]  # fmt: skip
+    return logical_id, fn
+
+
+def approval_role_id(agent):
+    return approval_function(agent)[1]["Properties"]["Role"]["Fn::GetAtt"][0]
+
+
+def test_the_workflow_is_durable_for_8_days_and_published_as_a_version(agent):
+    logical_id, fn = approval_function(agent)
+    properties = fn["Properties"]
+    assert properties["Handler"] == "inbox_agent.approval_workflow.handler"
+    assert properties["DurableConfig"] == {"ExecutionTimeout": 8 * 24 * 3600, "RetentionPeriodInDays": 14}
+    assert properties["Timeout"] == 60
+    assert set(properties["Environment"]["Variables"]) == {"GATEWAY_URL", "PENDING_DRAFTS_TABLE_NAME", "TRACKER_TABLE_NAME"}
+    versions = resources(agent, "AWS::Lambda::Version").values()
+    assert [v["Properties"]["FunctionName"] for v in versions] == [{"Ref": logical_id}]
+
+
+def test_the_workflow_role_holds_only_what_the_workflow_needs(agent):
+    statements = policy_statements(agent, approval_role_id(agent))
+    actions = {a for s in statements for a in as_list(s["Action"]) if not a.startswith("logs:")}
+    assert actions == {
+        "lambda:CheckpointDurableExecution",
+        "lambda:GetDurableExecutionState",
+        "bedrock-agentcore:InvokeGateway",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+    }
+    [durable] = [s for s in statements if "lambda:CheckpointDurableExecution" in as_list(s["Action"])]
+    assert render_arn(durable["Resource"]).endswith(f":function:{config.APPROVAL_FUNCTION_NAME}:*")
+    [puts] = [s for s in statements if "dynamodb:PutItem" in as_list(s["Action"])]
+    assert "PendingDraftsTable" in json.dumps(puts["Resource"])
+
+
+def test_the_workflow_may_update_only_the_follow_up_map(agent):
+    [update] = [s for s in policy_statements(agent, approval_role_id(agent)) if "dynamodb:UpdateItem" in as_list(s["Action"])]
+    assert "ApplicationsTable" in json.dumps(update["Resource"])
+    assert update["Condition"] == {
+        "ForAllValues:StringEquals": {"dynamodb:Attributes": ["company_key", "role_key", "follow_up"]},
+        "StringEqualsIfExists": {"dynamodb:ReturnValues": ["NONE"]},
+    }
+
+
+def test_the_only_wildcards_are_the_named_ones(templates):
+    """OQ-44 (b): the workflow's durable executions; plus, since week 3, the
+    Gateway's invoke grant on each tool function and its versions, which
+    CDK writes as <function ARN>:*. Anything else is refused."""
+    durable_actions = {
+        "lambda:CheckpointDurableExecution",
+        "lambda:GetDurableExecutionState",
+        "lambda:SendDurableExecutionCallbackSuccess",
+        "lambda:SendDurableExecutionCallbackFailure",
+    }
+    for name, template in templates.items():
+        for logical_id, policy in resources(template, "AWS::IAM::Policy").items():
+            for statement in policy["Properties"]["PolicyDocument"]["Statement"]:
+                for resource in as_list(statement["Resource"]):
+                    text = json.dumps(resource)
+                    if "*" not in text:
+                        continue
+                    actions = set(as_list(statement["Action"]))
+                    if text.endswith(f':function:{config.APPROVAL_FUNCTION_NAME}:*"]]}}'):
+                        assert actions <= durable_actions, (name, logical_id)
+                    else:
+                        assert actions == {"lambda:InvokeFunction"}, (name, logical_id, text)
+                        assert logical_id.startswith("GatewayRole") and text.endswith(':*"]]}'), (name, logical_id)
+
+
+def test_local_mode_has_no_approval_workflow():
+    local = synth("local")
+    assert AGENTCORE_STACK not in local
+    assert not any(
+        fn["Properties"].get("FunctionName") == config.APPROVAL_FUNCTION_NAME
+        for fn in resources(local[ALWAYS_FREE_STACK], "AWS::Lambda::Function").values()
+    )

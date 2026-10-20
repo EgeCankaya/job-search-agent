@@ -98,6 +98,58 @@ class FakeTable:
         self.puts += 1
         return {}
 
+    def update_item(
+        self,
+        Key: dict,
+        UpdateExpression: str,
+        ConditionExpression: str | None = None,
+        ExpressionAttributeNames: dict | None = None,
+        ExpressionAttributeValues: dict | None = None,
+    ) -> dict:
+        """Only the forms the runtime code uses: SET with comma-separated
+        assignments, each `path = :v`, `path = if_not_exists(path, :v)` or
+        `path = path + :v`."""
+        names, values = ExpressionAttributeNames or {}, ExpressionAttributeValues or {}
+        self._check_types(values)
+        key = self._key(Key)
+        existing = self.items.get(key)
+        if ConditionExpression is not None and not _condition_holds(existing, ConditionExpression, names, values):
+            raise FakeConditionalCheckFailed()
+        item = copy.deepcopy(existing) if existing is not None else dict(Key)
+        assert UpdateExpression.startswith("SET "), UpdateExpression
+        # Commas inside if_not_exists(...) don't separate assignments.
+        for assignment in re.split(r",\s*(?![^()]*\))", UpdateExpression[4:]):
+            target, expression = (part.strip() for part in assignment.split(" = ", 1))
+            parts = [names[p] if p.startswith("#") else p for p in target.split(".")]
+
+            def current(path):
+                node = item
+                for part in path.split("."):
+                    part = names[part] if part.startswith("#") else part
+                    if not isinstance(node, dict) or part not in node:
+                        return _MISSING
+                    node = node[part]
+                return node
+
+            if match := re.fullmatch(r"if_not_exists\(([\w#.]+), (:\w+)\)", expression):
+                found = current(match.group(1))
+                value = copy.deepcopy(values[match.group(2)]) if found is _MISSING else found
+            elif match := re.fullmatch(r"([\w#.]+) \+ (:\w+)", expression):
+                found = current(match.group(1))
+                assert found is not _MISSING, "DynamoDB rejects + on a missing attribute"
+                value = found + values[match.group(2)]
+            elif re.fullmatch(r":\w+", expression):
+                value = copy.deepcopy(values[expression])
+            else:
+                raise AssertionError(f"unsupported update {assignment!r}")
+            node = item
+            for part in parts[:-1]:
+                assert isinstance(node.get(part), dict), "DynamoDB rejects a path through a missing map"
+                node = node[part]
+            node[parts[-1]] = value
+        self.items[key] = item
+        return {}
+
     def delete_item(self, Key: dict) -> dict:
         self.items.pop(self._key(Key), None)
         return {}

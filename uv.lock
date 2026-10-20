@@ -653,6 +653,7 @@ app = [
 ]
 approval = [
     { name = "aws-durable-execution-sdk-python" },
+    { name = "mcp" },
 ]
 dev = [
     { name = "aws-durable-execution-sdk-python-testing" },
@@ -678,7 +679,10 @@ agent = [
     { name = "mcp", specifier = ">=1.30.0" },
 ]
 app = [{ name = "streamlit", specifier = ">=1.66.0" }]
-approval = [{ name = "aws-durable-execution-sdk-python", specifier = ">=2.0.1" }]
+approval = [
+    { name = "aws-durable-execution-sdk-python", specifier = ">=2.0.1" },
+    { name = "mcp", specifier = ">=1.30.0" },
+]
 dev = [
     { name = "aws-durable-execution-sdk-python-testing", specifier = ">=1.2.1" },
     { name = "boto3", extras = ["crt"], specifier = ">=1.43.114" },

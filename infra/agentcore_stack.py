@@ -21,6 +21,8 @@ from it, so it can always be removed.
 """
 
 from aws_cdk import (
+    ArnFormat,
+    Duration,
     Fn,
     RemovalPolicy,
     Stack,
@@ -42,7 +44,7 @@ from infra.always_free_stack import (
     AlwaysFreeStack,
     agent_code,
 )
-from infra.runtime_bundle import ENTRYPOINT, runtime_bundling
+from infra.runtime_bundle import ENTRYPOINT, PACKAGE, approval_bundling, runtime_bundling
 
 RUNTIME_ENDPOINT = "DEFAULT"
 AGENTCORE_SERVICE = "bedrock-agentcore.amazonaws.com"
@@ -107,6 +109,7 @@ class AgentCoreStack(Stack):
         self.agent_mode = agent_mode
         self._gateway(free)
         self._runtime(free)
+        self._approval_workflow(free)
         self._consumer(free)
 
     def _gateway(self, free: AlwaysFreeStack) -> None:
@@ -262,6 +265,82 @@ class AgentCoreStack(Stack):
                 ),
             ],
         )
+
+    def durable_executions_arn(self) -> str:
+        """Every durable execution of the approval workflow, on any version:
+        the one named wildcard (OQ-44 b). AWS authorizes checkpoints and
+        callbacks against these ARNs, and waits started before a deploy
+        resume on their old version."""
+        return self.format_arn(
+            service="lambda",
+            resource="function",
+            resource_name=f"{config.APPROVAL_FUNCTION_NAME}:*",
+            arn_format=ArnFormat.COLON_RESOURCE_NAME,
+        )
+
+    def _approval_workflow(self, free: AlwaysFreeStack) -> None:
+        """APR-3, OQ-44 (a): one durable execution per proposed draft."""
+        log_group = logs.LogGroup(
+            self, "ApprovalLogGroup", retention=LOG_RETENTION, removal_policy=RemovalPolicy.DESTROY
+        )
+        role = iam.Role(
+            self,
+            "ApprovalRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            description=(
+                "Approval workflow: its own checkpoints, the Gateway (create_gmail_draft only, by Cedar), "
+                "pending drafts, the tracker's follow-up state"
+            ),
+        )
+        log_group.grant_write(role)
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["lambda:CheckpointDurableExecution", "lambda:GetDurableExecutionState"],
+                resources=[self.durable_executions_arn()],
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(actions=["bedrock-agentcore:InvokeGateway"], resources=[self.gateway.gateway_arn])
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:GetItem", "dynamodb:PutItem"], resources=[free.pending_drafts_table.table_arn]
+            )
+        )
+        # OQ-44 (g): the follow-up map only, written in place.
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["dynamodb:UpdateItem"],
+                resources=[free.applications_table.table_arn],
+                conditions={
+                    "ForAllValues:StringEquals": {"dynamodb:Attributes": ["company_key", "role_key", "follow_up"]},
+                    "StringEqualsIfExists": {"dynamodb:ReturnValues": ["NONE"]},
+                },
+            )
+        )
+        self.approval_function = lambda_.Function(
+            self,
+            "ApprovalFunction",
+            function_name=config.APPROVAL_FUNCTION_NAME,
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            architecture=lambda_.Architecture.ARM_64,
+            handler=f"{AGENT_PACKAGE}.approval_workflow.handler",
+            code=lambda_.Code.from_asset(str(PACKAGE), **approval_bundling()),
+            role=role,
+            log_group=log_group,
+            memory_size=256,
+            # One invocation is a step or two; the wait itself costs nothing.
+            timeout=Duration.seconds(60),
+            durable_config=lambda_.DurableConfig(execution_timeout=Duration.days(8), retention_period=Duration.days(14)),
+            environment={
+                "GATEWAY_URL": self.gateway.gateway_url,
+                "PENDING_DRAFTS_TABLE_NAME": free.pending_drafts_table.table_name,
+                "TRACKER_TABLE_NAME": free.applications_table.table_name,
+            },
+        )
+        # Durable functions run on a version; each deploy publishes one, and
+        # the consumer starts new executions on it.
+        self.approval_version = self.approval_function.current_version
 
     def _consumer(self, free: AlwaysFreeStack) -> None:
         log_group = logs.LogGroup(

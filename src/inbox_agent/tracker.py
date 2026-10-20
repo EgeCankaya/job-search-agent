@@ -93,6 +93,37 @@ class TrackerTable:
                 return rows
             kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
 
+    def record_follow_up(self, company_key: str, role_key: str, *, outcome: str, on: str) -> None:
+        """The approval workflow's bookkeeping (APR-4, OQ-44 g), written in
+        place: only the `follow_up` map changes, and its version goes up, so
+        a whole-row write that read the old state is refused (put_row).
+
+        `outcome` is proposed, skipped, expired or draft. A skip adds to the
+        skip streak; an approval or an expiry ends it."""
+        field = {"proposed": LAST_PROPOSED, "skipped": LAST_SKIPPED, "expired": LAST_EXPIRED, "draft": LAST_DRAFT}[outcome]
+        key = {"company_key": company_key, "role_key": role_key}
+        names = {"#fu": FOLLOW_UP, "#version": VERSION, "#skips": SKIPS_IN_A_ROW, "#field": field}
+        # A row may have no map yet, and a nested SET needs one.
+        self._table.update_item(
+            Key=key,
+            UpdateExpression="SET #fu = if_not_exists(#fu, :empty)",
+            ConditionExpression="attribute_exists(company_key)",
+            ExpressionAttributeNames={"#fu": FOLLOW_UP},
+            ExpressionAttributeValues={":empty": {VERSION: 0, SKIPS_IN_A_ROW: 0}},
+        )
+        skips = {"skipped": "#fu.#skips = #fu.#skips + :one", "proposed": None}.get(outcome, "#fu.#skips = :zero")
+        sets = ["#fu.#field = :on", "#fu.#version = #fu.#version + :one", *([skips] if skips else [])]
+        used = {":on": on, ":one": 1, **({":zero": 0} if skips and ":zero" in skips else {})}
+        if not skips:
+            names.pop("#skips")
+        self._table.update_item(
+            Key=key,
+            UpdateExpression="SET " + ", ".join(sets),
+            ConditionExpression="attribute_exists(company_key)",
+            ExpressionAttributeNames=names,
+            ExpressionAttributeValues=used,
+        )
+
     def aliases(self) -> dict[str, str]:
         """Variant -> canonical company name, as the owner wrote them."""
         item = self._table.get_item(Key=ALIASES_KEY, ConsistentRead=True).get("Item")

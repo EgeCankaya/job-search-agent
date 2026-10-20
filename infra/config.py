@@ -83,6 +83,10 @@ CLASSIFIER_PROFILE_REGIONS = ("eu-central-1", "eu-north-1", "eu-west-1", "eu-wes
 CHAT_MODEL_ID = "eu.amazon.nova-lite-v1:0"
 CHAT_FOUNDATION_MODEL = "amazon.nova-lite-v1:0"
 
+# OQ-44 (a): the approval workflow has a fixed name, so its role can name
+# the durable-execution ARNs (<function ARN>:*) without a cycle.
+APPROVAL_FUNCTION_NAME = "inbox-agent-approval"
+
 # Week 3 agent (OQ-42). Runtime names allow letters, digits and underscores.
 RUNTIME_NAME = "inbox_agent"
 GATEWAY_NAME = "inbox-agent"

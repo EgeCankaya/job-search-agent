@@ -40,6 +40,12 @@ DECIDED_BY = "decided_by"  # the IAM role ID SQS reported for the decision
 DRAFT_CLAIMED_AT = "draft_claimed_at"
 DRAFT_ID = "gmail_draft_id"
 RESOLVED_AT = "resolved_at"
+CALLBACK_ID = "callback_id"
+PROPOSED_AT = "proposed_at"
+DECIDED_AT = "decided_at"
+# Copied from the stale check's draft, for the Follow-ups page and the
+# tracker's follow-up state.
+DRAFT_FIELDS = ("company", "role", "company_key", "role_key", "last_contact", "proposed_on", "language")
 
 
 class ApprovalRefused(PermissionError):
@@ -109,6 +115,44 @@ class PendingDrafts:
 
     def get(self, approval_id: str) -> dict | None:
         return self._table.get_item(Key={"approval_id": approval_id}, ConsistentRead=True).get("Item")
+
+    def register(self, draft: Mapping, callback_id: str) -> dict:
+        """The approval workflow's first write (APR-3): the draft, waiting for
+        my decision, with the callback the consumer resumes. A record that
+        exists already is left alone and returned."""
+        item = {
+            "approval_id": draft["approval_id"],
+            STATE: AWAITING_DECISION,
+            TEXT: draft["text"],
+            TEXT_HASH: text_hash(draft["text"]),
+            TO_ADDRESS: draft.get("to_address") or "",
+            SUBJECT: draft["subject"],
+            CALLBACK_ID: callback_id,
+            PROPOSED_AT: _epoch(self._now()),
+            **{name: draft[name] for name in DRAFT_FIELDS if draft.get(name) is not None},
+        }
+        for name, value in ((THREAD_ID, draft.get("thread_id")), (IN_REPLY_TO, draft.get("in_reply_to"))):
+            if value:
+                item[name] = value
+        try:
+            self._table.put_item(Item=item, ConditionExpression="attribute_not_exists(approval_id)")
+        except Exception as error:
+            if _condition_failed(error):
+                return self.get(draft["approval_id"])
+            raise
+        return item
+
+    def expire(self, approval_id: str) -> dict | None:
+        """The 7-day wait ended with no decision (APR-3). A record already
+        resolved keeps its state; one approved in the same moment as the
+        timeout is expired too, as its callback can no longer arrive."""
+        record = self.get(approval_id)
+        if record is None or record.get(STATE) in (DRAFT_SAVED, SKIPPED, EXPIRED):
+            return record
+        now = self._now()
+        expired = {**record, STATE: EXPIRED, RESOLVED_AT: _epoch(now), TTL_ATTRIBUTE: _epoch(now + RESOLVED_TTL)}
+        self._table.put_item(Item=expired)
+        return expired
 
     def claim_for_draft(self, record: Mapping) -> None:
         """Mark the approval used before the draft is made, so two calls with
