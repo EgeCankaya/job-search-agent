@@ -29,16 +29,17 @@ def test_the_inputs_are_the_prd_lists():
         "company", "role", "status", "last_contact", "next_step", "message_id", "key_date", "key_date_type",
     }
     assert set(LIST.input_schema["properties"]) == {"status", "company", "min_days_since_contact"}
-    assert set(NOTIFY.input_schema["properties"]) == {"kind", "email_class", "company", "role", "date"}
+    assert set(NOTIFY.input_schema["properties"]) == {"kind", "email_class", "company", "role", "date", "count"}
 
 
 def test_notify_owner_has_no_recipient_and_no_free_text():
     properties = NOTIFY.input_schema["properties"]
     assert not {"to", "recipient", "phone", "email", "address", "subject", "body", "message", "text"} & set(properties)
     # The only strings without a fixed list or date format are names, short.
-    free = [k for k, rule in properties.items() if "enum" not in rule and "format" not in rule]
+    free = [k for k, rule in properties.items() if rule["type"] == "string" and "enum" not in rule and "format" not in rule]
     assert sorted(free) == ["company", "role"]
     assert all(properties[k]["maxLength"] <= 100 for k in free)
+    assert properties["count"] == {"type": "integer", "minimum": 1, "maximum": 5}
 
 
 @pytest.mark.parametrize("key", ["to", "recipient", "phone", "body"])

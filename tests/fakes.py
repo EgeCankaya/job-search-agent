@@ -98,6 +98,10 @@ class FakeTable:
         self.puts += 1
         return {}
 
+    def delete_item(self, Key: dict) -> dict:
+        self.items.pop(self._key(Key), None)
+        return {}
+
     def scan(self, ExclusiveStartKey: dict | None = None) -> dict:
         keys = sorted(self.items)
         start = keys.index(self._key(ExclusiveStartKey)) + 1 if ExclusiveStartKey else 0

@@ -393,3 +393,32 @@ def test_the_lambda_picks_its_tool_from_the_environment(monkeypatch, table):
     monkeypatch.setenv("TOOL_NAME", "list_applications")
     monkeypatch.setattr(tool_lambda, "_deps", lambda name: ToolDeps(tracker=TrackerTable(table), today=lambda: TODAY))
     assert tool_lambda.handler({}, gateway_context("list_applications"))["count"] == 4
+
+
+# notify_owner: drafts_ready (APR-2, OQ-44 f)
+
+
+def test_drafts_ready_sends_the_count_only(tools, topic):
+    tools.call("notify_owner", {"kind": "drafts_ready", "count": 3})
+    [published] = topic.published
+    assert published["Subject"] == "You have 3 follow-up drafts ready"
+    assert "3" in published["Message"] and "Kuzey" not in published["Message"]
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"kind": "drafts_ready"},
+        {"kind": "drafts_ready", "count": 0},
+        {"kind": "drafts_ready", "count": 6},
+        {"kind": "drafts_ready", "count": 2, "company": "Kuzey"},
+        {"kind": "drafts_ready", "count": 2, "email_class": "offer"},
+        {"kind": "urgent", "email_class": "offer", "company": "Kuzey", "count": 1},
+        {"kind": "urgent", "email_class": "offer"},
+        {"kind": "urgent", "company": "Kuzey"},
+    ],
+)
+def test_notify_owner_refuses_mixed_kinds(tools, topic, arguments):
+    with pytest.raises(ToolInputError):
+        tools.call("notify_owner", arguments)
+    assert topic.published == []

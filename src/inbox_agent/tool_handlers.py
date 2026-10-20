@@ -17,13 +17,14 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 
 from inbox_agent import settings
-from inbox_agent.alerts import AlertTopic, build_alert
+from inbox_agent.alerts import AlertTopic, build_alert, drafts_ready_alert
 from inbox_agent.classes import URGENT_CLASSES, EmailClass
 from inbox_agent.gmail import DraftsOnlyGmail, GmailClient, GmailError, draft_message
 from inbox_agent.matching import company_key, is_open, match_application
 from inbox_agent.pending_drafts import PendingDrafts, check_approved
 from inbox_agent.query import build_query, company_search_query
 from inbox_agent.tools import (
+    DRAFTS_READY,
     OPEN,
     SEARCH_LIMIT,
     TOOL_SPECS,
@@ -198,11 +199,24 @@ def notify_owner(
     deps: ToolDeps,
     *,
     kind: str,
-    email_class: str,
-    company: str,
+    email_class: str | None = None,
+    company: str | None = None,
     role: str | None = None,
     date: str | None = None,
+    count: int | None = None,
 ) -> dict:
+    if kind == DRAFTS_READY:
+        # The count only (APR-2, OQ-44 f).
+        if count is None:
+            raise ToolInputError("drafts_ready needs count")
+        if any(value is not None for value in (email_class, company, role, date)):
+            raise ToolInputError("drafts_ready takes count only")
+        deps.topic.publish(drafts_ready_alert(count))
+        return {"published": True}
+    if count is not None:
+        raise ToolInputError("count goes with drafts_ready only")
+    if email_class is None or company is None:
+        raise ToolInputError("an email alert needs email_class and company")
     cls = EmailClass(email_class)
     possible = kind == "possible"
     # Urgent alerts are for the urgent classes; "Possible:" for the rest (ALR-1).

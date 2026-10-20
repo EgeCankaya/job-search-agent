@@ -187,7 +187,14 @@ def test_the_runtime_is_a_python_313_zip_on_the_public_network(agent):
     assert environment["AGENT_MODE"] == "cloud"
     assert environment["CLASSIFIER_MODEL_ID"] == config.CLASSIFIER_MODEL_ID
     assert environment["CHAT_MODEL_ID"] == config.CHAT_MODEL_ID
-    assert set(environment) == {"AGENT_MODE", "GATEWAY_URL", "PROCESSED_EMAILS_TABLE_NAME", "CLASSIFIER_MODEL_ID", "CHAT_MODEL_ID"}
+    assert set(environment) == {
+        "AGENT_MODE",
+        "GATEWAY_URL",
+        "PROCESSED_EMAILS_TABLE_NAME",
+        "TRACKER_TABLE_NAME",
+        "CLASSIFIER_MODEL_ID",
+        "CHAT_MODEL_ID",
+    }
 
 
 def runtime_role_id(agent):
@@ -201,6 +208,8 @@ def test_the_runtime_role_is_least_privilege(agent):
         "bedrock-agentcore:InvokeGateway",
         "dynamodb:GetItem",
         "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Scan",
         "logs:CreateLogStream",
         "logs:PutLogEvents",
         "logs:DescribeLogStreams",
@@ -310,3 +319,17 @@ def test_the_draft_tool_reads_only_the_owners_role_and_the_pending_drafts(free):
     assert render_arn(get_role["Resource"]).endswith(":role/managed/AccountFullAccessRole")
     tables = {render_arn(r) for s in statements if any(a.startswith("dynamodb:") for a in as_list(s["Action"])) for r in as_list(s["Resource"])}
     assert len(tables) == 1 and "PendingDraftsTable" in tables.pop()
+
+
+def test_the_runtime_reads_the_tracker_and_writes_only_the_log(agent):
+    statements = policy_statements(agent, runtime_role_id(agent))
+    for statement in statements:
+        dynamo = {a for a in as_list(statement["Action"]) if a.startswith("dynamodb:")}
+        if not dynamo:
+            continue
+        tables = " ".join(json.dumps(r) for r in as_list(statement["Resource"]))
+        if "ApplicationsTable" in tables:
+            assert dynamo == {"dynamodb:Scan"}
+        else:
+            assert "ProcessedEmailsTable" in tables
+        assert "PendingDraftsTable" not in tables  # OQ-44 (a): the agent never writes a pending draft

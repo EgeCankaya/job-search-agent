@@ -147,7 +147,7 @@ class AgentCoreStack(Stack):
             assumed_by=iam.ServicePrincipal(
                 AGENTCORE_SERVICE, conditions={"StringEquals": {"aws:SourceAccount": self.account}}
             ),
-            description="Agent Runtime: its code, its log group, Nova Micro and Lite, the Gateway, the processed-email log",
+            description="Agent Runtime: its code, its log group, Nova Micro and Lite, the Gateway, the processed-email log, tracker read",
         )
         # Before the Runtime exists: its code, the models, the Gateway, the log.
         self.runtime_role.add_to_policy(
@@ -184,9 +184,15 @@ class AgentCoreStack(Stack):
         )
         self.runtime_role.add_to_policy(
             iam.PolicyStatement(
-                actions=["dynamodb:GetItem", "dynamodb:PutItem"],
+                # DeleteItem releases the drafts-ready notice after a failed publish.
+                actions=["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
                 resources=[free.processed_emails_table.table_arn],
             )
+        )
+        # APR-4: the stale check reads rows and their follow-up state directly,
+        # read-only (OQ-44 g); writes go through upsert_application.
+        self.runtime_role.add_to_policy(
+            iam.PolicyStatement(actions=["dynamodb:Scan"], resources=[free.applications_table.table_arn])
         )
 
         self.runtime = agentcore.CfnRuntime(
@@ -210,6 +216,7 @@ class AgentCoreStack(Stack):
                 "AGENT_MODE": "cloud",
                 "GATEWAY_URL": self.gateway.gateway_url,
                 "PROCESSED_EMAILS_TABLE_NAME": free.processed_emails_table.table_name,
+                "TRACKER_TABLE_NAME": free.applications_table.table_name,
                 "CLASSIFIER_MODEL_ID": config.CLASSIFIER_MODEL_ID,
                 "CHAT_MODEL_ID": config.CHAT_MODEL_ID,
             },

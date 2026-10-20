@@ -93,6 +93,17 @@ def alert_for(
     )
 
 
+def drafts_ready_alert(count: int) -> Alert:
+    """APR-2: the count only, nothing about the companies or the drafts."""
+    if not isinstance(count, int) or isinstance(count, bool) or count < 1:
+        raise ValueError("count must be a positive whole number")
+    noun = "draft" if count == 1 else "drafts"
+    return Alert(
+        subject=f"You have {count} follow-up {noun} ready",
+        body=f"You have {count} follow-up {noun} ready.\nOpen the Follow-ups page in the Mac app to approve or skip them.",
+    )
+
+
 def build_alert(
     email_class: EmailClass,
     *,

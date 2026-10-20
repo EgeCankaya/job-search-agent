@@ -21,9 +21,10 @@ CLASSIFIER_MODEL_ID_ENV = "CLASSIFIER_MODEL_ID"
 CHAT_MODEL_ID_ENV = "CHAT_MODEL_ID"
 
 # What each call needs: classify asks for one short JSON object (CLS-1), chat
-# for an answer to one question (CHT-1).
-MAX_TOKENS = {"classify": 300, "chat": 1000}
-MODEL_ID_ENV = {"classify": CLASSIFIER_MODEL_ID_ENV, "chat": CHAT_MODEL_ID_ENV}
+# for an answer to one question (CHT-1), draft for one follow-up of at most
+# 120 words (APR-2), which Nova Lite writes, as it answers chat.
+MAX_TOKENS = {"classify": 300, "chat": 1000, "draft": 600}
+MODEL_ID_ENV = {"classify": CLASSIFIER_MODEL_ID_ENV, "chat": CHAT_MODEL_ID_ENV, "draft": CHAT_MODEL_ID_ENV}
 
 
 class Model(Protocol):
@@ -33,7 +34,7 @@ class Model(Protocol):
 
 
 def chat_model(purpose: str, environ=os.environ):
-    """The LangChain chat model for one purpose, "classify" or "chat", in
+    """The LangChain chat model for one purpose, "classify", "chat" or "draft", in
     the configured mode: Nova on Bedrock (cloud) or Ollama (local)."""
     if purpose not in MAX_TOKENS:
         raise ValueError(f"unknown model purpose {purpose!r}")

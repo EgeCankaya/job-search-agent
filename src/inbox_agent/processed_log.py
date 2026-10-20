@@ -26,6 +26,7 @@ HANDLED = "handled_at"
 # The last-poll time is one item in the same table. Gmail message IDs are hex,
 # so this key can't collide with one, and the item has no TTL.
 POLL_STATE_KEY = "#poll-state"
+NOTICE_CLAIMED = "notice_claimed_at"
 
 
 def _epoch(moment: datetime) -> int:
@@ -85,6 +86,28 @@ class ProcessedLog:
         item.pop(ALERT_CLAIMED, None)
         item.pop(ALERT_KIND, None)
         self._table.put_item(Item=item)
+
+    def claim_notice(self, key: str, now: datetime) -> bool:
+        """True for exactly one caller per key: the daily check's drafts-ready
+        email goes out once per day, even if the check is redelivered. The
+        key starts with "#", so it can't collide with a message ID; it
+        expires like a log entry, and the Dashboard doesn't count it."""
+        if not key.startswith("#"):
+            raise ValueError("notice keys start with #")
+        try:
+            self._table.put_item(
+                Item={**self._new_item(key, now), NOTICE_CLAIMED: _epoch(now)},
+                ConditionExpression=f"attribute_not_exists({NOTICE_CLAIMED})",
+            )
+        except Exception as error:
+            if _condition_failed(error):
+                return False
+            raise
+        return True
+
+    def release_notice(self, key: str) -> None:
+        """After a failed publish, so the retry can send it."""
+        self._table.delete_item(Key={"message_id": key})
 
     def mark_handled(self, message_id: str, now: datetime) -> None:
         self._table.put_item(Item={**self._item(message_id, now), HANDLED: _epoch(now)})

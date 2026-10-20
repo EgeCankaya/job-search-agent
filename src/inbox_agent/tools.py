@@ -30,6 +30,8 @@ APPROVAL_ID_PATTERN = r"^[0-9a-f]{32}$"
 SEARCH_LIMIT = 5
 KEY_DATE_TYPES = ("interview", "assessment_deadline")
 ALERT_KINDS = ("urgent", "possible")
+DRAFTS_READY = "drafts_ready"  # APR-2's "You have N follow-up drafts ready" (OQ-44 f)
+MAX_DRAFTS_READY = 5  # the daily check's cap (OQ-44 c)
 OPEN = "open"
 
 
@@ -115,19 +117,22 @@ NOTIFY_OWNER = ToolSpec(
     name="notify_owner",
     description=(
         "Email the owner one alert through the alert topic. kind is urgent for an interview invite, "
-        'assessment or offer, and possible for a "Possible:" alert on another class. The tool writes the '
-        "alert text itself from these fields; it has no recipient and no free-text input."
+        'assessment or offer, and possible for a "Possible:" alert on another class; both need email_class '
+        "and company. kind drafts_ready says how many follow-up drafts wait on the Follow-ups page, and takes "
+        "count only. The tool writes the alert text itself from these fields; it has no recipient and no "
+        "free-text input."
     ),
     input_schema={
         "type": "object",
         "properties": {
-            "kind": {"type": "string", "enum": list(ALERT_KINDS)},
+            "kind": {"type": "string", "enum": [*ALERT_KINDS, DRAFTS_READY]},
             "email_class": {"type": "string", "enum": [c.value for c in EmailClass]},
             "company": _string(NAME_LIMIT),
             "role": _string(NAME_LIMIT),
             "date": {"type": "string", "format": "date-time-or-date"},
+            "count": {"type": "integer", "minimum": 1, "maximum": MAX_DRAFTS_READY},
         },
-        "required": ["kind", "email_class", "company"],
+        "required": ["kind"],
         "additionalProperties": False,
     },
 )

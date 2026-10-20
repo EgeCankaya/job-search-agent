@@ -3,10 +3,12 @@ on 127.0.0.1:8080 in MacBook mode (OQ-42 j).
 
 One handler routes on the payload's type:
 - `new_email` (from the queue consumer, OQ-42 a): the batch path;
-- `chat` (from the Mac app's Ask page): the chat path.
+- `chat` (from the Mac app's Ask page): the chat path;
+- `stale_check` (from the queue consumer, APR-1): the stale-check path,
+  which returns the day's follow-up drafts.
 
-Week 4 adds the daily stale check. Approve and Skip decisions never come
-here: the consumer takes them to the approval workflow (APR-3).
+Approve and Skip decisions never come here: the consumer takes them to the
+approval workflow (APR-3).
 
 In cloud mode the tools are the Gateway's (TOOL-1). In MacBook mode they
 are the local MCP server's, a child process spoken to over stdio (OQ-42 j).
@@ -35,6 +37,7 @@ logger = logging.getLogger("inbox_agent.runtime")
 logger.setLevel(logging.INFO)
 
 CHAT_MESSAGE = "chat"
+STALE_CHECK_MESSAGE = "stale_check"
 CHAT_TOOLS = ("list_applications",)  # OQ-42 h
 GATEWAY_URL_ENV = "GATEWAY_URL"
 LOCAL_HOST = "127.0.0.1"  # never another interface (NFR-REL-4)
@@ -116,6 +119,24 @@ def batch_graph():
 
 
 @cache
+def stale_check_deps():
+    if agent_mode() != "cloud":
+        raise PayloadError("the stale check runs only in cloud mode until the Mac worker exists")
+    from inbox_agent.model import LangChainModel, chat_model
+    from inbox_agent.processed_log import ProcessedLog
+    from inbox_agent.stale_check import StaleCheckDeps
+    from inbox_agent.tracker import TrackerTable
+
+    return StaleCheckDeps(
+        tools=_tools(),
+        model=LangChainModel(chat_model("draft")),
+        log=ProcessedLog(_table("PROCESSED_EMAILS_TABLE_NAME")),
+        tracker_rows=TrackerTable(_table("TRACKER_TABLE_NAME")).rows,
+        now=lambda: datetime.now(UTC),
+    )
+
+
+@cache
 def chat_graph():
     from inbox_agent.chat_path import ChatDeps, build_chat_graph
     from inbox_agent.model import chat_model
@@ -124,8 +145,9 @@ def chat_graph():
     return build_chat_graph(ChatDeps(chat_model=chat_model("chat"), tools=RestrictedTools(_tools(), CHAT_TOOLS), today=_today))
 
 
-def handle(payload, *, batch=None, chat=None, today=_today, clock=time.monotonic) -> dict:
-    """`batch` and `chat` are the compiled graphs; tests pass their own."""
+def handle(payload, *, batch=None, chat=None, stale=None, today=_today, clock=time.monotonic) -> dict:
+    """`batch` and `chat` are the compiled graphs and `stale` the stale
+    check's dependencies; tests pass their own."""
     if not isinstance(payload, dict):
         raise PayloadError("the payload must be an object")
     kind = payload.get("type")
@@ -159,6 +181,28 @@ def handle(payload, *, batch=None, chat=None, today=_today, clock=time.monotonic
         reply = answer(chat or chat_graph(), payload.get("question"), today=today())
         logger.info(json.dumps({"event": "chat_done", "seconds": round(clock() - started, 3)}))
         return {"answer": reply}
+
+    if kind == STALE_CHECK_MESSAGE:
+        from inbox_agent.stale_check import run_stale_check
+
+        try:
+            outcome = run_stale_check(stale or stale_check_deps(), today())
+        except Exception as error:
+            logger.error(json.dumps({"event": "stale_check_failed", "error": type(error).__name__}))
+            raise
+        # Counts only: the drafts hold text and addresses (NFR-PRIV-3).
+        logger.info(
+            json.dumps(
+                {
+                    "event": "stale_check_done",
+                    **{key: outcome[key] for key in ("check_date", "eligible", "rejected", "notified")},
+                    "drafts": len(outcome["drafts"]),
+                    "approval_ids": [draft["approval_id"] for draft in outcome["drafts"]],
+                    "seconds": round(clock() - started, 3),
+                }
+            )
+        )
+        return outcome
 
     raise PayloadError("unknown payload type")
 
