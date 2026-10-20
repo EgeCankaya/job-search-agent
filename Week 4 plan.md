@@ -1,7 +1,7 @@
 # Week 4 plan: memory and approval
 
 **Date:** 2026-10-20
-**Status:** OQ-44 accepted (all fourteen items, 2026-10-20). Step 0 is done (2026-10-20): PRD v0.4.4, design-doc revision 113, and the (n) packages added with uv. Nothing is built, deployed or committed.
+**Status:** OQ-44 accepted (all fourteen items, 2026-10-20). Steps 0 to 8 are built and committed on main (2026-10-20, `9037dd4` to `e34f6c7`), not pushed, so nothing is deployed. Steps 9 and 10 are mine: the runbook at the end has the commands.
 **Sources:** PRD v0.4.3 (§9 APR-1 to APR-4, MEM-1, MEM-2, MODE-3, TOOL-1, TOOL-4, ING-1, ING-3; §10; §12; §14 week 4; §16a; §18 OQ-4, OQ-20, OQ-21, OQ-27, OQ-30, OQ-35, OQ-36, OQ-38), the design doc (Claude Doc, revision 106), `Week 3 plan.md`, the week 3 code as deployed (commit `c2302c4`).
 
 ## Checked before planning (2026-10-20, read-only, my `aws login` session)
@@ -160,3 +160,27 @@ As drafted in OQ-44 (j) and (k).
 - **Durable replay.** Code outside steps runs again on every replay; the draft call must sit inside a step so a replay never repeats it. Tests replay on purpose.
 - **Old versions in flight.** A deploy publishes a new version; executions waiting since an older one resume on it. Breaking changes to the record or callback shape need both shapes for 7 days.
 - **AgentCore charges.** Memory and the policy engine are the first new charges since week 3. Check Billing → Credits the day after the deploy.
+
+## Runbook for steps 9 and 10 (my commands)
+
+Placeholders in angle brackets come from the stack outputs or the console; none of them is written down in the repo. Run from the repo root after `aws login`.
+
+**Deploy (step 9.1).** Push main; the runner deploys. The daily schedule stays off (`STALE_CHECK_ON = False` in `infra/always_free_stack.py`), and the probe stays off (`POLICY_PROBE_ON = False` in `infra/agentcore_stack.py`). Right after it, ask one question on the Ask page: an answer proves the Runtime role passes the policy engine (the chat path calls `list_applications` through the Gateway). If it fails, the batch path fails the same way, so act before the next poll with mail.
+
+**Policy probe (step 9.2, exit 5).**
+1. Set `POLICY_PROBE_ON = True`, commit, push, wait for the deploy.
+2. `aws bedrock-agentcore invoke-agent-runtime --agent-runtime-arn <runtime ARN> --runtime-session-id inbox-agent-policy-probe-2026-10-20xx --payload '{"type": "policy_probe"}' --cli-binary-format raw-in-base64-out probe.json` and read `probe.json`: `refused` should be true, with a detail that names the policy (not "the tool failed", which would mean the tool refused instead).
+3. The same call with my own session must be denied too: it is any identity but the workflow's.
+4. Set `POLICY_PROBE_ON = False`, commit, push.
+
+**A draft, Approve, Skip (exits 1 to 3).**
+1. Seed two fictional rows with a CSV under `data/` (gitignored), last contact 11 days ago, for example `Örnek Test Ltd,Test Engineer,<date>,applied` and `Örnek Deneme AŞ,QA Engineer,<date>,applied`: `uv run python import_applications.py data/week4-test.csv --table <ApplicationsTableName>`.
+2. Count Gmail Sent, then send the check: `aws sqs send-message --queue-url <agent queue URL> --message-body '{"type": "stale_check"}'`.
+3. Within a minute or two: the drafts-ready email arrives, and the Follow-ups page shows both drafts (To empty, as no thread exists).
+4. Approve one: Gmail Drafts has it, and Sent has the same count. Skip the other: no draft.
+5. Timeout: take one draft's JSON from `aws dynamodb get-item` (or write one by hand with a fresh 32-hex `approval_id`), save it as `data/timeout-test.json` in the shape `{"draft": {...}, "test_timeout_seconds": 60}`, then `aws lambda invoke --function-name inbox-agent-approval:<latest version> --invocation-type Event --durable-execution-name <its approval_id> --payload fileb://data/timeout-test.json out.json`. After a minute the record says `expired`, and no draft exists.
+6. Cleanup: delete the seeded rows, the Gmail draft, the test records.
+
+**Memory (exit 4).** On the Ask page, state a preference ("I prefer short, formal follow-ups"), wait a few minutes for extraction, then `uv run python export_memory.py --show 5`: it prints both counts and five records.
+
+**Turn the daily check on (step 9.4).** `STALE_CHECK_ON = True`, commit, push. The first live check proposes at most 5, oldest first.

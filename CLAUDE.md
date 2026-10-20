@@ -48,11 +48,13 @@ email alerts through SNS.
 ```
 app.py                       CDK entry point (calls infra.app.build)
 import_applications.py       TRK-3 import, run by the owner (wraps src/inbox_agent)
+export_memory.py             MODE-3 memory export to data/memory.sqlite, run by the owner
 infra/config.py              settings: tag, region, AGENT_MODE, alert email
 infra/app.py                 builds the stacks for the configured mode
 infra/always_free_stack.py   tables, queues, alert topic, budgets, poll Lambda + schedule
 infra/agentcore_stack.py     Runtime (CfnRuntime), Gateway + 4 Lambda targets, queue consumer (cloud only)
-infra/runtime_bundle.py      the Runtime ZIP: uv installs the agent group for arm64 at synth, no Docker
+infra/runtime_bundle.py      the uv-built arm64 ZIPs at synth, no Docker: the Runtime (agent group), the approval workflow (approval group)
+infra/cedar.py               the Gateway's Cedar policies (week 4: per-identity permits, the draft forbid)
 src/budgets/budgets_resource.py   deploy-time custom resource that creates the budgets
 src/inbox_agent/             runtime code (packaged into the poll Lambda):
   settings.py                ATS domains, subject keywords, alert sender, alias list
@@ -66,18 +68,23 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   trim.py, classify.py       CLS-3 trimming and prompt; CLS-1 classes and precedence, CLS-2 extraction
   tracker_update.py, alerts.py  TRK-1 row update; ALR-1 alert text
   classes.py, model.py       the 6 classes; Model interface, Bedrock Converse adapter, chat_model() per AGENT_MODE
-  mode.py, memory.py         AGENT_MODE for the runtime; the Memory interface (no-op until week 4)
-  tools.py                   the week 3 tool specs, fixed input schemas and validation (OQ-42 d)
-  tool_handlers.py           read_email, upsert_application, list_applications, notify_owner; InProcessTools
+  mode.py, memory.py         AGENT_MODE for the runtime; Memory: AgentCore (cloud), SQLite (local), NoMemory (tests)
+  tools.py                   the six tool specs, fixed input schemas and validation (OQ-42 d, OQ-44 e, f); GATEWAY_/AGENT_/APPROVAL_TOOLS
+  tool_handlers.py           the six tool handlers; InProcessTools
+  pending_drafts.py          APR-3 pending-draft records: register, decide, expire, the TOOL-4 check and claim
+  followup_draft.py, stale_check.py  APR-2 drafting (checked in code); the APR-1 stale-check path
+  approval_workflow.py       APR-3: the durable function (callback wait, draft through the Gateway)
+  owner_identity.py          the owner's role ID and SQS SenderId parsing (OQ-44 d)
+  export_memory.py           ListMemoryRecords into the local store (MODE-3)
   tool_lambda.py             one tool per Lambda behind the Gateway (TOOL_NAME pins which)
   gateway_tools.py           the tools through AgentCore Gateway: MCP over HTTPS, SigV4-signed (OQ-42 e)
   batch_path.py, chat_path.py  the LangGraph graphs: fixed batch path (OQ-42 b); chat with list_applications only
   runtime.py                 the Runtime entry point (new_email, chat); local worker on 127.0.0.1:8080
-  consumer.py                the queue consumer Lambda: one InvokeAgentRuntime per new email (OQ-42 a)
+  consumer.py                the queue consumer Lambda: new_email and stale_check to the Runtime; decisions to the record and the workflow
   dashboard.py, app_backend.py  DASH-1 numbers; the Mac app's AWS calls (stack discovery, scans, Ask)
   local_mcp_server.py, stdio_tools.py  MacBook mode's tools: MCP over stdio (no port), and the worker's client
 spikes/                      one-off checks run by the owner (ING-4 AgentCore Identity spike)
-mac_app/                     the Streamlit Mac app: app.py (navigation), dashboard_page.py, ask_page.py, common.py
+mac_app/                     the Streamlit Mac app: app.py (navigation), dashboard_page.py, ask_page.py, followups_page.py, common.py
 .streamlit/config.toml       the app binds 127.0.0.1:8501 and sends no usage stats (CHT-2)
 .github/workflows/           check.yml (tests + synth, GitHub runners, PRs) and deploy.yml (main only, deploy on the Mac's self-hosted runner)
 tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
@@ -93,6 +100,7 @@ uv run pytest
 cdk synth -c alert_email=alerts@example.com
 cdk synth -c alert_email=alerts@example.com -c agent_mode=local
 uv run python import_applications.py data/applications.csv --table <ApplicationsTableName>
+uv run python export_memory.py --show 5          # MODE-3 export and the week 4 exit check 4
 uv run streamlit run mac_app/app.py              # the Mac app, from the repo root
 AGENT_MODE=local PYTHONPATH=src uv run python -m inbox_agent.runtime   # the local worker on 127.0.0.1:8080
 ```
@@ -136,7 +144,7 @@ account ID and the alert email.
 - no API Gateway API or Lambda function URL, in either mode;
 - every role is hand-built: no managed policies, no wildcards (budgets, poll, poll schedule, queue reader).
 - resource policies use `Principal: "*"` only on a Deny with a condition (the topic policy), never on an Allow.
-- one named wildcard from week 4 (OQ-44 (b)): the approval workflow's own function ARN + `:*`, only for the durable checkpoint, state and callback actions.
+- the named wildcards, pinned by `tests/infra/test_week4_stack.py`: the approval workflow's own function ARN + `:*`, only for the durable checkpoint, state and callback actions (OQ-44 (b)); CDK's Gateway invoke grant `<tool function ARN>:*` (function and versions, since week 3); CDK's policy-engine grant `AuthorizeAction` on `gateway/inbox-agent-??????????` (week 4, not yet in an OQ).
 
 ### Gotchas learned
 
@@ -219,6 +227,23 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (h) AgentCore Memory, 30-day events, built-in user-preference and summary strategies (one session per company, no email text); (i) local memory in SQLite; (j) the Cedar policy engine in ENFORCE in week 4 with per-identity permits, forbids in week 5; (k) a one-off `policy_probe` in the Runtime behind `POLICY_PROBE=1` for exit 5;
   - (l) the query gains `-from:me -in:drafts`; (m) without a person's email, the draft takes the company's latest email's language, else English; (n) `aws-durable-execution-sdk-python` (group `approval`) and its `-testing` runner (dev), added 2026-10-20.
 - **Step 1 built (2026-10-20), not committed or deployed:** the query's own-mail exclusion (`settings.OWN_MAIL_EXCLUSION`, placed before the alert-sender term, so that term still ends the query); the `follow_up` map's field names in `tracker.py`; `TrackerTable.put_row`, which writes a whole row only if it is still new, or its `follow_up.version` is the one read (`upsert_application` re-reads and retries up to 3 times, so it never undoes the workflow's in-place update); the skip-streak reset on a new message; `eligibility.py`. The workflow must always set `follow_up.version` and raise it on every change.
+
+- **Steps 2 to 8 built (2026-10-20), committed (`dc475eb` to `e34f6c7`), not pushed, so not deployed.** 696 tests pass; `cdk synth` works in both modes. The owner's steps 9 and 10 are a runbook at the end of `Week 4 plan.md`.
+  - Step 2: `search_gmail` and `create_gmail_draft` (one Lambda and role each; the compose grant only on the draft tool's role, plus `iam:GetRole` on the owner's role); the Gateway serves six; the Runtime's client lists five.
+  - Step 3: the stale-check path and drafting, the `drafts_ready` alert (claimed once a day as `#drafts-ready-<date>` in the processed-email log; the Dashboard doesn't count it). The Runtime role gained a read-only tracker `Scan` and `DeleteItem` on the log (to release that claim).
+  - Step 4: the approval workflow `inbox-agent-approval` (fixed name, durable 8 days, history 14 days, a published version per deploy) in the AgentCore stack, with its own 58 MB ZIP. Its tracker access is `UpdateItem` limited to `follow_up` by `dynamodb:Attributes`.
+  - Step 5: the consumer routes `stale_check` and `decision`; the daily schedule (09:00 Europe/Istanbul, to the queue) is **off**: `STALE_CHECK_ON` in `infra/always_free_stack.py`.
+  - Step 6: one AgentCore Memory (`CfnMemory`, no execution role, events 30 days, preference and summary strategies); the Ask page passes its session ID in the chat payload; `upsert_application` also returns `company_key`.
+  - Step 7: the policy engine in ENFORCE with 3 policies (`FAIL_ON_ANY_FINDINGS`); the probe is **off**: `POLICY_PROBE_ON` in `infra/agentcore_stack.py`.
+  - Step 8: the Follow-ups page.
+- **Gotchas from week 4:**
+  - The policy simulator needs `aws:RequestedRegion=eu-north-1` in its context; without it every action simulates as the SCP's `explicitDeny`. In zsh, write `${ACCT}:role`, not `$ACCT:role` (`:r` is a modifier).
+  - The CDK caches a bundle by its options, not by the local bundler object: two `UvBundling` assets with the same options share one output. The approval bundle sets `environment={"UV_GROUP": "approval"}` to keep its own.
+  - An SQS event source mapping caps a durable execution at 15 minutes, so the 7-day wait is started asynchronously (`InvocationType="Event"`, `DurableExecutionName`); a second start raises `DurableExecutionAlreadyStartedException`.
+  - The durable SDK's local runner (`aws_durable_execution_sdk_python_testing.runner.DurableFunctionTestRunner`) runs real checkpoints, replays, callbacks and timeouts in tests; a step that fails is retried with the earlier steps replayed, not re-run.
+  - DynamoDB reserved words: pending-draft attributes are `draft_state`, `draft_text`, `to_address`; conditions use `#name` placeholders. The fake table evaluates AND-ed `attribute_exists`/`attribute_not_exists`/`=` conditions and simple SET updates.
+  - A policy engine may filter the MCP tool list per caller, so the probe calls the draft tool by its Gateway name without listing (`GatewayTools.call_unlisted`).
+  - Whole-row tracker writes (`TrackerTable.put_row`) are refused if the row's `follow_up.version` changed since the read; `upsert_application` re-reads up to 3 times.
 
 ## AWS Free plan (decided 2026-10-17)
 
