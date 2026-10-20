@@ -11,6 +11,7 @@ from datetime import date, datetime
 
 from inbox_agent.classes import EmailClass
 from inbox_agent.matching import company_key, match_application, role_key
+from inbox_agent.tracker import FOLLOW_UP, SKIPS_IN_A_ROW
 
 # The status mapping (TRK-1, OQ-13). Recruiter outreach sets
 # `recruiter_contact` on a new row only; "other" changes only last contact.
@@ -134,6 +135,10 @@ def update_for_status(
     ids = list(item.get("source_message_ids", []))
     if message_id not in ids:
         ids.append(message_id)
+        # A new email ends a skip streak (APR-4: "2 times in a row since its
+        # last new email"; OQ-44 g).
+        if item.get(FOLLOW_UP, {}).get(SKIPS_IN_A_ROW):
+            item[FOLLOW_UP] = {**item[FOLLOW_UP], SKIPS_IN_A_ROW: 0}
     item["source_message_ids"] = ids
 
     # A key date only when the email's status took effect: a late assessment

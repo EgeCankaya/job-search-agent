@@ -25,6 +25,11 @@ COMPANY_ALIASES: dict[str, str] = {}
 # "interview", so the query excludes it (OQ-40).
 ALERT_SENDER = "no-reply@sns.amazonaws.com"
 
+# ING-1. Gmail's search also covers Drafts and Sent, so without this the
+# follow-up drafts and the replies the owner sends would be polled back as
+# new contacts (OQ-44 l). Gmail resolves "me" to the signed-in account.
+OWN_MAIL_EXCLUSION = "-from:me -in:drafts"
+
 # ING-1 part 1: applicant tracking systems that send on a company's behalf,
 # and assessment platforms, whose test invites often match no keyword (OQ-41 b).
 # Gmail's from:domain also matches subdomains (hire.lever.co).

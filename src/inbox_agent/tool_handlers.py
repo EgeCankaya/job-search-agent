@@ -31,13 +31,15 @@ from inbox_agent.tools import (
     parse_date_or_datetime,
     validate,
 )
-from inbox_agent.tracker import TrackerTable
+from inbox_agent.tracker import RowChanged, TrackerTable
 from inbox_agent.tracker_update import manual_update, update_for_status
 from inbox_agent.trim import trim_email
 
 # What list_applications returns of a row: no message IDs, follow-up state,
 # company domains or recruiter senders (OQ-42 d).
 LISTED_FIELDS = ("company", "role", "status", "last_contact", "next_step", "key_date", "key_date_type")
+# Whole-row writes that lost to a concurrent change are recomputed this often.
+ROW_WRITE_ATTEMPTS = 3
 
 
 def _today() -> date:
@@ -98,45 +100,57 @@ def upsert_application(
         company_key(company, aliases)
     except ValueError:
         raise ToolInputError("company is empty after normalization") from None
-    rows = deps.tracker.rows()
+    if message_id is not None and last_contact is None:
+        raise ToolInputError("an update from an email needs last_contact, the email's date")
     when = parse_date_or_datetime(key_date) if key_date is not None else None
     next_step = " ".join(next_step.split()) if next_step is not None else None
 
-    if message_id is None:
-        update = manual_update(
-            rows,
-            company=company,
-            role=role,
-            status=status,
-            last_contact=parse_date(last_contact) if last_contact is not None else None,
-            next_step=next_step,
-            key_date=when,
-            key_date_type=key_date_type,
-            aliases=aliases,
-        )
-    else:
-        if last_contact is None:
-            raise ToolInputError("an update from an email needs last_contact, the email's date")
-        existing = match_application(rows, company, role, aliases)
-        if existing is not None and message_id in existing.get("source_message_ids", []):
-            # This email already landed on the row (ING-2): nothing to write.
-            return _row_summary(existing, created=False, written=False)
-        update = update_for_status(
-            rows,
-            status=status,
-            company=company,
-            role=role,
-            message_id=message_id,
-            received_on=parse_date(last_contact),
-            key_date=when,
-            key_date_type=key_date_type,
-            aliases=aliases,
-        )
-        if next_step is not None:
-            update.item["next_step"] = next_step
+    # The approval workflow updates a row's follow-up state in place
+    # (OQ-44 g), so a whole-row write is guarded; if the row moved since the
+    # read, read it again.
+    for _ in range(ROW_WRITE_ATTEMPTS):
+        rows = deps.tracker.rows()
+        if message_id is None:
+            update = manual_update(
+                rows,
+                company=company,
+                role=role,
+                status=status,
+                last_contact=parse_date(last_contact) if last_contact is not None else None,
+                next_step=next_step,
+                key_date=when,
+                key_date_type=key_date_type,
+                aliases=aliases,
+            )
+        else:
+            existing = match_application(rows, company, role, aliases)
+            if existing is not None and message_id in existing.get("source_message_ids", []):
+                # This email already landed on the row (ING-2): nothing to write.
+                return _row_summary(existing, created=False, written=False)
+            update = update_for_status(
+                rows,
+                status=status,
+                company=company,
+                role=role,
+                message_id=message_id,
+                received_on=parse_date(last_contact),
+                key_date=when,
+                key_date_type=key_date_type,
+                aliases=aliases,
+            )
+            if next_step is not None:
+                update.item["next_step"] = next_step
+        read = None if update.created else _same_row(rows, update.item)
+        try:
+            deps.tracker.put_row(update.item, read=read)
+        except RowChanged:
+            continue
+        return _row_summary(update.item, created=update.created, written=True)
+    raise RowChanged()
 
-    deps.tracker.put(update.item)
-    return _row_summary(update.item, created=update.created, written=True)
+
+def _same_row(rows: list[dict], item: Mapping) -> dict:
+    return next(r for r in rows if (r["company_key"], r["role_key"]) == (item["company_key"], item["role_key"]))
 
 
 def list_applications(

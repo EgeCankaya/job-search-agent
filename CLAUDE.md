@@ -11,17 +11,17 @@ repo is **public**.
 
 1. **Design doc** owns architecture: services, models, modes, data flow. The
    live version is the Claude Doc https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9
-   (revision 106). `Job search inbox agent design.pdf` is still the export of revision 90;
+   (revision 113). `Job search inbox agent design.pdf` is still the export of revision 90;
    the owner re-exports it.
-2. **`Job search inbox agent PRD.md`** (v0.4.3) owns requirements and targets:
+2. **`Job search inbox agent PRD.md`** (v0.4.4) owns requirements and targets:
    FRs §9, NFRs §10, metrics §11, CI gates §12, milestones §14, dependencies §16a.
 3. **The code follows both.** Never add tools, tool inputs, endpoints or
    capabilities beyond PRD §9, or architecture beyond the design doc.
 4. **Changes to the design doc go through an OQ-style item** that the owner
    accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`,
    `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md`,
-   `Design doc edits for OQ-41.md`, `Design doc edits for OQ-42.md` and
-   `Design doc edits for OQ-43.md`, all accepted and applied to the PRD and
+   `Design doc edits for OQ-41.md`, `Design doc edits for OQ-42.md`,
+   `Design doc edits for OQ-43.md` and `Design doc edits for OQ-44.md`, all accepted and applied to the PRD and
    the design doc.
 
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
@@ -56,7 +56,8 @@ infra/runtime_bundle.py      the Runtime ZIP: uv installs the agent group for ar
 src/budgets/budgets_resource.py   deploy-time custom resource that creates the budgets
 src/inbox_agent/             runtime code (packaged into the poll Lambda):
   settings.py                ATS domains, subject keywords, alert sender, alias list
-  tracker.py, matching.py    tracker table; TRK-1 normalization and matching
+  tracker.py, matching.py    tracker table (guarded row writes, follow-up state); TRK-1 normalization and matching
+  eligibility.py             APR-1/APR-4: which rows the daily check proposes (5 a check, oldest first)
   import_applications.py     TRK-3 CSV import
   query.py                   ING-1 query builder, local matcher, M8 coverage hook
   gmail.py                   GmailClient interface (search, fetch); real client via AgentCore Identity (ING-4)
@@ -135,6 +136,7 @@ account ID and the alert email.
 - no API Gateway API or Lambda function URL, in either mode;
 - every role is hand-built: no managed policies, no wildcards (budgets, poll, poll schedule, queue reader).
 - resource policies use `Principal: "*"` only on a Deny with a condition (the topic policy), never on an Allow.
+- one named wildcard from week 4 (OQ-44 (b)): the approval workflow's own function ARN + `:*`, only for the durable checkpoint, state and callback actions.
 
 ### Gotchas learned
 
@@ -205,6 +207,18 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - Tests set the `aws:cdk:bundling-stacks: []` context, so they never bundle. A real `cdk synth` bundles (about 155 MB unzipped).
   - The Runtime's log group name `/aws/bedrock-agentcore/runtimes/<runtime id>-DEFAULT` is AWS's convention, not checked yet: after the first deploy, confirm the Runtime writes there.
 - **Nova Lite profile (looked up 2026-10-19):** `eu.amazon.nova-lite-v1:0` is `ACTIVE` and routes to `amazon.nova-lite-v1:0` in the same 4 Regions as Micro (eu-central-1, eu-north-1, eu-west-1, eu-west-3). The Runtime role names both profiles and these 8 model ARNs.
+
+## Week 4 (started 2026-10-20)
+
+- **Plan:** `Week 4 plan.md` (5 exit checks, 10 steps, what the owner does by hand).
+- **Checked 2026-10-20 (read-only):** the SCP allows every week 4 action in eu-north-1, but the policy simulator needs `aws:RequestedRegion=eu-north-1` in its context, or every action shows `explicitDeny`. Durable functions are listed for Stockholm by AWS (2025-12) and the API answers there (OQ-27 resolved). AgentCore Memory and Policy answer (none exist yet). `inbox-agent-drafts` still exists.
+- **OQ-44, accepted and applied 2026-10-20 (all items, (a) to (n))** to PRD v0.4.4 and design-doc revision 113:
+  - (a) the approval workflow is a durable function in the AgentCore stack, started asynchronously by the consumer (an SQS mapping caps a durable execution at 15 min), execution name = `approval_id`; it writes the pending-draft record, the Runtime role can't; (b) one named wildcard, `<workflow ARN>:*`, for the durable actions;
+  - (c) Scheduler → SQS `stale_check` at 09:00 Europe/Istanbul in both modes; a fixed stale-check path; at most 5 drafts per check, oldest first; (d) a decision counts only if SQS's `SenderId` is the owner's `aws login` role (`iam:GetRole` once per cold start), recorded with the shown text's hash;
+  - (e) `search_gmail(company)` returns IDs, thread, sender, time, `Message-ID` only; `create_gmail_draft(approval_id)` takes everything else from the record; (f) `notify_owner` `kind=drafts_ready` with `count` 1 to 5; (g) a `follow_up` map on tracker rows, written by the workflow (IAM-limited to that attribute), skip streak reset by `upsert_application`;
+  - (h) AgentCore Memory, 30-day events, built-in user-preference and summary strategies (one session per company, no email text); (i) local memory in SQLite; (j) the Cedar policy engine in ENFORCE in week 4 with per-identity permits, forbids in week 5; (k) a one-off `policy_probe` in the Runtime behind `POLICY_PROBE=1` for exit 5;
+  - (l) the query gains `-from:me -in:drafts`; (m) without a person's email, the draft takes the company's latest email's language, else English; (n) `aws-durable-execution-sdk-python` (group `approval`) and its `-testing` runner (dev), added 2026-10-20.
+- **Step 1 built (2026-10-20), not committed or deployed:** the query's own-mail exclusion (`settings.OWN_MAIL_EXCLUSION`, placed before the alert-sender term, so that term still ends the query); the `follow_up` map's field names in `tracker.py`; `TrackerTable.put_row`, which writes a whole row only if it is still new, or its `follow_up.version` is the one read (`upsert_application` re-reads and retries up to 3 times, so it never undoes the workflow's in-place update); the skip-streak reset on a new message; `eligibility.py`. The workflow must always set `follow_up.version` and raise it on every change.
 
 ## AWS Free plan (decided 2026-10-17)
 

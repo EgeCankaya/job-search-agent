@@ -16,7 +16,7 @@ from inbox_agent.import_applications import import_rows, parse_csv
 from inbox_agent.messages import EmailHeader, FetchedEmail
 from inbox_agent.tool_handlers import InProcessTools, ToolDeps
 from inbox_agent.tools import ToolInputError, ToolNotAllowed
-from inbox_agent.tracker import TrackerTable
+from inbox_agent.tracker import RowChanged, TrackerTable
 from tests.fakes import FakeTable, FakeTopic
 
 TODAY = date(2026, 10, 19)
@@ -173,6 +173,59 @@ def test_an_email_update_needs_its_date(tools, table):
     with pytest.raises(ToolInputError, match="last_contact"):
         tools.call("upsert_application", {"company": "Güney Savunma", "message_id": "18f30"})
     assert table.puts == 0
+
+
+class ChangingTable(FakeTable):
+    """The approval workflow updates a row's follow-up state between the
+    upsert's read and its write, `times` times."""
+
+    def __init__(self, times):
+        super().__init__("company_key", "role_key")
+        self.times = times
+
+    def scan(self, ExclusiveStartKey=None):
+        page = super().scan(ExclusiveStartKey)
+        if self.times and "LastEvaluatedKey" not in page:
+            self.times -= 1
+            for item in self.items.values():
+                if item.get("company") == "Güney Savunma":
+                    version = item.get("follow_up", {}).get("version", 0) + 1
+                    item["follow_up"] = {"last_proposed": "2026-10-19", "version": version}
+        return page
+
+
+def changing_tools(times):
+    table = ChangingTable(times)
+    import_rows(parse_csv(TRACKER_CSV), TrackerTable(table))
+    return table, InProcessTools(ToolDeps(tracker=TrackerTable(table), today=lambda: TODAY))
+
+
+def test_an_upsert_never_undoes_a_follow_up_change_made_after_its_read():
+    table, tools = changing_tools(times=2)
+    tools.call(
+        "upsert_application",
+        {"company": "Güney Savunma", "status": "offer", "last_contact": "2026-10-19", "message_id": "18f3a"},
+    )
+    [row] = [item for item in table.items.values() if item.get("company") == "Güney Savunma"]
+    assert row["status"] == "offer"
+    assert row["follow_up"] == {"last_proposed": "2026-10-19", "version": 2}
+
+
+def test_an_upsert_gives_up_when_the_row_keeps_changing():
+    table, tools = changing_tools(times=5)
+    with pytest.raises(RowChanged):
+        tools.call("upsert_application", {"company": "Güney Savunma", "last_contact": "2026-10-19", "message_id": "18f3b"})
+    [row] = [item for item in table.items.values() if item.get("company") == "Güney Savunma"]
+    assert "18f3b" not in row.get("source_message_ids", [])
+
+
+def test_a_new_row_is_not_written_over_one_created_since_the_read():
+    table = FakeTable("company_key", "role_key")
+    tracker = TrackerTable(table)
+    tracker.put({"company_key": "bati", "role_key": "-", "company": "Batı", "status": "applied"})
+    with pytest.raises(RowChanged):
+        tracker.put_row({"company_key": "bati", "role_key": "-", "company": "Batı", "status": "offer"}, read=None)
+    assert table.items[("bati", "-")]["status"] == "applied"
 
 
 @pytest.mark.parametrize(

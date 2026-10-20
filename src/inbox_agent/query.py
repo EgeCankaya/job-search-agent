@@ -8,7 +8,8 @@ Four parts, combined with OR:
 
 The result is limited to `after:` the last successful poll minus a 1-hour
 overlap, and excludes the alert sender, so the agent never reads its own
-alerts.
+alerts, and the owner's own mail and drafts, so follow-ups are never read
+back as replies (OQ-44 l).
 
 `GmailQuery.matches` evaluates the query locally against an email's headers.
 It backs the unit tests and the M8 coverage hook (`query_coverage`); it is an
@@ -67,15 +68,20 @@ class GmailQuery:
     after: datetime
     excluded_sender: str = settings.ALERT_SENDER
     skipped_values: int = 0  # tracker values dropped because they weren't clean
+    # Gmail knows "me"; a local check of labeled mail needs the address.
+    own_addresses: tuple[str, ...] = ()
 
     def to_gmail(self) -> str:
         terms = [f"from:{domain}" for domain in self.sender_domains]
         terms += [f"from:{address}" for address in self.sender_addresses]
         terms += [f"subject:{keyword}" for keyword in self.subject_keywords]
-        return f"({' OR '.join(terms)}) after:{int(self.after.timestamp())} -from:{self.excluded_sender}"
+        return (
+            f"({' OR '.join(terms)}) after:{int(self.after.timestamp())} "
+            f"{settings.OWN_MAIL_EXCLUSION} -from:{self.excluded_sender}"
+        )
 
     def matches(self, email: EmailHeader) -> bool:
-        if email.received_at < self.after or email.sender_address == self.excluded_sender:
+        if email.received_at < self.after or email.sender_address in (self.excluded_sender, *self.own_addresses):
             return False
         domain = email.sender_domain
         if any(domain == d or domain.endswith("." + d) for d in self.sender_domains):

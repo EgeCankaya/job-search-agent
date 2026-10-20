@@ -7,6 +7,10 @@ The owner's company alias list (TRK-1) is one reserved item in the same
 table, so it never lives in the public repo (OQ-41 d). Normalized company
 keys hold only [0-9a-z ], so the "#" key can't collide with a row, and
 `rows()` leaves the item out.
+
+Each row may carry a `follow_up` map (APR-4, OQ-44 g): the approval
+workflow's bookkeeping, which it updates in place. Writers of whole rows use
+`put_row`, which refuses to overwrite a newer follow-up state.
 """
 
 STATUSES = (
@@ -24,6 +28,24 @@ CLOSED_STATUSES = frozenset({"rejected", "withdrawn"})
 RESERVED_PREFIX = "#"
 ALIASES_KEY = {"company_key": "#config", "role_key": "aliases"}
 
+# Follow-up state (TRK-1, OQ-20): ISO dates, the skip streak since the last
+# new email, and a version the approval workflow raises on every change.
+FOLLOW_UP = "follow_up"
+LAST_PROPOSED = "last_proposed"
+LAST_SKIPPED = "last_skipped"
+LAST_EXPIRED = "last_expired"
+LAST_DRAFT = "last_draft"
+SKIPS_IN_A_ROW = "skips_in_a_row"
+VERSION = "version"
+
+
+class RowChanged(Exception):
+    """The row changed between the read and the write; read it again."""
+
+
+def _is_conditional_failure(error: Exception) -> bool:
+    return getattr(error, "response", {}).get("Error", {}).get("Code") == "ConditionalCheckFailedException"
+
 
 class TrackerTable:
     def __init__(self, table) -> None:
@@ -37,6 +59,27 @@ class TrackerTable:
 
     def put(self, item: dict) -> None:
         self._table.put_item(Item=item)
+
+    def put_row(self, item: dict, *, read: dict | None) -> None:
+        """Write a whole row computed from `read`, the row as it was read
+        (None for a new row). Raises RowChanged if the row was created, or
+        its follow-up state changed, since: the approval workflow writes that
+        state in place, and a whole-row write must not undo it."""
+        if read is None:
+            condition = {"ConditionExpression": "attribute_not_exists(company_key)"}
+        elif FOLLOW_UP not in read:
+            condition = {"ConditionExpression": f"attribute_not_exists({FOLLOW_UP})"}
+        else:
+            condition = {
+                "ConditionExpression": f"{FOLLOW_UP}.{VERSION} = :version",
+                "ExpressionAttributeValues": {":version": read[FOLLOW_UP].get(VERSION, 0)},
+            }
+        try:
+            self._table.put_item(Item=item, **condition)
+        except Exception as error:
+            if _is_conditional_failure(error):
+                raise RowChanged() from None
+            raise
 
     def rows(self) -> list[dict]:
         """Every application row. The tracker holds tens of rows, so a scan is fine."""

@@ -48,14 +48,22 @@ class FakeTable:
         item = self.items.get(self._key(Key))
         return {"Item": copy.deepcopy(item)} if item is not None else {}
 
-    def put_item(self, Item: dict, ConditionExpression: str | None = None) -> dict:
+    def put_item(
+        self, Item: dict, ConditionExpression: str | None = None, ExpressionAttributeValues: dict | None = None
+    ) -> dict:
         self._check_types(Item)
         if ConditionExpression is not None:
-            # Only the form the runtime code uses.
-            match = re.fullmatch(r"attribute_not_exists\((\w+)\)", ConditionExpression)
-            assert match, f"unsupported condition {ConditionExpression!r}"
             existing = self.items.get(self._key(Item))
-            if existing is not None and match.group(1) in existing:
+            # Only the forms the runtime code uses.
+            if match := re.fullmatch(r"attribute_not_exists\((\w+)\)", ConditionExpression):
+                failed = existing is not None and match.group(1) in existing
+            elif match := re.fullmatch(r"(\w+)\.(\w+) = (:\w+)", ConditionExpression):
+                outer, inner, name = match.groups()
+                value = (existing or {}).get(outer, {}).get(inner)
+                failed = value is None or value != ExpressionAttributeValues[name]
+            else:
+                raise AssertionError(f"unsupported condition {ConditionExpression!r}")
+            if failed:
                 raise FakeConditionalCheckFailed()
         self.items[self._key(Item)] = copy.deepcopy(Item)
         self.puts += 1

@@ -201,3 +201,21 @@ def test_new_row_without_role():
     result = update([], EmailClass.OTHER, "Kuzey Yazılım", "  ")
     assert result.item["role_key"] == NO_ROLE_KEY
     assert "role" not in result.item
+
+
+# Follow-up state (APR-4, OQ-44 g)
+
+
+def test_a_new_email_ends_the_skip_streak():
+    existing = row("Kuzey Yazılım", "Backend Engineer", follow_up={"skips_in_a_row": 2, "last_skipped": "2026-10-10", "version": 3})
+    result = update([existing], EmailClass.OTHER, "Kuzey Yazılım", "Backend Engineer", message_id="msg-new")
+    assert result.item["follow_up"] == {"skips_in_a_row": 0, "last_skipped": "2026-10-10", "version": 3}
+    assert existing["follow_up"]["skips_in_a_row"] == 2  # the read row is not changed
+
+
+def test_the_same_email_again_keeps_the_skip_streak():
+    existing = row(
+        "Kuzey Yazılım", "Backend Engineer", source_message_ids=["msg-1"], follow_up={"skips_in_a_row": 2, "version": 3}
+    )
+    result = update([existing], EmailClass.OTHER, "Kuzey Yazılım", "Backend Engineer", message_id="msg-1")
+    assert result.item["follow_up"]["skips_in_a_row"] == 2

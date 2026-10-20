@@ -3,6 +3,7 @@
 Fictional senders only.
 """
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -45,7 +46,7 @@ def test_gmail_query_string():
     keywords = " OR ".join(f"subject:{k}" for k in SUBJECT_KEYWORDS)
     assert q.to_gmail() == (
         "(from:ats.example.org OR from:kuzey.example.com OR from:recruiter@mail.example.net OR "
-        f"{keywords}) after:{after} -from:no-reply@sns.amazonaws.com"
+        f"{keywords}) after:{after} -from:me -in:drafts -from:no-reply@sns.amazonaws.com"
     )
 
 
@@ -54,6 +55,23 @@ def test_alert_sender_exclusion_sits_outside_the_or_group():
     group_end = gmail.rindex(")")
     assert gmail.endswith(f" -from:{ALERT_SENDER}")
     assert gmail.index(f"-from:{ALERT_SENDER}") > group_end
+
+
+def test_own_mail_and_drafts_are_excluded_outside_the_or_group():
+    # OQ-44 (l): a follow-up draft or a sent follow-up ("Re: Başvurunuz")
+    # hits the keyword part, so only these exclusions keep it out.
+    gmail = query().to_gmail()
+    group_end = gmail.rindex(")")
+    assert gmail.index("-from:me") > group_end
+    assert gmail.index("-in:drafts") > group_end
+
+
+def test_a_message_of_mine_is_not_returned_by_the_local_matcher():
+    mine = "owner@example.com"
+    q = replace(query(), own_addresses=(mine,))
+    subject = "Re: Başvurunuz: Backend Engineer"
+    assert not q.matches(email(f"Owner <{mine}>", subject))
+    assert q.matches(email("someone@example.org", subject))
 
 
 def test_an_alert_email_is_not_returned_by_the_built_query():
