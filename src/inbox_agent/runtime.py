@@ -21,7 +21,6 @@ answers (NFR-PRIV-3). The times are the NFR-OBS-1 fields until week 6 adds
 OpenTelemetry (OQ-42 k).
 """
 
-import json
 import logging
 import os
 import re
@@ -30,6 +29,8 @@ from datetime import UTC, datetime
 from functools import cache
 
 from inbox_agent import settings
+from inbox_agent.cedar_policies import gateway_name
+from inbox_agent.logs import log_event, setup
 from inbox_agent.mode import agent_mode
 from inbox_agent.poll import NEW_EMAIL_MESSAGE
 
@@ -43,6 +44,14 @@ STALE_CHECK_MESSAGE = "stale_check"
 POLICY_PROBE_MESSAGE = "policy_probe"
 POLICY_PROBE_ENV = "POLICY_PROBE"
 PROBE_APPROVAL_ID = "0" * 32  # never a real approval_id: no record has it
+PROBE_CASES = {
+    "draft_tool": ("create_gmail_draft", {"approval_id": PROBE_APPROVAL_ID}),
+    "recipient_key": (
+        "notify_owner",
+        {"kind": "urgent", "email_class": "interview_invite", "company": "Örnek Probe Ltd", "to": "someone@example.com"},
+    ),
+    "unserved_tool": ("send_email", {}),
+}
 CHAT_TOOLS = ("list_applications",)  # OQ-42 h
 GATEWAY_URL_ENV = "GATEWAY_URL"
 LOCAL_HOST = "127.0.0.1"  # never another interface (NFR-REL-4)
@@ -182,16 +191,16 @@ def handle(payload, *, batch=None, chat=None, stale=None, today=_today, clock=ti
             outcome = handle_new_email(batch or batch_graph(), message_id)
         except Exception as error:
             # The type only: an exception message could quote the email.
-            logger.error(json.dumps({"event": "batch_failed", "message_id": message_id, "error": type(error).__name__}))
+            log_event(logger, "batch_failed", logging.ERROR, message_id=message_id, error=type(error).__name__)
             raise
-        fields = {"event": "batch_done", **outcome, "seconds": round(clock() - started, 3)}
+        fields = {**outcome, "seconds": round(clock() - started, 3)}
         # NFR-LAT-1 and NFR-LAT-2 from these, with CloudWatch Logs Insights.
         for key in ("received_at", "detected_at"):
             if isinstance(payload.get(key), str):
                 fields[key] = payload[key]
         if outcome.get("alerted"):
             fields["published_at"] = datetime.now(UTC).isoformat()
-        logger.info(json.dumps(fields))
+        log_event(logger, "batch_done", **fields)
         return outcome
 
     if kind == CHAT_MESSAGE:
@@ -200,7 +209,7 @@ def handle(payload, *, batch=None, chat=None, stale=None, today=_today, clock=ti
         session = payload.get("session_id")
         memory = _memory() if isinstance(session, str) and _SESSION.match(session) else None
         reply = answer(chat or chat_graph(), payload.get("question"), today=today(), memory=memory, session_id=session if memory else None)
-        logger.info(json.dumps({"event": "chat_done", "seconds": round(clock() - started, 3)}))
+        log_event(logger, "chat_done", seconds=round(clock() - started, 3))
         return {"answer": reply}
 
     if kind == POLICY_PROBE_MESSAGE and os.environ.get(POLICY_PROBE_ENV) == "1":
@@ -212,19 +221,16 @@ def handle(payload, *, batch=None, chat=None, stale=None, today=_today, clock=ti
         try:
             outcome = run_stale_check(stale or stale_check_deps(), today())
         except Exception as error:
-            logger.error(json.dumps({"event": "stale_check_failed", "error": type(error).__name__}))
+            log_event(logger, "stale_check_failed", logging.ERROR, error=type(error).__name__)
             raise
         # Counts only: the drafts hold text and addresses (NFR-PRIV-3).
-        logger.info(
-            json.dumps(
-                {
-                    "event": "stale_check_done",
-                    **{key: outcome[key] for key in ("check_date", "eligible", "rejected", "notified")},
-                    "drafts": len(outcome["drafts"]),
-                    "approval_ids": [draft["approval_id"] for draft in outcome["drafts"]],
-                    "seconds": round(clock() - started, 3),
-                }
-            )
+        log_event(
+            logger,
+            "stale_check_done",
+            **{key: outcome[key] for key in ("check_date", "eligible", "rejected", "notified")},
+            drafts=len(outcome["drafts"]),
+            approval_ids=[draft["approval_id"] for draft in outcome["drafts"]],
+            seconds=round(clock() - started, 3),
         )
         return outcome
 
@@ -238,18 +244,40 @@ def _gateway_for_probe():
 
 
 def policy_probe(gateway) -> dict:
-    """Exit check 5: the agent's own role calls create_gmail_draft. Cedar
-    should refuse it; if it didn't, the tool would refuse the made-up
-    approval_id, so nothing is ever drafted. The detail says which refused."""
-    name = "create_gmail_draft"
-    try:
-        gateway.call_unlisted(f"{name.replace('_', '-')}___{name}", {"approval_id": PROBE_APPROVAL_ID})
-    except Exception as error:
-        outcome = {"tool": name, "refused": True, "error": type(error).__name__, "detail": str(error)[:300]}
-    else:
-        outcome = {"tool": name, "refused": False}
-    logger.info(json.dumps({"event": "policy_probe_done", "refused": outcome["refused"], "error": outcome.get("error")}))
-    return outcome
+    """Week 4 exit 5 and week 5 exit 1 (OQ-44 k, OQ-45 d): the agent's own
+    role makes three calls the Gateway's policies must refuse.
+
+    1. create_gmail_draft (OnlyTheWorkflowDrafts). Had Cedar allowed it, the
+       tool would refuse the made-up approval_id, so nothing is drafted.
+    2. notify_owner with valid inputs plus a `to` key (NoRecipientKeys).
+       Had Cedar allowed it, the tool would refuse the unknown key, so
+       nothing is published. The address is fictional.
+    3. send_email, a tool outside the six: refused as unknown by the
+       Gateway, or by NeverSend if a target ever served it.
+
+    Each case returns whether it was refused, the error type and the
+    deciding policy's ID, never the input. Case 3 also returns the start of
+    the Gateway's message, to tell an unknown tool from another failure;
+    its input is empty, so the message can't quote one."""
+    cases = []
+    for case, (tool, arguments) in PROBE_CASES.items():
+        try:
+            gateway.call_unlisted(gateway_name(tool), arguments)
+        except Exception as error:
+            outcome = {"case": case, "tool": tool, "refused": True, "error": type(error).__name__, "policy_id": getattr(error, "policy_id", None)}
+            if not arguments:
+                outcome["detail"] = str(error)[:200]
+        else:
+            outcome = {"case": case, "tool": tool, "refused": False}
+        cases.append(outcome)
+    refused = all(outcome["refused"] for outcome in cases)
+    log_event(
+        logger,
+        "policy_probe_done",
+        refused=refused,
+        cases=[{key: outcome.get(key) for key in ("case", "refused", "error", "policy_id")} for outcome in cases],
+    )
+    return {"refused": refused, "cases": cases}
 
 
 def _app():
@@ -267,8 +295,9 @@ def _app():
 def main() -> None:
     """The process AgentCore Runtime starts (the ZIP's main.py), or the local
     worker on the Mac: `AGENT_MODE=local PYTHONPATH=src uv run python -m inbox_agent.runtime`."""
-    logging.basicConfig(level=logging.INFO)
     app = _app()
+    # After the app: the AgentCore SDK sets its own logger's level.
+    setup()
     if agent_mode() == "local":
         app.run(port=LOCAL_PORT, host=LOCAL_HOST)
     else:

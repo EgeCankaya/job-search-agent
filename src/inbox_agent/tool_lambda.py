@@ -9,12 +9,12 @@ Logs carry the tool name, a message ID and counts, never arguments or
 results, which can hold email text or tracker data (NFR-PRIV-3).
 """
 
-import json
 import logging
 import os
 
 from inbox_agent import settings
 from inbox_agent.alerts import AlertTopic
+from inbox_agent.logs import log_event, setup
 from inbox_agent.tool_handlers import InProcessTools, ToolDeps
 from inbox_agent.tools import TOOL_SPECS, ToolNotAllowed
 
@@ -73,7 +73,7 @@ def _deps(name: str) -> ToolDeps:
 
 
 def _log_fields(name: str, arguments: object, result: dict) -> dict:
-    fields: dict = {"event": "tool_done", "tool": name}
+    fields: dict = {"tool": name}
     if isinstance(arguments, dict) and isinstance(arguments.get("message_id"), str):
         fields["message_id"] = arguments["message_id"]
     if isinstance(arguments, dict) and isinstance(arguments.get("approval_id"), str):
@@ -88,18 +88,19 @@ def handle(event: object, context: object, *, deps: ToolDeps, name: str) -> dict
     if name not in TOOL_SPECS:
         raise ValueError(f"unknown tool {name}")
     if gateway_tool_name(context) != name:
-        logger.error(json.dumps({"event": "tool_refused", "tool": name}))
+        log_event(logger, "tool_refused", logging.ERROR, tool=name)
         raise ToolNotAllowed(f"this function serves {name} only")
     try:
         result = InProcessTools(deps, names=(name,)).call(name, event)
     except Exception as error:
         # The type only: an exception message could quote the input.
-        logger.error(json.dumps({"event": "tool_failed", "tool": name, "error": type(error).__name__}))
+        log_event(logger, "tool_failed", logging.ERROR, tool=name, error=type(error).__name__)
         raise
-    logger.info(json.dumps(_log_fields(name, event, result)))
+    log_event(logger, "tool_done", **_log_fields(name, event, result))
     return result
 
 
 def handler(event: object, context: object) -> dict:
+    setup()
     name = os.environ[TOOL_NAME_ENV]
     return handle(event, context, deps=_deps(name), name=name)

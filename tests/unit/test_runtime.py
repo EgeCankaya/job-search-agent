@@ -11,7 +11,7 @@ import pytest
 from botocore.credentials import Credentials
 
 from inbox_agent import runtime
-from inbox_agent.gateway_tools import GatewayToolError, GatewayTools, parse_result, plain_name, sigv4_auth
+from inbox_agent.gateway_tools import GatewayToolError, GatewayTools, ToolDenied, denied_policy, parse_result, plain_name, sigv4_auth
 from inbox_agent.tools import ToolInputError, ToolNotAllowed
 
 GATEWAY = "https://gw-abc123.gateway.bedrock-agentcore.eu-north-1.amazonaws.com/mcp"
@@ -195,14 +195,115 @@ def test_the_probe_is_refused_unless_switched_on(monkeypatch):
         runtime.handle({"type": "policy_probe"})
 
 
-def test_the_probe_calls_the_draft_tool_by_its_gateway_name_with_a_made_up_id(monkeypatch):
-    gateway = ProbeGateway(RuntimeError("AccessDeniedException: denied by policy"))
+DENIAL = "Tool Execution Denied: Tool call not allowed due to policy enforcement [Policy evaluation denied due to {}]"
+
+
+class PolicyGateway:
+    """Refuses each case the way the Gateway does, by policy or as unknown."""
+
+    def __init__(self):
+        self.calls = []
+
+    def call_unlisted(self, name, arguments):
+        self.calls.append((name, arguments))
+        if name == "send-email___send_email":
+            raise GatewayToolError("Unknown tool: send-email___send_email")
+        policy = {"create-gmail-draft___create_gmail_draft": "OnlyTheWorkflowDrafts-a1b2c3", "notify-owner___notify_owner": "NoRecipientKeys-d4e5f6"}
+        raise ToolDenied(plain_name(name), policy[name])
+
+
+def test_the_probe_makes_the_three_calls_by_their_gateway_names(monkeypatch, caplog):
+    gateway = PolicyGateway()
     monkeypatch.setenv("POLICY_PROBE", "1")
     monkeypatch.setattr(runtime, "_gateway_for_probe", lambda: gateway)
-    outcome = runtime.handle({"type": "policy_probe"})
-    assert gateway.calls == [("create-gmail-draft___create_gmail_draft", {"approval_id": "0" * 32})]
-    assert outcome == {"tool": "create_gmail_draft", "refused": True, "error": "RuntimeError", "detail": "AccessDeniedException: denied by policy"}
+    with caplog.at_level(logging.INFO, logger="inbox_agent.runtime"):
+        outcome = runtime.handle({"type": "policy_probe"})
+    assert gateway.calls == [
+        ("create-gmail-draft___create_gmail_draft", {"approval_id": "0" * 32}),
+        ("notify-owner___notify_owner", {"kind": "urgent", "email_class": "interview_invite", "company": "Örnek Probe Ltd", "to": "someone@example.com"}),
+        ("send-email___send_email", {}),
+    ]
+    assert outcome["refused"] is True
+    draft, recipient, unserved = outcome["cases"]
+    assert draft == {"case": "draft_tool", "tool": "create_gmail_draft", "refused": True, "error": "ToolDenied", "policy_id": "OnlyTheWorkflowDrafts-a1b2c3"}
+    assert recipient == {"case": "recipient_key", "tool": "notify_owner", "refused": True, "error": "ToolDenied", "policy_id": "NoRecipientKeys-d4e5f6"}
+    # Only the empty-input case carries the start of the Gateway's message.
+    assert unserved == {"case": "unserved_tool", "tool": "send_email", "refused": True, "error": "GatewayToolError", "policy_id": None, "detail": "Unknown tool: send-email___send_email"}
+    # Neither the result nor the log holds an input.
+    assert "example.com" not in json.dumps(outcome) and "Örnek" not in json.dumps(outcome)
+    [record] = caplog.records
+    logged = json.loads(record.getMessage())
+    assert logged["event"] == "policy_probe_done" and logged["refused"] is True
+    assert "example.com" not in caplog.text and "Örnek" not in caplog.text and "detail" not in caplog.text
 
 
 def test_a_probe_that_was_not_refused_says_so():
-    assert runtime.policy_probe(ProbeGateway())["refused"] is False
+    outcome = runtime.policy_probe(ProbeGateway())
+    assert outcome["refused"] is False
+    assert [case["refused"] for case in outcome["cases"]] == [False, False, False]
+
+
+@pytest.mark.parametrize(
+    ("text", "policy"),
+    [
+        (DENIAL.format("InboxAgentAgentCorePngineNoRecipientKeys47707FF5-x9y8z7"), "InboxAgentAgentCorePngineNoRecipientKeys47707FF5-x9y8z7"),
+        ("Tool Execution Denied: Tool call not allowed due to policy enforcement", "unknown"),
+        ("the tool failed", None),
+        ("Unknown tool: send-email___send_email", None),
+    ],
+)
+def test_a_denial_is_told_apart_and_its_policy_read(text, policy):
+    assert denied_policy(text) == policy
+
+
+def test_a_policy_denial_becomes_tool_denied_and_is_logged_without_the_input(monkeypatch, caplog):
+    from mcp.shared.exceptions import McpError
+    from mcp.types import ErrorData
+
+    async def denied(self, name, arguments):
+        raise ExceptionGroup("task group", [McpError(ErrorData(code=-32002, message=DENIAL.format("NoRecipientKeys-d4e5f6")))])
+
+    monkeypatch.setattr(GatewayTools, "_call", denied)
+    tools = GatewayTools(GATEWAY, credentials=object())
+    with caplog.at_level(logging.INFO, logger="inbox_agent.gateway_tools"), pytest.raises(ToolDenied) as error:
+        tools.call("upsert_application", {"company": "Örnek Test Ltd", "role": "Backend Engineer"})
+    assert (error.value.tool, error.value.policy_id) == ("upsert_application", "NoRecipientKeys-d4e5f6")
+    [record] = caplog.records
+    assert record.levelno == logging.WARNING
+    assert json.loads(record.getMessage()) == {"event": "tool_denied", "tool": "upsert_application", "policy_id": "NoRecipientKeys-d4e5f6"}
+    assert "Örnek" not in caplog.text and "Backend" not in caplog.text
+
+
+def test_a_denied_error_result_is_a_denial_too():
+    result = SimpleNamespace(isError=True, content=[SimpleNamespace(text=DENIAL.format("NeverSend-q1"))], structuredContent=None)
+    with pytest.raises(ToolDenied) as error:
+        parse_result(result)
+    assert error.value.policy_id == "NeverSend-q1"
+
+
+def test_another_failure_is_not_a_denial(monkeypatch, caplog):
+    async def failed(self, name, arguments):
+        raise GatewayToolError("the tool failed behind the Gateway")
+
+    monkeypatch.setattr(GatewayTools, "_call", failed)
+    with caplog.at_level(logging.INFO, logger="inbox_agent.gateway_tools"), pytest.raises(GatewayToolError) as error:
+        GatewayTools(GATEWAY, credentials=object()).call("list_applications", {})
+    assert not isinstance(error.value, ToolDenied) and not caplog.records
+
+
+class McpErrorLike(Exception):
+    pass
+
+
+def test_an_unlisted_call_logs_a_safe_tool_name(monkeypatch, caplog):
+    async def denied(self, gateway_name, arguments):
+        raise McpErrorLike(DENIAL.format("NeverSend-q1"))
+
+    monkeypatch.setattr(GatewayTools, "_call_unlisted", denied)
+    tools = GatewayTools(GATEWAY, credentials=object())
+    with caplog.at_level(logging.INFO, logger="inbox_agent.gateway_tools"), pytest.raises(ToolDenied):
+        tools.call_unlisted("send-email___send_email", {})
+    assert json.loads(caplog.records[0].getMessage())["tool"] == "send_email"
+    with caplog.at_level(logging.INFO, logger="inbox_agent.gateway_tools"), pytest.raises(ToolDenied):
+        tools.call_unlisted('evil"name', {})
+    assert json.loads(caplog.records[-1].getMessage())["tool"] == "unknown"

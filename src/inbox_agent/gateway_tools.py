@@ -9,22 +9,56 @@ fails here, not in a Lambda.
 Each call opens its own MCP session. The batch path makes 3 or 4 calls per
 email, so the extra handshake costs little, and nothing is left open between
 Runtime requests.
+
+A call the Gateway's Cedar policies refuse becomes `ToolDenied`, with the
+tool and the deciding policy's ID from the Gateway's message, and is logged
+here as `tool_denied` with those two fields, never the input (TOOL-2,
+OQ-45 d). The Runtime and the approval workflow both call through here.
 """
 
 import asyncio
 import json
+import logging
+import re
 from collections.abc import Mapping
 
 from inbox_agent import settings
+from inbox_agent.logs import log_event
 from inbox_agent.tools import TOOL_SPECS, ToolSpec, validate
 
 SERVICE = "bedrock-agentcore"
 TARGET_SEPARATOR = "___"
 TIMEOUT_SECONDS = 30
+# The Gateway's message on a Cedar denial (week 4 exit 5): "Tool Execution
+# Denied: Tool call not allowed due to policy enforcement [Policy evaluation
+# denied due to <policy ID>]". It quotes no input.
+_DENIED = re.compile(r"Tool Execution Denied|Policy evaluation denied")
+_POLICY_ID = re.compile(r"Policy evaluation denied due to ([A-Za-z0-9_-]{1,128})")
+_TOOL_NAME = re.compile(r"^[a-z_]{1,64}$")
+UNKNOWN = "unknown"
+
+logger = logging.getLogger("inbox_agent.gateway_tools")
 
 
 class GatewayToolError(RuntimeError):
     """The tool failed behind the Gateway. Its text never reaches the logs."""
+
+
+class ToolDenied(GatewayToolError):
+    """The Gateway's policy refused the call. Carries only the tool's name
+    and the deciding policy's ID."""
+
+    def __init__(self, tool: str, policy_id: str) -> None:
+        super().__init__(f"the Gateway's policy refused {tool} ({policy_id})")
+        self.tool, self.policy_id = tool, policy_id
+
+
+def denied_policy(text: str) -> str | None:
+    """The deciding policy's ID if `text` is a policy denial, else None."""
+    if not _DENIED.search(text):
+        return None
+    found = _POLICY_ID.search(text)
+    return found.group(1) if found else UNKNOWN
 
 
 def sigv4_auth(credentials, region: str = settings.AWS_REGION):
@@ -55,11 +89,14 @@ def plain_name(gateway_name: str) -> str:
 
 def parse_result(result) -> dict:
     """A CallToolResult as the tool's own dict."""
+    text = "".join(getattr(block, "text", "") for block in result.content)
     if result.isError:
+        policy = denied_policy(text)
+        if policy is not None:
+            raise ToolDenied(UNKNOWN, policy)
         raise GatewayToolError("the tool failed behind the Gateway")
     if isinstance(getattr(result, "structuredContent", None), dict):
         return result.structuredContent
-    text = "".join(getattr(block, "text", "") for block in result.content)
     try:
         value = json.loads(text)
     except ValueError:
@@ -119,7 +156,7 @@ class GatewayTools:
         """A call by the Gateway's own tool name, without listing first, so
         the Gateway's policy, not a filtered list, decides (exit check 5).
         Only the Runtime's one-off policy probe uses it."""
-        return _unwrapped(lambda: asyncio.run(self._call_unlisted(gateway_name, dict(arguments))))
+        return _checked(plain_name(gateway_name), lambda: asyncio.run(self._call_unlisted(gateway_name, dict(arguments))))
 
     def call(self, name: str, arguments: Mapping) -> dict:
         from inbox_agent.tools import ToolNotAllowed
@@ -129,7 +166,23 @@ class GatewayTools:
         checked = validate(TOOL_SPECS[name], arguments)
         # The Runtime runs synchronous handlers in worker threads, which have
         # no event loop of their own.
-        return _unwrapped(lambda: asyncio.run(self._call(name, checked)))
+        return _checked(name, lambda: asyncio.run(self._call(name, checked)))
+
+
+def _checked(tool: str, run):
+    """`run`'s result, or its failure unwrapped; a policy denial becomes
+    ToolDenied and is logged."""
+    try:
+        return _unwrapped(run)
+    except ToolDenied as denied:
+        policy = denied.policy_id
+    except Exception as error:
+        policy = denied_policy(str(error))
+        if policy is None:
+            raise
+    tool = tool if _TOOL_NAME.match(tool) else UNKNOWN
+    log_event(logger, "tool_denied", logging.WARNING, tool=tool, policy_id=policy)
+    raise ToolDenied(tool, policy) from None
 
 
 def _unwrapped(run):

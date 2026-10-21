@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from inbox_agent import settings
+from inbox_agent.logs import log_event, setup
 from inbox_agent.owner_identity import sender_role_id
 from inbox_agent.pending_drafts import CALLBACK_ID, PendingDrafts
 from inbox_agent.poll import NEW_EMAIL_MESSAGE
@@ -171,7 +172,7 @@ def consume(records: list[dict], *, client, runtime_arn: str, approvals: Approva
             try:
                 outcome = handle_decision(approvals, body, record.get("attributes", {}).get("SenderId"))
             except Exception as error:
-                logger.error(json.dumps({"event": "decision_failed", "error": _error_code(error)}))
+                log_event(logger, "decision_failed", logging.ERROR, error=_error_code(error))
                 counts["failed"] += 1
                 failures.append({"itemIdentifier": record["messageId"]})
                 continue
@@ -190,7 +191,7 @@ def consume(records: list[dict], *, client, runtime_arn: str, approvals: Approva
                     if start_approval(approvals, draft):
                         started_ids.append(draft["approval_id"])
             except Exception as error:
-                logger.error(json.dumps({"event": "stale_check_failed", "error": _error_code(error)}))
+                log_event(logger, "stale_check_failed", logging.ERROR, error=_error_code(error))
                 counts["failed"] += 1
                 failures.append({"itemIdentifier": record["messageId"]})
                 continue
@@ -211,7 +212,7 @@ def consume(records: list[dict], *, client, runtime_arn: str, approvals: Approva
             outcome = invoke_agent(client, runtime_arn, payload)
         except Exception as error:
             # The type only: an exception message could quote the email.
-            logger.error(json.dumps({"event": "consumer_failed", "message_id": message_id, "error": type(error).__name__}))
+            log_event(logger, "consumer_failed", logging.ERROR, message_id=message_id, error=type(error).__name__)
             counts["failed"] += 1
             failed_ids.append(message_id)
             failures.append({"itemIdentifier": record["messageId"]})
@@ -223,17 +224,14 @@ def consume(records: list[dict], *, client, runtime_arn: str, approvals: Approva
         counts["alerts"] += bool(outcome.get("alerted"))
         handled_ids.append(message_id)
 
-    logger.info(
-        json.dumps(
-            {
-                "event": "consumer_done",
-                **counts,
-                "handled_ids": handled_ids,
-                "failed_ids": failed_ids,
-                "started_approval_ids": started_ids,
-                "decisions_seen": decided,
-            }
-        )
+    log_event(
+        logger,
+        "consumer_done",
+        **counts,
+        handled_ids=handled_ids,
+        failed_ids=failed_ids,
+        started_approval_ids=started_ids,
+        decisions_seen=decided,
     )
     return {"batchItemFailures": failures}
 
@@ -244,6 +242,7 @@ def handler(event: dict, context: object) -> dict:
 
     from inbox_agent.owner_identity import owner_role_id
 
+    setup()
     # A new email takes seconds and the daily check about a minute (5
     # drafts at most). A botocore retry would add a second run on top of the
     # queue's own retries, so there is none; the queue retries.

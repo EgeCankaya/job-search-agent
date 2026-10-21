@@ -1,5 +1,7 @@
 """MacBook mode's tools (OQ-42 j): the local MCP server, the stdio client the
-local worker uses, and what the worker hands the child process."""
+local worker uses, and what the worker hands the child process. The server
+authorizes every call with cedarpy over the repo's policies (MODE-4, OQ-45 e);
+the UAC-MODE-4 cases run against a real server process over stdio."""
 
 import os
 import sys
@@ -10,7 +12,8 @@ import anyio
 import pytest
 
 from inbox_agent import runtime
-from inbox_agent.local_mcp_server import LOCAL_TOOLS, build_server
+from inbox_agent.cedar_policies import Authorizer, local_policies
+from inbox_agent.local_mcp_server import LOCAL_TOOLS, POLICY_DIR_ENV, build_server
 from inbox_agent.stdio_tools import LocalToolError, StdioTools
 from inbox_agent.tool_handlers import InProcessTools, ToolDeps
 from inbox_agent.tools import TOOL_SPECS, ToolInputError, ToolNotAllowed
@@ -32,7 +35,7 @@ def seeded_tools():
 async def with_session(action):
     from mcp.shared.memory import create_connected_server_and_client_session
 
-    async with create_connected_server_and_client_session(build_server(seeded_tools())) as session:
+    async with create_connected_server_and_client_session(build_server(seeded_tools(), Authorizer(local_policies()))) as session:
         return await action(session)
 
 
@@ -61,7 +64,8 @@ def test_a_call_returns_the_tool_result():
     ("name", "arguments", "message"),
     [
         ("list_applications", {"status": "hired"}, "status is not one of the allowed values"),
-        ("list_applications", {"recipient": "someone@example.com"}, "has no input named like that"),
+        ("list_applications", {"recipient": "someone@example.com"}, "refused by policy (NoRecipientKeys)"),
+        ("list_applications", {"surname": "Yılmaz"}, "has no input named like that"),
         ("notify_owner", {"kind": "urgent", "email_class": "offer", "company": "Brightpath"}, "notify_owner is not available here"),
     ],
 )
@@ -73,7 +77,7 @@ def test_refusals_come_back_short_and_without_values(name, arguments, message):
     assert result.isError
     text = result.content[0].text
     assert message in text
-    assert "hired" not in text and "example.com" not in text
+    assert "hired" not in text and "example.com" not in text and "Yılmaz" not in text
 
 
 @pytest.fixture(scope="module")
@@ -128,3 +132,78 @@ def test_the_worker_gives_the_child_only_what_it_needs(monkeypatch):
     assert env["AWS_PROFILE"] == "default"
     assert env["PYTHONPATH"] == str(ROOT / "src")
     assert "SOME_TOKEN" not in env and "GATEWAY_URL" not in env
+
+
+# UAC-MODE-4 (week 5 exit 1): a stdio client against the real server process,
+# with no client-side checks in the way.
+FIXTURE = ROOT / "tests" / "local_mcp_fixture_server.py"
+
+
+def raw_calls(calls, *, errlog, policy_dir=None):
+    from mcp import ClientSession
+    from mcp.client.stdio import StdioServerParameters, stdio_client
+
+    env = {"PATH": os.environ["PATH"], "HOME": os.environ["HOME"], "PYTHONPATH": f"{ROOT / 'src'}:{ROOT}"}
+    if policy_dir is not None:
+        env[POLICY_DIR_ENV] = str(policy_dir)
+
+    async def run():
+        params = StdioServerParameters(command=sys.executable, args=[str(FIXTURE)], env=env)
+        async with stdio_client(params, errlog=errlog) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                return [await session.call_tool(name, arguments) for name, arguments in calls]
+
+    return anyio.run(run)
+
+
+def denials(log_path):
+    import json
+
+    lines = [line for line in log_path.read_text().splitlines() if '"tool_denied"' in line]
+    return [json.loads(line[line.index("{") :]) for line in lines]
+
+
+def test_the_server_refuses_a_send_a_recipient_and_the_draft_tool(tmp_path):
+    log_path = tmp_path / "server.log"
+    with log_path.open("w") as errlog:
+        send, recipient, draft, served = raw_calls(
+            [
+                ("send_email", {}),
+                ("upsert_application", {"company": "Örnek Test Ltd", "to": "someone@example.com"}),
+                ("create_gmail_draft", {"approval_id": "0" * 32}),
+                ("list_applications", {"status": "open"}),
+            ],
+            errlog=errlog,
+        )
+    # TOOL-2: a send-like tool, and a recipient key on a served tool.
+    assert send.isError and send.content[0].text == "refused by policy (NeverSend)"
+    assert recipient.isError and recipient.content[0].text == "refused by policy (NoRecipientKeys)"
+    # TOOL-4: the agent may not draft.
+    assert draft.isError and draft.content[0].text == "refused by policy (OnlyTheWorkflowDrafts)"
+    # The served tracker tools still work.
+    assert not served.isError and served.structuredContent["count"] == 2
+    logged = denials(log_path)
+    assert [(d["tool"], d["policy_ids"]) for d in logged] == [
+        ("unknown", ["NeverSend"]),
+        ("upsert_application", ["NoRecipientKeys"]),
+        ("create_gmail_draft", ["OnlyTheWorkflowDrafts"]),
+    ]
+    text = log_path.read_text()
+    assert "example.com" not in text and "Örnek" not in text and "Ã" not in text
+
+
+def test_with_no_policy_files_every_call_is_refused(tmp_path):
+    empty = tmp_path / "policies"
+    empty.mkdir()
+    log_path = tmp_path / "server.log"
+    with log_path.open("w") as errlog:
+        results = raw_calls([("list_applications", {}), ("upsert_application", {"company": "Örnek Test Ltd"})], errlog=errlog, policy_dir=empty)
+    assert all(r.isError and r.content[0].text == "refused by policy (no permit)" for r in results)
+    assert [d["policy_ids"] for d in denials(log_path)] == [[], []]
+
+
+def test_the_server_starts_with_the_repos_policies():
+    from inbox_agent.local_mcp_server import authorizer
+
+    assert authorizer({}).decide("AgentCore::IamEntity::\"local:agent\"", "list_applications", {}).allowed

@@ -58,7 +58,8 @@ infra/app.py                 builds the stacks for the configured mode
 infra/always_free_stack.py   tables, queues, alert topic, budgets, poll Lambda + schedule
 infra/agentcore_stack.py     Runtime (CfnRuntime), Gateway + 4 Lambda targets, queue consumer (cloud only)
 infra/runtime_bundle.py      the uv-built arm64 ZIPs at synth, no Docker: the Runtime (agent group), the approval workflow (approval group)
-infra/cedar.py               the Gateway's Cedar policies (week 4: per-identity permits, the draft forbid)
+infra/cedar.py               the Gateway's Cedar policies, rendered from policies/ (week 4 permits and draft forbid; week 5 NeverSend, NoRecipientKeys)
+policies/*.cedar             the Cedar policy files with ?agent, ?workflow, ?gateway placeholders, for the Gateway and cedarpy (OQ-45 e)
 src/budgets/budgets_resource.py   deploy-time custom resource that creates the budgets
 src/inbox_agent/             runtime code (packaged into the poll Lambda):
   settings.py                ATS domains, subject keywords, alert sender, alias list
@@ -74,6 +75,8 @@ src/inbox_agent/             runtime code (packaged into the poll Lambda):
   classes.py, model.py       the 6 classes; Model interface, Bedrock Converse adapter, chat_model() per AGENT_MODE
   mode.py, memory.py         AGENT_MODE for the runtime; Memory: AgentCore (cloud), SQLite (local), NoMemory (tests)
   tools.py                   the six tool specs, fixed input schemas and validation (OQ-42 d, OQ-44 e, f); GATEWAY_/AGENT_/APPROVAL_TOOLS
+  cedar_policies.py          renders policies/ for the Gateway or locally; Authorizer (cedarpy, deny unless a clear Allow)
+  logs.py                    setup() for every entry point, log_event's field allow-list (OQ-45 g)
   tool_handlers.py           the six tool handlers; InProcessTools
   pending_drafts.py          APR-3 pending-draft records: register, decide, expire, the TOOL-4 check and claim
   followup_draft.py, stale_check.py  APR-2 drafting (checked in code); the APR-1 stale-check path
@@ -277,6 +280,11 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - (e) one set of `policies/*.cedar` files with `?agent`, `?workflow`, `?gateway` placeholders, rendered for the Gateway and for cedarpy (`local:agent`); (f) 24 planted emails and `eval/run_injection.py --mode cloud|local` on the Mac (the mode's model, in-process tools over fakes, cedarpy before each call);
   - (g) one `log_event` allow-list, third-party loggers at WARNING, a canary test; (h) `scan_logs.py` (subjects and senders of 7 days' processed mail, counts only);
   - (i) CDK's `AuthorizeAction` name-pattern grant accepted; (j) approval versions kept, pruned monthly by hand; (k) week 4's records in the PRD (two-identity row verified, OQ-30 and OQ-36 resolved, MODE-3 per-session namespaces); (l) the week 5 milestone row; (m) `cedarpy` 4.12.1 in the `local` and dev groups, added 2026-10-21 after a source check (`k9securityio/cedar-py`; release tags match PyPI; no PyPI provenance attestation).
+- **Steps 1 to 5 built (2026-10-21), not committed or deployed:**
+  - Steps 1 and 2: five `policies/*.cedar` files; `cedar_policies.render` strips whole-line `//` notes and fails on any unfilled `?placeholder`. The three week 4 policies render byte-for-byte to the deployed text (a test keeps the week 4 code as the reference), and keep their place, so the template only adds `NeverSend` and `NoRecipientKeys` (both `FAIL_ON_ANY_FINDINGS`; `IGNORE_FINDINGS` in `infra/agentcore_stack.py` is empty). cedarpy tests run the exact rendered Gateway text: the agent's five tools allowed, the draft tool denied, anything outside the six denied by `NeverSend` for every caller, each of the seven keys denied by `NoRecipientKeys`, the workflow drafts only with `approval_id` and no `cc`, the owner's session denied everything.
+  - Step 3: the local MCP server authorizes every `tools/call` as `local:agent` before any tool code; deny, error or no policies refuse. Real stdio tests: `send_email` refused by `NeverSend`, `upsert_application` with `to` by `NoRecipientKeys`, `create_gmail_draft` by `OnlyTheWorkflowDrafts`, `list_applications` works, an empty policy directory refuses all.
+  - Step 4: `GatewayTools` turns a denial (a raised `McpError` or an error result whose text says "Tool Execution Denied"/"Policy evaluation denied") into `ToolDenied(tool, policy_id)` and logs `tool_denied` at WARNING; the Runtime and the approval workflow both call through it. `policy_probe` runs the three cases (`draft_tool`, `recipient_key`, `unserved_tool`) and returns `refused`, the error type and the policy ID per case; only the empty-input case 3 also returns the first 200 characters of the Gateway's message.
+  - Step 5: `logs.setup()` in every entry point (inside each Lambda handler, after the app in `runtime.main`). Besides the allow-list and WARNING for libraries, it installs a record factory: an exception is kept as its type only (the AgentCore SDK logs a failed invocation's traceback with `logger.exception`), and a third-party record keeps only its fixed text, without its arguments. The canary test fails if the Runtime logs `str(error)`.
 
 ## AWS Free plan (decided 2026-10-17)
 

@@ -192,10 +192,29 @@ def test_the_gateway_enforces_the_week_4_policies(agent):
         lid: "".join(p if isinstance(p, str) else "<token>" for p in r["Properties"]["Definition"]["Cedar"]["Statement"]["Fn::Join"][1])
         for lid, r in resources(agent, "AWS::BedrockAgentCore::Policy").items()
     }
-    assert len(texts) == 3
-    assert all(r["Properties"]["ValidationMode"] == "FAIL_ON_ANY_FINDINGS" for r in resources(agent, "AWS::BedrockAgentCore::Policy").values())
-    [forbid] = [t for t in texts.values() if t.startswith("forbid")]
-    assert 'create-gmail-draft___create_gmail_draft' in forbid and "unless" in forbid
+    # Week 5 adds the two forbids (OQ-45 a, b).
+    assert len(texts) == 5
+    descriptions = sorted(r["Properties"]["Description"] for r in resources(agent, "AWS::BedrockAgentCore::Policy").values())
+    assert descriptions == [
+        "OQ-44 (j): AgentTools",
+        "OQ-44 (j): ApprovalDraft",
+        "OQ-44 (j): OnlyTheWorkflowDrafts",
+        "OQ-45 (a): NeverSend",
+        "OQ-45 (b): NoRecipientKeys",
+    ]
+    forbids = [t for t in texts.values() if t.startswith("forbid")]
+    assert len(forbids) == 3
+    assert any("create-gmail-draft___create_gmail_draft" in t and "unless { principal ==" in t for t in forbids)
+
+
+def test_only_the_two_week_5_forbids_may_ever_ignore_findings(agent):
+    # OQ-45 (c): none does today; a "matches nothing" finding is the only reason.
+    from infra import agentcore_stack
+
+    assert agentcore_stack.IGNORE_FINDINGS <= {"NeverSend", "NoRecipientKeys"}
+    assert agentcore_stack.IGNORE_FINDINGS == frozenset()
+    modes = {r["Properties"]["Description"].split(": ")[1]: r["Properties"]["ValidationMode"] for r in resources(agent, "AWS::BedrockAgentCore::Policy").values()}
+    assert {name for name, mode in modes.items() if mode != "FAIL_ON_ANY_FINDINGS"} == set(agentcore_stack.IGNORE_FINDINGS)
 
 
 def test_the_committed_config_keeps_the_probe_off(agent):

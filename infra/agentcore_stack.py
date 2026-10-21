@@ -37,6 +37,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
+from inbox_agent.cedar_policies import DECIDED_IN
 from inbox_agent.tools import APPROVAL_ID_PATTERN, GATEWAY_TOOLS, MESSAGE_ID_PATTERN, TOOL_SPECS, ToolSpec
 from infra import cedar, config
 from infra.always_free_stack import (
@@ -55,6 +56,9 @@ AGENTCORE_SERVICE = "bedrock-agentcore.amazonaws.com"
 # Exit check 5 (OQ-44 k): one deploy with True lets the Runtime take a
 # `policy_probe` payload; the next deploy turns it off again.
 POLICY_PROBE_ON = False
+# OQ-45 (c): a policy that AgentCore refuses only because it matches nothing
+# today may ignore findings. At most NeverSend and NoRecipientKeys; none so far.
+IGNORE_FINDINGS: frozenset[str] = frozenset()
 MEMORY_EVENT_EXPIRY_DAYS = 30  # MEM-2, NFR-PRIV-4, OQ-30
 CONSUMER_BATCH_SIZE = 5
 CONSUMER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
@@ -335,10 +339,14 @@ class AgentCoreStack(Stack):
             policy = self.policy_engine.add_policy(
                 name,
                 statement=agentcore.PolicyStatement.from_cedar(text),
-                description=f"OQ-44 (j): {name}",
+                description=f"{DECIDED_IN[name]}: {name}",
                 # A policy that doesn't check out fails the deploy, which
                 # rolls back, instead of denying every call in ENFORCE.
-                validation_mode=agentcore.PolicyValidationMode.FAIL_ON_ANY_FINDINGS,
+                validation_mode=(
+                    agentcore.PolicyValidationMode.IGNORE_ALL_FINDINGS
+                    if name in IGNORE_FINDINGS
+                    else agentcore.PolicyValidationMode.FAIL_ON_ANY_FINDINGS
+                ),
             )
             # AgentCore checks each action against the Gateway's tools as
             # they are at that moment, so every target must exist first

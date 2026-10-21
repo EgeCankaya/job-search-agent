@@ -30,6 +30,7 @@ from datetime import UTC, datetime, timedelta
 
 from inbox_agent import settings
 from inbox_agent.gmail import GmailClient, gmail_client
+from inbox_agent.logs import log_event, setup
 from inbox_agent.processed_log import ProcessedLog
 from inbox_agent.query import build_query
 from inbox_agent.tracker import TrackerTable
@@ -101,17 +102,14 @@ def poll(
         query_values_skipped=query.skipped_values,
         dry_run=dry_run,
     )
-    logger.info(
-        json.dumps(
-            {
-                "event": "poll_dry_run" if dry_run else "poll_done",
-                "found": result.found,
-                "skipped": result.skipped,
-                "enqueued": len(result.enqueued_ids),
-                "enqueued_ids": list(result.enqueued_ids),
-                "query_values_skipped": result.query_values_skipped,
-            }
-        )
+    log_event(
+        logger,
+        "poll_dry_run" if dry_run else "poll_done",
+        found=result.found,
+        skipped=result.skipped,
+        enqueued=len(result.enqueued_ids),
+        enqueued_ids=list(result.enqueued_ids),
+        query_values_skipped=result.query_values_skipped,
     )
     return result
 
@@ -124,6 +122,7 @@ def _aws():
 
 
 def handler(event: dict, context: object) -> dict:
+    setup()
     dynamodb, sqs = _aws()
     result = poll(
         gmail=gmail_client(),

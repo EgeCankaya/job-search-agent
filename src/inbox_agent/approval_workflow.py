@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from inbox_agent import settings
+from inbox_agent.logs import log_event, setup
 from inbox_agent.pending_drafts import PendingDrafts
 from inbox_agent.tools import APPROVAL_ID_PATTERN
 from inbox_agent.tracker import TrackerTable
@@ -149,13 +150,14 @@ def _deps() -> WorkflowDeps:
 
 
 def _handler(event, context):
+    setup()
     try:
         outcome = run(event, context, _deps())
     except Exception as error:
         # The type only; the payload holds the draft.
-        logger.error(json.dumps({"event": "approval_failed", "error": type(error).__name__}))
+        log_event(logger, "approval_failed", logging.ERROR, error=type(error).__name__)
         raise
-    logger.info(json.dumps({"event": "approval_done", **{k: v for k, v in outcome.items() if k != "draft_id"}}))
+    log_event(logger, "approval_done", **{k: v for k, v in outcome.items() if k != "draft_id"})
     return outcome
 
 
