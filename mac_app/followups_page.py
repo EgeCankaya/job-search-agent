@@ -42,10 +42,13 @@ for draft in drafts:
         approve, skip = st.columns(2)
         for column, decision, label in ((approve, "approve", "Approve"), (skip, "skip", "Skip")):
             if column.button(label, key=f"{decision}-{draft.approval_id}", use_container_width=True):
+                # Marked before the call: a second click racing the rerun
+                # then finds it sent and queues nothing.
+                sent[draft.approval_id] = label
                 try:
                     backend().decide(draft, decision)
                 except Exception as error:  # noqa: BLE001
+                    del sent[draft.approval_id]
                     st.error(f"Not sent ({type(error).__name__}). {SESSION_HINT}")
                 else:
-                    sent[draft.approval_id] = label
                     st.rerun()

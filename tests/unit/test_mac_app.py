@@ -332,6 +332,30 @@ def test_approve_sends_one_decision_and_replaces_the_buttons(app):
     assert "Approve sent" in app.success[0].value
 
 
+def test_a_draft_is_marked_sent_before_its_decision_is_queued(app):
+    # A double click on 2026-10-21 queued two decisions 0.8 s apart: the
+    # second click's run came before the mark was saved.
+    import streamlit as st
+
+    marked_at_call = []
+    app.fake.decide = lambda draft, decision: marked_at_call.append(draft.approval_id in st.session_state["sent_decisions"])
+    open_follow_ups(app)
+    app.button(key="skip-" + "a" * 32).click().run()
+    assert marked_at_call == [True]
+
+
+def test_a_failed_decision_brings_the_buttons_back(app):
+    def broken(draft, decision):
+        raise RuntimeError("ExpiredToken")
+
+    app.fake.decide = broken
+    open_follow_ups(app)
+    app.button(key="skip-" + "a" * 32).click().run()
+    assert "Not sent" in app.error[0].value
+    app.run()
+    assert [b.label for b in app.button] == ["Approve", "Skip", "Approve", "Skip"]
+
+
 def test_no_drafts_shows_a_plain_note(app):
     app.fake.drafts = []
     open_follow_ups(app)
