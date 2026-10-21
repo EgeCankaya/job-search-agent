@@ -239,6 +239,10 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - Step 6: one AgentCore Memory (`CfnMemory`, no execution role, events 30 days, preference and summary strategies); the Ask page passes its session ID in the chat payload; `upsert_application` also returns `company_key`.
   - Step 7: the policy engine in ENFORCE with 3 policies (`FAIL_ON_ANY_FINDINGS`); the probe is **off**: `POLICY_PROBE_ON` in `infra/agentcore_stack.py`.
   - Step 8: the Follow-ups page.
+- **Week 4 exit 5 passed (2026-10-21):** the probe deploy (`fbe0fd9`, `POLICY_PROBE_ON = True`, run 39592428389, Runtime version 6) let the owner call `create_gmail_draft` through the Gateway with the all-zeros `approval_id` under two identities:
+  - the owner's own `aws login` session (11:43 UTC) was refused with `McpError` "Tool Execution Denied … Policy evaluation denied due to …OnlyTheWorkflowDrafts…";
+  - the Runtime, as the agent's role (11:44 UTC, `policy_probe`, HTTP 200), returned `refused: true` with the same policy named; the Runtime logged `policy_probe_done`.
+  - The `create_gmail_draft` Lambda has never run (no log streams, no `Invocations`), so Cedar refused both calls, not the tool. The forbid and per-identity principals work on this IAM Gateway, so PRD §16's fallback isn't needed (OQ-36's test; the PRD's §16a row and OQ-36 are updated at the week 4 wrap-up).
 - **Gotchas from week 4:**
   - The policy simulator needs `aws:RequestedRegion=eu-north-1` in its context; without it every action simulates as the SCP's `explicitDeny`. In zsh, write `${ACCT}:role`, not `$ACCT:role` (`:r` is a modifier).
   - The CDK caches a bundle by its options, not by the local bundler object: two `UvBundling` assets with the same options share one output. The approval bundle sets `environment={"UV_GROUP": "approval"}` to keep its own.
