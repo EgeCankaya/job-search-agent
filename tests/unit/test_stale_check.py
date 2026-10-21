@@ -185,9 +185,11 @@ def test_with_an_email_each_date_is_tied_to_its_language():
     assert 'in English write the date as "1 October 2026", in Turkish as "1 Ekim 2026"' in prompt
 
 
-def test_the_prompt_asks_for_no_name_after_the_closing():
-    # Nova Lite signed off with "[Your Name]" (week 4 exit 1, 2026-10-21).
-    assert "no name or signature after the closing" in build_prompt(request())
+def test_the_prompt_fixes_the_closing_line():
+    # Nova Lite signed off with "[Your Name]" (week 4 exit 1, 2026-10-21),
+    # even when told "no name after the closing"; an exact closing stopped it.
+    prompt = build_prompt(request())
+    assert 'end the text with "Best regards," in English or "Saygılarımla," in Turkish, and nothing after it' in prompt
 
 
 def test_the_email_is_quoted_data_and_the_tone_is_used():

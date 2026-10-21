@@ -50,7 +50,7 @@ Facts:
 
 Rules:
 - {language_rule}
-- At most {max_words} words. No subject line, no placeholders like [Name], and no name or signature after the closing: I sign it myself.
+- At most {max_words} words. No subject line, no placeholders like [Name], and no name or signature: end the text with "Best regards," in English or "Saygılarımla," in Turkish, and nothing after it. I add my name myself.
 - Name the role exactly as "{role_name}". {date_rule}
 - Ask politely whether there is any news on my application. Make no promises and add no facts beyond these.
 {tone}
