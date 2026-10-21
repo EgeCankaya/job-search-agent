@@ -8,7 +8,7 @@
 - `tools/list` is filtered per caller.
 
 Week 4 also left a few records for the PRD (item (k)) and one accepted decision (item (i)).
-**Status:** **items (a) to (l) accepted on 2026-10-21** (item (i) in chat earlier the same day); **(m) approved on condition** that I first confirm cedarpy's source; no `uv add` until then. **Not yet applied** to the PRD (v0.4.5) or the design doc (revision after 113). No code is written yet.
+**Status:** **items (a) to (l) accepted on 2026-10-21** (item (i) in chat earlier the same day); **(m) approved on condition** that I first confirm cedarpy's source; no `uv add` until then. cedarpy's source was checked on 2026-10-21 (the `k9securityio/cedar-py` repository: README points at the `cedarpy` PyPI project, release tags match PyPI; PyPI has no provenance attestation for it), and 4.12.1 was added to the `local` and dev groups. **Applied on 2026-10-21** to the PRD (v0.4.5) and the source Claude Doc (revision 113 → 116); each design-doc edit was read back. The PDF in this folder is still the revision 90 export. No week 5 code is written yet.
 **Depends on:** OQ-9, OQ-11, OQ-19, OQ-36, OQ-42 (b), (d), (e), (j), OQ-44 (j), (k).
 **Plan:** `Week 5 plan.md` shows where each item lands.
 
@@ -290,4 +290,4 @@ The steps in `Week 5 plan.md`: the policy files and renderer (1), the two forbid
 | (j) Approval versions kept; monthly pruning by hand | Accept | 2026-10-21 | |
 | (k) Week 4's records in the PRD | Accept | 2026-10-21 | |
 | (l) The week 5 milestone row | Accept | 2026-10-21 | |
-| (m) Dependency: cedarpy 4.12.1 (`local`, dev) | Accept, on condition | 2026-10-21 | after I confirm the PyPI project's source; then `uv add` |
+| (m) Dependency: cedarpy 4.12.1 (`local`, dev) | Accept | 2026-10-21 | source checked, then added |

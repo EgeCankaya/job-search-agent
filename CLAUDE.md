@@ -11,9 +11,9 @@ repo is **public**.
 
 1. **Design doc** owns architecture: services, models, modes, data flow. The
    live version is the Claude Doc https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9
-   (revision 113). `Job search inbox agent design.pdf` is still the export of revision 90;
+   (revision 116). `Job search inbox agent design.pdf` is still the export of revision 90;
    the owner re-exports it.
-2. **`Job search inbox agent PRD.md`** (v0.4.4) owns requirements and targets:
+2. **`Job search inbox agent PRD.md`** (v0.4.5) owns requirements and targets:
    FRs §9, NFRs §10, metrics §11, CI gates §12, milestones §14, dependencies §16a.
 3. **The code follows both.** Never add tools, tool inputs, endpoints or
    capabilities beyond PRD §9, or architecture beyond the design doc.
@@ -21,7 +21,7 @@ repo is **public**.
    accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`,
    `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md`,
    `Design doc edits for OQ-41.md`, `Design doc edits for OQ-42.md`,
-   `Design doc edits for OQ-43.md` and `Design doc edits for OQ-44.md`, all accepted and applied to the PRD and
+   `Design doc edits for OQ-43.md`, `Design doc edits for OQ-44.md` and `Design doc edits for OQ-45.md`, all accepted and applied to the PRD and
    the design doc.
 
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
@@ -148,7 +148,7 @@ account ID and the alert email.
 - no API Gateway API or Lambda function URL, in either mode;
 - every role is hand-built: no managed policies, no wildcards (budgets, poll, poll schedule, queue reader).
 - resource policies use `Principal: "*"` only on a Deny with a condition (the topic policy), never on an Allow.
-- the named wildcards, pinned by `tests/infra/test_week4_stack.py`: the approval workflow's own function ARN + `:*`, only for the durable checkpoint, state and callback actions (OQ-44 (b)); CDK's Gateway invoke grant `<tool function ARN>:*` (function and versions, since week 3); CDK's policy-engine grant `AuthorizeAction` on `gateway/inbox-agent-??????????` (week 4; the owner accepted it on 2026-10-21, to be recorded as an OQ-45 item).
+- the named wildcards, pinned by `tests/infra/test_week4_stack.py`: the approval workflow's own function ARN + `:*`, only for the durable checkpoint, state and callback actions (OQ-44 (b)); CDK's Gateway invoke grant `<tool function ARN>:*` (function and versions, since week 3); CDK's policy-engine grant `AuthorizeAction` on `gateway/inbox-agent-??????????` (week 4; accepted 2026-10-21, OQ-45 (i)).
 
 ### Gotchas learned
 
@@ -266,6 +266,17 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - Nova Lite at `temperature=0` still varies between calls, but a plain retry mostly repeats the same mistake. Offered two date formats, it mixed them; told "no placeholders", it still signed "[Your Name]" until the prompt fixed the exact closing line.
   - AgentCore validates a policy against the Gateway's tools when the policy is created, so each policy depends on every Gateway target; and a `forbid(principal, …)` not scoped to `AgentCore::IamEntity` is refused as "overly restrictive" under `FAIL_ON_ANY_FINDINGS`.
   - Whole-row tracker writes (`TrackerTable.put_row`) are refused if the row's `follow_up.version` changed since the read; `upsert_application` re-reads up to 3 times.
+
+## Week 5 (started 2026-10-21)
+
+- **Plan:** `Week 5 plan.md` (3 exit checks, 9 steps, what the owner does by hand).
+- **Checked 2026-10-21 (read-only):** the SCP allows every week 5 action in eu-north-1 (AgentCore policy calls, `InvokeGateway`, the Identity token calls, `bedrock:InvokeModel`, `logs:FilterLogEvents` and Logs Insights, log delivery); `iam:CreateOpenIDConnectProvider` is still denied. Neither the Gateway nor the policy engine has a logging setting. The Gateway's tool schemas carry no `additionalProperties: false`, so extra keys reach Cedar and the Lambda.
+- **OQ-45, accepted and applied 2026-10-21 (all items, (a) to (m))** to PRD v0.4.5 and design-doc revision 116:
+  - (a) `NeverSend` forbids every action outside the six tools, for every IAM caller (a policy can't name a tool the Gateway doesn't serve); (b) `NoRecipientKeys` forbids any tool call whose input has `to`, `recipient`, `recipients`, `phone`, `email`, `cc` or `bcc`; (c) only those two may switch to `IGNORE_ALL_FINDINGS`, and only on a "matches nothing" finding;
+  - (d) proof by the three-case Runtime probe (the draft tool, `notify_owner` with `to`, an unserved send tool) plus the owner's session; denials logged by the caller as `tool_denied` (tool, policy ID), no Gateway log delivery;
+  - (e) one set of `policies/*.cedar` files with `?agent`, `?workflow`, `?gateway` placeholders, rendered for the Gateway and for cedarpy (`local:agent`); (f) 24 planted emails and `eval/run_injection.py --mode cloud|local` on the Mac (the mode's model, in-process tools over fakes, cedarpy before each call);
+  - (g) one `log_event` allow-list, third-party loggers at WARNING, a canary test; (h) `scan_logs.py` (subjects and senders of 7 days' processed mail, counts only);
+  - (i) CDK's `AuthorizeAction` name-pattern grant accepted; (j) approval versions kept, pruned monthly by hand; (k) week 4's records in the PRD (two-identity row verified, OQ-30 and OQ-36 resolved, MODE-3 per-session namespaces); (l) the week 5 milestone row; (m) `cedarpy` 4.12.1 in the `local` and dev groups, added 2026-10-21 after a source check (`k9securityio/cedar-py`; release tags match PyPI; no PyPI provenance attestation).
 
 ## AWS Free plan (decided 2026-10-17)
 

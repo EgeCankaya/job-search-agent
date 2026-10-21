@@ -1,7 +1,7 @@
 # Week 5 plan: safety
 
 **Date:** 2026-10-21
-**Status:** OQ-45 (a) to (l) accepted on 2026-10-21; (m), cedarpy 4.12.1, approved once I've checked its source. Nothing is built, and the PRD and design-doc edits aren't applied yet (step 0). Week 4 passed all five exit checks on 2026-10-21, and the daily check is on (step 9.4, run 39666316535). Live state: `Project status.md`.
+**Status:** OQ-45 accepted on 2026-10-21 (all thirteen items). Step 0 done the same day: PRD v0.4.5, design doc revision 116 (read back), cedarpy 4.12.1 added after a source check. Next is step 1. Week 4 passed all five exit checks on 2026-10-21, and the daily check is on (step 9.4, run 39666316535). Live state: `Project status.md`.
 **Sources:**
 - PRD v0.4.4: §9 TOOL-2, TOOL-4, ALR-3, MODE-4; §10 NFR-PRIV-3, NFR-SEC-1, NFR-SEC-2; §11 M4; §12 EV-4 and the integration tests; §14 week 5; §16a; US-07.
 - The design doc (Claude Doc, revision 113).
