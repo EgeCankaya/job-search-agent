@@ -39,6 +39,7 @@ gitignored and must stay out of the repo.
 - **Never deploy** and never create accounts or enter credentials. The owner does these.
 - **Never commit secrets, emails, phone numbers or personal data.** Tests use fictional values (`example.com`, `90555…`).
 - Commit and push only on the owner's verbal confirmation in chat (for example "yes, commit" or "push it"). A yes covers the commit or push it answers, not later ones. Commit messages end with the co-author line.
+- **A session may run `git push origin main` itself** when the owner says yes to that push in chat (owner, 2026-10-21). A push to main deploys, so one yes covers one push. The session then watches the deploy run. Every other live write (test messages, seeds, deletes, clicks, direct invokes) stays with the owner.
 - Stay inside the current milestone. Week 2+ items (Gmail, Bedrock, LangGraph, AgentCore resources, the Mac app, GitHub Actions) wait for their week.
 - Research notes go to `/Users/egemencankaya/Vault/OpenCode Research/` (from `~/AGENTS.md`).
 
@@ -243,6 +244,7 @@ Built behind interfaces with fakes, so Gmail and Nova plug in later:
   - the owner's own `aws login` session (11:43 UTC) was refused with `McpError` "Tool Execution Denied … Policy evaluation denied due to …OnlyTheWorkflowDrafts…";
   - the Runtime, as the agent's role (11:44 UTC, `policy_probe`, HTTP 200), returned `refused: true` with the same policy named; the Runtime logged `policy_probe_done`.
   - The `create_gmail_draft` Lambda has never run (no log streams, no `Invocations`), so Cedar refused both calls, not the tool. The forbid and per-identity principals work on this IAM Gateway, so PRD §16's fallback isn't needed (OQ-36's test; the PRD's §16a row and OQ-36 are updated at the week 4 wrap-up).
+- **Week 4 exits 1 to 3, first check (2026-10-21, 11:50 UTC) failed for the seeded rows:** two fictional rows (last contact 2026-10-10, no domain) were seeded and one `stale_check` sent. Result: `eligible 3, rejected 2, drafts 1`; the owner's one real stale row got a draft (now `awaiting_decision`) and the drafts-ready email went out with count 1. Both seeded rows (`search_gmail` count 0, so English) were rejected by the in-code checks. Replayed on Nova Lite: it wrote the Turkish date ("10 Ekim 2026") into English drafts when the prompt offered both dates, and signed off "[Your Name]". `temperature=0` makes the retry repeat the same text. Fix (uncommitted): the prompt gives only the English date when there is no email, ties each date to its language otherwise, and asks for no name after the closing; Nova Lite then passed all four replayed cases (two no-email, one English, one Turkish).
 - **Gotchas from week 4:**
   - The policy simulator needs `aws:RequestedRegion=eu-north-1` in its context; without it every action simulates as the SCP's `explicitDeny`. In zsh, write `${ACCT}:role`, not `$ACCT:role` (`:r` is a modifier).
   - The CDK caches a bundle by its options, not by the local bundler object: two `UvBundling` assets with the same options share one output. The approval bundle sets `environment={"UV_GROUP": "approval"}` to keep its own.
