@@ -45,13 +45,13 @@ SYSTEM_RULE = (
 PROMPT_TEMPLATE = """Write a follow-up email from me to {company} about my application for {role_phrase}.
 
 Facts:
-- My last contact with them was on {date_en} (in Turkish: {date_tr}).
+- My last contact with them was on {date_en}.
 - {context}
 
 Rules:
 - {language_rule}
-- At most {max_words} words. No subject line, no placeholders like [Name].
-- Name the role exactly as "{role_name}" and the date exactly as written above for that language.
+- At most {max_words} words. No subject line, no placeholders like [Name], and no name or signature after the closing: I sign it myself.
+- Name the role exactly as "{role_name}". {date_rule}
 - Ask politely whether there is any news on my application. Make no promises and add no facts beyond these.
 {tone}
 Reply with only this JSON: {{"language": "tr" or "en", "text": "..."}}
@@ -87,10 +87,12 @@ def format_date(value: date, language: str) -> str:
 
 
 def build_prompt(request: FollowUpRequest) -> str:
+    date_en, date_tr = format_date(request.last_contact, "en"), format_date(request.last_contact, "tr")
     if request.email is not None:
         language_rule = (
             "Write in the language of the quoted email: Turkish or English. If it is in neither, write English."
         )
+        date_rule = f'Name the date exactly: in English write the date as "{date_en}", in Turkish as "{date_tr}".'
         email = request.email
         quoted = "\n".join(
             [
@@ -104,15 +106,18 @@ def build_prompt(request: FollowUpRequest) -> str:
             ]
         )
     else:
+        # Only the English date: offered both, the model wrote the Turkish
+        # one into English drafts.
         language_rule = "Write in English."
+        date_rule = f'Name the date exactly as "{date_en}".'
         quoted = ""
     role_name = request.role or request.company
     return PROMPT_TEMPLATE.format(
         company=request.company,
         role_phrase=f'the role "{request.role}"' if request.role else "a role there",
         role_name=role_name,
-        date_en=format_date(request.last_contact, "en"),
-        date_tr=format_date(request.last_contact, "tr"),
+        date_en=date_en,
+        date_rule=date_rule,
         context=f"What happened so far: {request.summary}" if request.summary else NO_CONTEXT,
         language_rule=language_rule,
         max_words=MAX_WORDS,

@@ -85,9 +85,9 @@ class DraftingModel:
         if self.replies:
             return self.replies.pop(0)
         role = prompt.split('Name the role exactly as "')[1].split('"')[0]
-        date_en = prompt.split("was on ")[1].split(" (in Turkish")[0]
-        date_tr = prompt.split("(in Turkish: ")[1].split(")")[0]
+        date_en = prompt.split("was on ")[1].split(".\n")[0]
         if "<<<EMAIL" in prompt:
+            date_tr = prompt.split('in Turkish as "')[1].split('"')[0]
             text = f"Merhaba, {date_tr} tarihli son yazışmamızın ardından {role} başvurum hakkında bir gelişme var mı?"
             return json.dumps({"language": "tr", "text": text})
         return json.dumps({"language": "en", "text": f"Hello, following up on my {role} application since {date_en}. Any news?"})
@@ -170,6 +170,24 @@ def test_without_an_email_only_english_passes():
     with pytest.raises(DraftRejected):
         check_draft({"language": "tr", "text": "Backend Engineer 1 Ekim 2026"}, no_email)
     assert check_draft({"language": "en", "text": "Backend Engineer 1 October 2026"}, no_email).language == "en"
+
+
+def test_without_an_email_the_prompt_gives_only_the_english_date():
+    # Nova Lite wrote "1 Ekim 2026" into English drafts when both dates were
+    # offered (week 4 exit 1, 2026-10-21).
+    prompt = build_prompt(request(email=None))
+    assert '"1 October 2026"' in prompt
+    assert "Ekim" not in prompt
+
+
+def test_with_an_email_each_date_is_tied_to_its_language():
+    prompt = build_prompt(request())
+    assert 'in English write the date as "1 October 2026", in Turkish as "1 Ekim 2026"' in prompt
+
+
+def test_the_prompt_asks_for_no_name_after_the_closing():
+    # Nova Lite signed off with "[Your Name]" (week 4 exit 1, 2026-10-21).
+    assert "no name or signature after the closing" in build_prompt(request())
 
 
 def test_the_email_is_quoted_data_and_the_tone_is_used():
