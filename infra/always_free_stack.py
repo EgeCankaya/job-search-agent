@@ -49,11 +49,11 @@ CONSUMER_TIMEOUT = Duration.seconds(180)
 # timeout, so a slow attempt isn't handed to a second invocation.
 QUEUE_VISIBILITY = Duration.seconds(6 * 180)
 TOOL_TIMEOUT = Duration.seconds(30)
-# APR-1: 09:00 in Istanbul, every day (OQ-44 c). Off until the owner turns it
-# on, after the week 4 deploy checks (Week 4 plan, step 9).
+# APR-1: 09:00 in Istanbul, every day (OQ-44 c). Turned on by the owner on
+# 2026-10-21, after the week 4 exit checks passed (Week 4 plan, step 9.4).
 STALE_CHECK_CRON = "cron(0 9 * * ? *)"
 STALE_CHECK_TIMEZONE = "Europe/Istanbul"
-STALE_CHECK_ON = False
+STALE_CHECK_ON = True
 # Turned on by the owner on 2026-10-18. A live poll marks emails processed,
 # so it must never run without the queue consumer (agentcore_stack.CONSUMER_ON).
 POLL_SCHEDULE_ON = True

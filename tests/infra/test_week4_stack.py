@@ -112,13 +112,13 @@ def test_local_mode_has_no_approval_workflow():
     )
 
 
-def test_the_daily_check_goes_to_the_queue_at_9_istanbul_and_starts_off(templates):
+def test_the_daily_check_goes_to_the_queue_at_9_istanbul_and_is_on(templates):
     free = templates[ALWAYS_FREE_STACK]
     [schedule] = [s for s in resources(free, "AWS::Scheduler::Schedule").values() if "stale" in s["Properties"]["Description"].lower()]
     properties = schedule["Properties"]
     assert properties["ScheduleExpression"] == "cron(0 9 * * ? *)"
     assert properties["ScheduleExpressionTimezone"] == "Europe/Istanbul"
-    assert properties["State"] == "DISABLED"  # the owner's switch, STALE_CHECK_ON
+    assert properties["State"] == "ENABLED"  # the owner's switch, STALE_CHECK_ON (on since 2026-10-21)
     assert json.loads(properties["Target"]["Input"]) == {"type": "stale_check"}
     assert "AgentQueue" in json.dumps(properties["Target"]["Arn"])
 
