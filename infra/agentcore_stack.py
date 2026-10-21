@@ -412,6 +412,10 @@ class AgentCoreStack(Stack):
             # One invocation is a step or two; the wait itself costs nothing.
             timeout=Duration.seconds(60),
             durable_config=lambda_.DurableConfig(execution_timeout=Duration.days(8), retention_period=Duration.days(14)),
+            # A wait resumes on the version it started on, up to 7 days later,
+            # so a deploy keeps old versions: Lambda refuses to delete one with
+            # a running execution, and the stack would hang in cleanup.
+            current_version_options=lambda_.VersionOptions(removal_policy=RemovalPolicy.RETAIN),
             environment={
                 "GATEWAY_URL": self.gateway.gateway_url,
                 "PENDING_DRAFTS_TABLE_NAME": free.pending_drafts_table.table_name,

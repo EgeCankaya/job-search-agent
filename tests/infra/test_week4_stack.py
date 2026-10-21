@@ -43,6 +43,15 @@ def test_the_workflow_is_durable_for_8_days_and_published_as_a_version(agent):
     assert [v["Properties"]["FunctionName"] for v in versions] == [{"Ref": logical_id}]
 
 
+def test_a_deploy_never_deletes_an_old_workflow_version(agent):
+    # A wait runs on the version it started on, for up to 7 days. On
+    # 2026-10-21 a deploy's cleanup tried to delete version 2 while a draft
+    # waited on it; Lambda refused and the stack hung in cleanup.
+    [version] = resources(agent, "AWS::Lambda::Version").values()
+    assert version["DeletionPolicy"] == "Retain"
+    assert version["UpdateReplacePolicy"] == "Retain"
+
+
 def test_the_workflow_role_holds_only_what_the_workflow_needs(agent):
     statements = policy_statements(agent, approval_role_id(agent))
     actions = {a for s in statements for a in as_list(s["Action"]) if not a.startswith("logs:")}
