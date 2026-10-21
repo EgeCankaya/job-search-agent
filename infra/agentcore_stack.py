@@ -54,7 +54,7 @@ AGENTCORE_SERVICE = "bedrock-agentcore.amazonaws.com"
 
 # Exit check 5 (OQ-44 k): one deploy with True lets the Runtime take a
 # `policy_probe` payload; the next deploy turns it off again.
-POLICY_PROBE_ON = False
+POLICY_PROBE_ON = True
 MEMORY_EVENT_EXPIRY_DAYS = 30  # MEM-2, NFR-PRIV-4, OQ-30
 CONSUMER_BATCH_SIZE = 5
 CONSUMER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial

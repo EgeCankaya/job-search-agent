@@ -189,12 +189,14 @@ def test_the_gateway_enforces_the_week_4_policies(agent):
     assert 'create-gmail-draft___create_gmail_draft' in forbid and "unless" in forbid
 
 
-def test_the_committed_config_keeps_the_probe_off(agent):
+def test_the_probe_deploy_sets_the_runtime_flag(agent):
+    """Exit check 5's one probe deploy. Reverting this commit restores the
+    test that keeps the probe off."""
     from infra import agentcore_stack
 
-    assert agentcore_stack.POLICY_PROBE_ON is False
+    assert agentcore_stack.POLICY_PROBE_ON is True
     [runtime] = resources(agent, "AWS::BedrockAgentCore::Runtime").values()
-    assert "POLICY_PROBE" not in runtime["Properties"]["EnvironmentVariables"]
+    assert runtime["Properties"]["EnvironmentVariables"]["POLICY_PROBE"] == "1"
 
 
 def test_every_policy_waits_for_every_gateway_target(agent):
