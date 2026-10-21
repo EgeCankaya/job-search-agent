@@ -154,13 +154,27 @@ def test_a_company_event_holds_fields_only():
 
 
 class FakeExportClient:
-    def __init__(self, pages):
+    """AgentCore matches a namespace exactly, not as a prefix: on 2026-10-21
+    `/summaries/owner` listed nothing while `/summaries/owner/<session>`
+    held each company's summary."""
+
+    def __init__(self, pages, session_pages=None):
         self.pages = pages  # namespace -> list of pages
+        self.session_pages = session_pages or [[]]  # ListSessions pages of session IDs
 
     def list_memory_records(self, memoryId, namespace, maxResults, nextToken=None):
-        pages = self.pages.get(namespace, [[]])
-        index = int(nextToken or 0)
-        page = {"memoryRecordSummaries": pages[index]}
+        pages = self.pages.get(namespace.rstrip("/"), [[]])
+        return self._page(pages, nextToken, "memoryRecordSummaries")
+
+    def list_sessions(self, memoryId, actorId, maxResults, nextToken=None):
+        assert actorId == "owner"
+        pages = [[{"sessionId": s, "actorId": actorId} for s in page] for page in self.session_pages]
+        return self._page(pages, nextToken, "sessionSummaries")
+
+    @staticmethod
+    def _page(pages, next_token, key):
+        index = int(next_token or 0)
+        page = {key: pages[index]}
         if index + 1 < len(pages):
             page["nextToken"] = str(index + 1)
         return page
@@ -170,19 +184,21 @@ def summary(record_id, namespace, text):
     return {"memoryRecordId": record_id, "namespaces": [namespace], "content": {"text": text}, "createdAt": NOW}
 
 
-def test_the_export_pages_every_namespace_and_the_counts_match(tmp_path):
+def test_the_export_reads_every_session_s_summaries_and_the_counts_match(tmp_path):
     client = FakeExportClient(
         {
             "/preferences/owner": [[summary("p1", "/preferences/owner", "Short, formal follow-ups")]],
-            "/summaries/owner": [
+            "/summaries/owner/company-kuzey": [
                 [summary("s1", "/summaries/owner/company-kuzey", "Interview done.")],
-                [summary("s2", "/summaries/owner/company-guney", "Applied 20 September.")],
+                [summary("s3", "/summaries/owner/company-kuzey", "Offer expected.")],
             ],
-        }
+            "/summaries/owner/company-guney": [[summary("s2", "/summaries/owner/company-guney", "Applied 20 September.")]],
+        },
+        session_pages=[["company-kuzey", "inbox-agent-ask-1"], ["company-guney"]],
     )
     listed, held, records = export(client, "inbox_agent_memory-abc", SqliteMemory(tmp_path / "m.sqlite"))
-    assert (listed, held) == (3, 3)
-    assert {r["text"] for r in records} == {"Short, formal follow-ups", "Interview done.", "Applied 20 September."}
+    assert (listed, held) == (4, 4)
+    assert {r["text"] for r in records} == {"Short, formal follow-ups", "Interview done.", "Offer expected.", "Applied 20 September."}
 
 
 def test_the_export_finds_the_one_memory():

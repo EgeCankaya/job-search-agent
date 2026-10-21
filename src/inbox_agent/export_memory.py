@@ -2,7 +2,9 @@
 records into the local SQLite store on the Mac.
 
 AgentCore has no bulk export (OQ-4), so this pages through
-`ListMemoryRecords` for each namespace prefix, stores every record, and
+`ListMemoryRecords` for my preferences' namespace and for each session's
+summary namespace (a namespace matches exactly, not as a prefix, so the
+sessions come from `ListSessions`), stores every record, and
 prints both counts: the records AgentCore listed and the records the local
 store holds. `--show N` prints N records in full for the spot check; nothing
 else prints record text. The store lives under `data/`, which git ignores.
@@ -14,9 +16,8 @@ import argparse
 from collections.abc import Iterator
 
 from inbox_agent import settings
-from inbox_agent.memory import DEFAULT_LOCAL_PATH, PREFERENCES_NAMESPACE, SUMMARIES_NAMESPACE, SqliteMemory
+from inbox_agent.memory import ACTOR, DEFAULT_LOCAL_PATH, PREFERENCES_NAMESPACE, SUMMARIES_NAMESPACE, SqliteMemory
 
-NAMESPACES = (PREFERENCES_NAMESPACE, SUMMARIES_NAMESPACE)
 MEMORY_NAME = "inbox_agent_memory"  # infra/config.py; AgentCore adds "-<suffix>" to the ID
 PAGE_SIZE = 100
 
@@ -52,10 +53,27 @@ def list_records(client, memory_id: str, namespace: str) -> Iterator[dict]:
         kwargs["nextToken"] = page["nextToken"]
 
 
+def list_sessions(client, memory_id: str) -> Iterator[str]:
+    kwargs = {"memoryId": memory_id, "actorId": ACTOR, "maxResults": PAGE_SIZE}
+    while True:
+        page = client.list_sessions(**kwargs)
+        for session in page.get("sessionSummaries", []):
+            yield session["sessionId"]
+        if not page.get("nextToken"):
+            return
+        kwargs["nextToken"] = page["nextToken"]
+
+
+def namespaces(client, memory_id: str) -> list[str]:
+    """My preferences, then one summary namespace per session (per company,
+    and per Ask conversation)."""
+    return [PREFERENCES_NAMESPACE] + [f"{SUMMARIES_NAMESPACE}/{s}" for s in list_sessions(client, memory_id)]
+
+
 def export(client, memory_id: str, store: SqliteMemory) -> tuple[int, int, list[dict]]:
     """Records listed, records the store holds, and the records."""
     records = {}
-    for namespace in NAMESPACES:
+    for namespace in namespaces(client, memory_id):
         for record in list_records(client, memory_id, namespace):
             records[record["record_id"]] = record
     held = store.import_records(list(records.values()))
