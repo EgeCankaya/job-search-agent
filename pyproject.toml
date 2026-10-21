@@ -25,9 +25,11 @@ approval = [
 dev = [
     "aws-durable-execution-sdk-python-testing>=1.2.1",
     "boto3[crt]>=1.43.114",
+    "cedarpy==4.12.1",
     "pytest>=9.1.1",
 ]
 local = [
+    "cedarpy==4.12.1",
     "langchain-ollama>=1.1.0",
 ]
 
