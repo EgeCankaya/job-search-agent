@@ -59,6 +59,11 @@ POLICY_PROBE_ON = False
 # OQ-45 (c): a policy that AgentCore refuses only because it matches nothing
 # today may ignore findings. At most NeverSend and NoRecipientKeys; none so far.
 IGNORE_FINDINGS: frozenset[str] = frozenset()
+# Policies the Gateway doesn't get yet. AgentCore refused NeverSend as "Overly
+# Restrictive" ("Any Future Tools", run 39670756382, 2026-10-21), which is not
+# a "matches nothing" finding; the owner's decision is pending, so it runs in
+# cedarpy only until then.
+HELD_BACK: frozenset[str] = frozenset({"NeverSend"})
 MEMORY_EVENT_EXPIRY_DAYS = 30  # MEM-2, NFR-PRIV-4, OQ-30
 CONSUMER_BATCH_SIZE = 5
 CONSUMER_MAX_CONCURRENCY = 2  # the lowest SQS allows; keeps tracker writes nearly serial
@@ -336,6 +341,8 @@ class AgentCoreStack(Stack):
             runtime_role=self.runtime_role.role_name,
             approval_role=self.approval_role.role_name,
         ).items():
+            if name in HELD_BACK:
+                continue
             policy = self.policy_engine.add_policy(
                 name,
                 statement=agentcore.PolicyStatement.from_cedar(text),

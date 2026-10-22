@@ -192,18 +192,17 @@ def test_the_gateway_enforces_the_week_4_policies(agent):
         lid: "".join(p if isinstance(p, str) else "<token>" for p in r["Properties"]["Definition"]["Cedar"]["Statement"]["Fn::Join"][1])
         for lid, r in resources(agent, "AWS::BedrockAgentCore::Policy").items()
     }
-    # Week 5 adds the two forbids (OQ-45 a, b).
-    assert len(texts) == 5
+    # Week 5 adds the two forbids (OQ-45 a, b); NeverSend is held back for now.
+    assert len(texts) == 4
     descriptions = sorted(r["Properties"]["Description"] for r in resources(agent, "AWS::BedrockAgentCore::Policy").values())
     assert descriptions == [
         "OQ-44 (j): AgentTools",
         "OQ-44 (j): ApprovalDraft",
         "OQ-44 (j): OnlyTheWorkflowDrafts",
-        "OQ-45 (a): NeverSend",
         "OQ-45 (b): NoRecipientKeys",
     ]
     forbids = [t for t in texts.values() if t.startswith("forbid")]
-    assert len(forbids) == 3
+    assert len(forbids) == 2
     assert any("create-gmail-draft___create_gmail_draft" in t and "unless { principal ==" in t for t in forbids)
 
 
@@ -213,6 +212,8 @@ def test_only_the_two_week_5_forbids_may_ever_ignore_findings(agent):
 
     assert agentcore_stack.IGNORE_FINDINGS <= {"NeverSend", "NoRecipientKeys"}
     assert agentcore_stack.IGNORE_FINDINGS == frozenset()
+    # Only NeverSend may be held back, pending the owner's decision.
+    assert agentcore_stack.HELD_BACK <= {"NeverSend"}
     modes = {r["Properties"]["Description"].split(": ")[1]: r["Properties"]["ValidationMode"] for r in resources(agent, "AWS::BedrockAgentCore::Policy").values()}
     assert {name for name, mode in modes.items() if mode != "FAIL_ON_ANY_FINDINGS"} == set(agentcore_stack.IGNORE_FINDINGS)
 
