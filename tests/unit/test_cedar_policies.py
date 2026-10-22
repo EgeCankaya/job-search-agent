@@ -123,3 +123,18 @@ def test_an_input_cedar_cannot_hold_is_refused_not_allowed():
 def test_a_file_with_two_policies_is_refused():
     with pytest.raises(PolicyRenderError):
         Authorizer({"Two": 'permit(principal, action, resource);\nforbid(principal, action, resource);'})
+
+
+def test_a_request_without_an_input_is_not_an_error_for_the_recipient_forbid(gateway):
+    # AgentCore's own actions may carry no input; the guard keeps evaluation clean.
+    import cedarpy
+
+    texts = policies(gateway_arn=GATEWAY_ARN, account=ACCOUNT, runtime_role="RuntimeRole123", approval_role="ApprovalRole456")
+    request = {
+        "principal": AGENT,
+        "action": 'AgentCore::Action::"InvokeAgent"',
+        "resource": f'AgentCore::Gateway::"{GATEWAY_ARN}"',
+        "context": {},
+    }
+    result = cedarpy.is_authorized(request, texts["NoRecipientKeys"], [])
+    assert result.diagnostics.errors == [] and result.diagnostics.reasons == []

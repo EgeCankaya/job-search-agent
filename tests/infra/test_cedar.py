@@ -106,9 +106,12 @@ def test_the_action_lists_in_the_files_are_the_tools_in_tools_py():
     assert actions_in(files["NoRecipientKeys"]) == []
 
 
-def test_the_recipient_forbid_names_the_seven_keys():
-    keys = re.findall(r"context\.input has (\w+)", policy_files()["NoRecipientKeys"])
+def test_the_recipient_forbid_names_the_seven_keys_behind_a_guard():
+    text = policy_files()["NoRecipientKeys"]
+    keys = re.findall(r"context\.input has (\w+)", text)
     assert keys == ["to", "recipient", "recipients", "phone", "email", "cc", "bcc"]
+    # Validation refuses an unguarded access to the optional `input` (run 39775820712).
+    assert "when { context has input && (" in text
 
 
 def test_every_forbid_is_scoped_to_iam_callers():
