@@ -103,7 +103,8 @@ def test_the_action_lists_in_the_files_are_the_tools_in_tools_py():
     assert len(GATEWAY_TOOLS) == 6
     for name in ("ApprovalDraft", "OnlyTheWorkflowDrafts"):
         assert actions_in(files[name]) == [gateway_name(DRAFT_TOOL)]
-    assert actions_in(files["NoRecipientKeys"]) == []
+    # Named, not every action: a forbid on future tools is "Overly Restrictive".
+    assert actions_in(files["NoRecipientKeys"]) == [gateway_name(tool) for tool in GATEWAY_TOOLS]
 
 
 def test_the_recipient_forbid_names_the_seven_keys_behind_a_guard():
