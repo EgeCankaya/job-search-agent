@@ -89,6 +89,19 @@ All three week 4 policies use `FAIL_ON_ANY_FINDINGS`, and AgentCore has refused 
 
 PRD and design doc: no change. A build detail; CLAUDE.md records which policy uses it.
 
+## (c') Amendment: NeverSend ignores AgentCore's findings (accepted 2026-10-23)
+
+The first deploy (run 39670756382, 2026-10-21) showed what AgentCore says about a forbid that covers tools not yet served: "Overly Restrictive: Policy Engine will deny every request for the specified principal (AgentCore::IamEntity), action (Any Future Tools) and resource (gateway/*)". Every forbid on an unscoped `action` gets it; `NoRecipientKeys` did too (run 39803468956) until it named the six tools. That is not the "matches nothing" finding (c) covers, and for `NeverSend` it describes exactly its purpose, so no policy change can remove it.
+
+**Decision:** `NeverSend` alone uses `IGNORE_ALL_FINDINGS`. The other four keep `FAIL_ON_ANY_FINDINGS`, and `NoRecipientKeys` names the six tools.
+- Ignoring findings skips AgentCore's warnings, not its parse or schema errors, which still fail the deploy (run 39775820712 failed on one).
+- The cedarpy tests run the exact rendered text: anything outside the six is denied for every caller, and the agent's five tools are allowed. The local MCP server enforces it.
+- A test pins `IGNORE_FINDINGS` to `{"NeverSend"}`.
+
+**Alternative (not chosen):** drop `NeverSend` and record TOOL-2's explicit forbid as a gap, leaving default deny plus "no send tool exists".
+
+PRD and design doc: no change (a build detail, as (c)). CLAUDE.md records it.
+
 ## (d) What "a direct send call is denied" means, and where the denial is logged
 
 The week 5 exit says "A direct send call is denied by the Gateway and by the local MCP server", and TOOL-2 says "the denial is logged".
@@ -281,6 +294,7 @@ The steps in `Week 5 plan.md`: the policy files and renderer (1), the two forbid
 | (a) Never-send forbid: every action outside the six, for every IAM caller | Accept | 2026-10-21 | |
 | (b) Recipient-key forbid on all six tools, seven keys | Accept | 2026-10-21 | |
 | (c) Narrow validation fallback for (a) and (b) only | Accept | 2026-10-21 | |
+| (c') NeverSend ignores AgentCore's findings ("Any Future Tools") | Accept | 2026-10-23 | in chat, after runs 39670756382 and 39803468956 |
 | (d) Proof by the three-case probe and my session; denials logged by the caller | Accept | 2026-10-21 | |
 | (e) One set of `.cedar` files under `policies/`, rendered for the Gateway and for cedarpy | Accept | 2026-10-21 | |
 | (f) 24 planted emails; a harness with the mode's model, in-process tools, cedarpy | Accept | 2026-10-21 | |
