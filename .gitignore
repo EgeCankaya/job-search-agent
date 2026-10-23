@@ -22,3 +22,6 @@ __pycache__/
 
 # Working notes kept out of the public repo
 Job search inbox agent PRD review.md
+
+# Injection harness scores (EV-4): IDs and counts, kept local
+eval/results/
