@@ -55,7 +55,7 @@ AGENTCORE_SERVICE = "bedrock-agentcore.amazonaws.com"
 
 # Exit check 5 (OQ-44 k): one deploy with True lets the Runtime take a
 # `policy_probe` payload; the next deploy turns it off again.
-POLICY_PROBE_ON = True
+POLICY_PROBE_ON = False
 # OQ-45 (c) and (c'): policies that may ignore AgentCore's findings (never its
 # syntax or schema errors). NeverSend denies every tool outside the six, so
 # AgentCore flags it "Overly Restrictive … Any Future Tools", which is its

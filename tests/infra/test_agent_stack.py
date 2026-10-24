@@ -206,7 +206,6 @@ def test_the_runtime_is_a_python_313_zip_on_the_public_network(agent):
         "MEMORY_ID",
         "CLASSIFIER_MODEL_ID",
         "CHAT_MODEL_ID",
-        "POLICY_PROBE",  # week 5 exit 1's probe deploy only
     }
 
 
