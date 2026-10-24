@@ -218,12 +218,14 @@ def test_only_the_two_week_5_forbids_may_ever_ignore_findings(agent):
     assert {name for name, mode in modes.items() if mode != "FAIL_ON_ANY_FINDINGS"} == set(agentcore_stack.IGNORE_FINDINGS)
 
 
-def test_the_committed_config_keeps_the_probe_off(agent):
+def test_the_probe_deploy_sets_the_runtime_flag(agent):
+    """Week 5 exit 1's one probe deploy. Reverting this commit restores the
+    test that keeps the probe off."""
     from infra import agentcore_stack
 
-    assert agentcore_stack.POLICY_PROBE_ON is False
+    assert agentcore_stack.POLICY_PROBE_ON is True
     [runtime] = resources(agent, "AWS::BedrockAgentCore::Runtime").values()
-    assert "POLICY_PROBE" not in runtime["Properties"]["EnvironmentVariables"]
+    assert runtime["Properties"]["EnvironmentVariables"]["POLICY_PROBE"] == "1"
 
 
 def test_every_policy_waits_for_every_gateway_target(agent):
