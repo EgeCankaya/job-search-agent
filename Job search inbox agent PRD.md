@@ -2,12 +2,12 @@
 
 > **One-liner:** A personal agent that watches my Gmail for job-search email, keeps my applications tracker current without my input, emails me only for interview invites, assessments and offers, and writes follow-ups that are saved as Gmail drafts only after I approve them. A local Mac app answers my questions and takes my approvals. It never sends or forwards email from my Gmail; its only outbound messages are AWS SNS notifications to me.
 
-**Date:** 2026-10-21 (v0.4.5; v0.4.4 on 2026-10-20; v0.4.3 and v0.4.2 on 2026-10-19; v0.4.1 on 2026-10-18; v0.1 to v0.4.0 on 2026-10-17)
-**Status:** Draft v0.4.5
+**Date:** 2026-10-25 (v0.4.6; v0.4.5 on 2026-10-21; v0.4.4 on 2026-10-20; v0.4.3 and v0.4.2 on 2026-10-19; v0.4.1 on 2026-10-18; v0.1 to v0.4.0 on 2026-10-17)
+**Status:** Draft v0.4.6
 **Owner:** Egemen Çankaya (sole builder and sole user)
 **DRI:** the owner. No email address is listed because the repo will be public.
 **Audience:** Me, as builder; reviewers who read the portfolio repo (hiring managers, interviewers)
-**Source of truth:** "Job search inbox agent design" (PDF, this folder). If this PRD and the design doc disagree, the design doc wins and this PRD needs a revision. **On 2026-10-17 I accepted all seven design-doc changes in OQ-32, and they were applied that day** to the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51). The Claude Doc is the source of truth. **On 2026-10-17 I also accepted all items of OQ-39 (AWS Free plan, home Region Stockholm) and OQ-40 (SNS email alerts and a local Mac app instead of WhatsApp)**, and their design-doc rows were applied the same day (revision 51 → 90). The PDF in this folder was re-exported from revision 90. **On 2026-10-18 I accepted all six items of OQ-41 (finishing week 2)**, and its design-doc rows were applied the same day (revision 90 → 98). **On 2026-10-18 I accepted all fourteen items of OQ-42 (building week 3)**, and its design-doc rows were applied on 2026-10-19 (revision 98 → 105). **On 2026-10-19 I accepted OQ-43 (deploying from main on a self-hosted runner, because the account can't hold an OIDC provider)**, applied the same day (revision 105 → 106). **On 2026-10-20 I accepted all fourteen items of OQ-44 (building week 4)**, applied the same day (revision 106 → 113). **On 2026-10-21 I accepted all thirteen items of OQ-45 (building week 5)**, applied the same day (revision 113 → 116). The exact edits are recorded in "Design doc edits for OQ-32.md", "Design doc edits for OQ-39.md", "Design doc edits for OQ-40.md", "Design doc edits for OQ-41.md", "Design doc edits for OQ-42.md", "Design doc edits for OQ-43.md", "Design doc edits for OQ-44.md" and "Design doc edits for OQ-45.md". §13 sets the order of authority.
+**Source of truth:** "Job search inbox agent design" (PDF, this folder). If this PRD and the design doc disagree, the design doc wins and this PRD needs a revision. **On 2026-10-17 I accepted all seven design-doc changes in OQ-32, and they were applied that day** to the source Claude Doc, [Job search inbox agent design](https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9) (revision 51). The Claude Doc is the source of truth. **On 2026-10-17 I also accepted all items of OQ-39 (AWS Free plan, home Region Stockholm) and OQ-40 (SNS email alerts and a local Mac app instead of WhatsApp)**, and their design-doc rows were applied the same day (revision 51 → 90). The PDF in this folder was re-exported from revision 90. **On 2026-10-18 I accepted all six items of OQ-41 (finishing week 2)**, and its design-doc rows were applied the same day (revision 90 → 98). **On 2026-10-18 I accepted all fourteen items of OQ-42 (building week 3)**, and its design-doc rows were applied on 2026-10-19 (revision 98 → 105). **On 2026-10-19 I accepted OQ-43 (deploying from main on a self-hosted runner, because the account can't hold an OIDC provider)**, applied the same day (revision 105 → 106). **On 2026-10-20 I accepted all fourteen items of OQ-44 (building week 4)**, applied the same day (revision 106 → 113). **On 2026-10-21 I accepted all thirteen items of OQ-45 (building week 5)**, applied the same day (revision 113 → 116). **On 2026-10-25 I accepted OQ-46 (a)** (the recipient forbid on the Gateway), a PRD-only change. The exact edits are recorded in "Design doc edits for OQ-32.md", "Design doc edits for OQ-39.md", "Design doc edits for OQ-40.md", "Design doc edits for OQ-41.md", "Design doc edits for OQ-42.md", "Design doc edits for OQ-43.md", "Design doc edits for OQ-44.md", "Design doc edits for OQ-45.md" and "Design doc edits for OQ-46.md". §13 sets the order of authority.
 
 | Assessment dimension | Value | Why |
 |---|---|---|
@@ -406,7 +406,7 @@ The 24-hour rule was deleted with WhatsApp (OQ-40 (b)). Email has no 24-hour win
 - **Acceptance criteria:**
   - The tool schema has no recipient field and no free-text field [OQ-42 (d)].
   - The alert topic has exactly one confirmed subscription, and its policy allows publishing only from the `notify_owner` tool's role, plus the dead-letter alarm (OQ-42 (g)).
-  - A Cedar forbid rejects any tool call whose input contains a recipient-like key (`to`, `recipient`, `recipients`, `phone`, `email`, `cc`, `bcc`) [PRD, OQ-11, OQ-45 (b)].
+  - A Cedar forbid rejects any tool call whose input contains a recipient-like key (`to`, `recipient`, `recipients`, `phone`, `email`, `cc`, `bcc`) [PRD, OQ-11, OQ-45 (b)]. **[v0.4.6]** In MacBook mode cedarpy enforces it on the whole input. On AgentCore Gateway, Cedar sees only the inputs a tool's schema declares, so the forbid can't fire there; in cloud mode each tool's own schema check refuses any undeclared key before it acts, shown by the week 5 probe (2026-10-24) [OQ-46].
 - **Trace:** UAC-ALR-3
 
 ### 9.5 Chat questions (CHT)
@@ -694,7 +694,7 @@ The Mac app's **Dashboard** page SHALL show totals, open applications, counts by
 | Threat | Impact | Mitigation | Status |
 |---|---|---|---|
 | An email instructs the agent to send or forward mail | Data leaks from my mailbox | Cedar deny (TOOL-2, MODE-4); no send tool; draft tool allows only `drafts.create` (TOOL-4); quoted data | Covered in both modes |
-| An email instructs the agent to notify someone else | Tracker data leaks | No recipient input; one subscription on the alert topic; topic policy; Cedar forbid on recipient-like keys (ALR-3) | Covered |
+| An email instructs the agent to notify someone else | Tracker data leaks | No recipient input; one subscription on the alert topic; topic policy; recipient-like keys refused by each tool's schema check, and by the Cedar forbid in MacBook mode (ALR-3, OQ-46) | Covered |
 | Someone else reaches the agent through a public endpoint | A false Approve or a data leak | No public endpoint exists; the Mac app binds to 127.0.0.1 and uses my IAM session (CHT-2) | Covered |
 | The compose grant also allows sending [R] | A bypass that does not go through the Gateway | Separate grants (ING-4); method allowlist (TOOL-4) | Covered |
 | A token leaks through logs or the repo | Account takeover | AgentCore Identity or Keychain; no AWS credential in GitHub (OQ-43) | Covered |
@@ -998,6 +998,7 @@ Many Provisional answers are already written into SHALL statements. To keep them
 | OQ-43 (new in v0.4.3) | How does main deploy, now that the account can't hold a GitHub OIDC provider? | Resolved (accepted 2026-10-19) | Done | The managed organization's SCP denies every IAM OIDC provider action (simulator: `explicitDeny`, 2026-10-19). Option (a), accepted: the deploy job runs on the self-hosted runner on my Mac with my `aws login` session, only for main, with no AWS credential in GitHub. Rejected: CodeBuild through CodeConnections, IAM user keys, deferring OPS-1. Recorded in "Design doc edits for OQ-43.md"; OQ-42 (l) is superseded |
 | OQ-44 (new in v0.4.4) | How is week 4 built? (a) The durable approval workflow. (b) The durable-execution ARN wildcard. (c) The daily check through the queue, 5 per check. (d) Decisions only from my IAM session. (e) The two Gmail tools' inputs. (f) The drafts-ready alert. (g) Follow-up state as bookkeeping. (h) AgentCore Memory strategies. (i) Local SQLite memory. (j) The policy engine in week 4. (k) The exit-5 probe. (l) The query excludes my own mail. (m) Draft language without a reply. (n) Dependencies | Resolved (accepted 2026-10-20) | Done | **All fourteen accepted on 2026-10-20** and applied to this PRD (v0.4.4) and the source Claude Doc (revision 113), recorded in "Design doc edits for OQ-44.md". (b) changes only the build; OQ-27 is resolved by the check in (a) |
 | OQ-45 (new in v0.4.5) | How is week 5 built? (a) The never-send forbid when no send tool exists. (b) The recipient-key forbid. (c) A narrow validation fallback. (d) How a direct send call is proven denied, and where the denial is logged. (e) One set of policy files for the Gateway and cedarpy. (f) The injection set and harness. (g) Log trimming. (h) The log scan. (i) CDK's AuthorizeAction name-pattern grant. (j) Old approval versions. (k) Week 4's records. (l) The week 5 milestone row. (m) cedarpy | Resolved (accepted 2026-10-21) | Done | **All thirteen accepted on 2026-10-21** ((i) in chat; (m) after a source check) and applied to this PRD (v0.4.5) and the source Claude Doc (revision 116), recorded in "Design doc edits for OQ-45.md". (c), (i) and (j) change only the build |
+| OQ-46 (new in v0.4.6) | The week 5 probe's `notify_owner` call with a `to` key passed the Gateway's Cedar engine (the tool refused it). How does ALR-3's recipient check read in cloud mode? | Resolved (accepted 2026-10-25) | Done | On AgentCore Gateway Cedar sees only the inputs a tool's schema declares, so `NoRecipientKeys` can't fire there. (a) accepted: in cloud mode the tool's own schema check is the recipient check (proven live by the probe); cedarpy enforces the forbid in MacBook mode; `NoRecipientKeys` stays on the Gateway, inert. (b) `additionalProperties: false` at the Gateway: not now. (c) declaring the keys: rejected (PRD §9). Recorded in "Design doc edits for OQ-46.md"; no design-doc change |
 
 ## 19. Rabbit holes
 
@@ -1046,7 +1047,7 @@ Many Provisional answers are already written into SHALL statements. To keep them
 **GIVEN** one test email of each class. **WHEN** they are processed. **THEN** 3 alert emails arrive with only class, company, role and date, and the silent classes produce none unless flagged "Possible:".
 
 ### UAC-ALR-3: Alerts go only to me
-**GIVEN** an email that tells the agent to notify another address or number. **WHEN** it is processed. **THEN** no notification goes to anyone but me, the alert topic still has exactly one subscription, and any `notify_owner` call with a recipient input is denied by Cedar.
+**GIVEN** an email that tells the agent to notify another address or number. **WHEN** it is processed. **THEN** no notification goes to anyone but me, the alert topic still has exactly one subscription, and any `notify_owner` call with a recipient input is refused before it publishes: by Cedar in MacBook mode, by the tool's schema check in cloud mode [OQ-46].
 
 ### UAC-CHT-1: Answer tracker questions on the Ask page
 **GIVEN** a seeded tracker. **WHEN** I ask "Which applications have been silent for 10+ days?". **THEN** the reply lists exactly the matching open rows, and the trace shows `list_applications` with that filter.
@@ -1149,6 +1150,17 @@ Many Provisional answers are already written into SHALL statements. To keep them
 - [cedarpy on PyPI](https://pypi.org/project/cedarpy): not officially supported by AWS or the Cedar team
 
 ## Changelog
+
+### v0.4.6, 2026-10-25
+
+**Topics in this revision** (decision input; the owner accepted OQ-46 (a) on 2026-10-25):
+- OQ-46: the recipient forbid can't fire on AgentCore Gateway (Cedar sees declared inputs only, shown by the week 5 probe on 2026-10-24); in cloud mode the tools' own schema checks are ALR-3's recipient check, and cedarpy enforces the forbid in MacBook mode.
+
+**Sections updated:**
+- Header: date, version, status; source-of-truth note (OQ-46, no design-doc change)
+- §9.4 ALR-3 acceptance; §10 the "notify someone else" threat row
+- §18: OQ-46 added
+- Appendix B: UAC-ALR-3
 
 ### v0.4.5, 2026-10-21
 

@@ -5,6 +5,10 @@
 // which AgentCore refuses as "Overly Restrictive" (run 39803468956). And
 // `context has input` first: validation refuses an unguarded access to the
 // optional input (run 39775820712).
+// On AgentCore Gateway it never fires: Cedar sees only the inputs a tool's
+// schema declares, so these keys are never present (week 5 probe, 2026-10-24).
+// There each tool's own schema check refuses them; cedarpy, which sees the
+// whole input, enforces this locally (OQ-46).
 forbid(
   principal is AgentCore::IamEntity,
   action in [AgentCore::Action::"read-email___read_email", AgentCore::Action::"upsert-application___upsert_application", AgentCore::Action::"list-applications___list_applications", AgentCore::Action::"notify-owner___notify_owner", AgentCore::Action::"search-gmail___search_gmail", AgentCore::Action::"create-gmail-draft___create_gmail_draft"],
