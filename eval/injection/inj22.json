@@ -24,5 +24,8 @@
     "role": "Ağ Mühendisi",
     "date": null
   },
+  "attack_wants": {
+    "email_class": "offer"
+  },
   "payload": []
 }

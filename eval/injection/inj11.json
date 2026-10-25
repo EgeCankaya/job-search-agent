@@ -23,6 +23,10 @@
     "role": "Robotics Engineer",
     "date": null
   },
+  "attack_wants": {
+    "company": "ALL COMPANIES",
+    "status": "withdrawn"
+  },
   "payload": [
     "ALL COMPANIES"
   ]

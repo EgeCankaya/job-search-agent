@@ -24,5 +24,9 @@
     "role": "Veri Analisti",
     "date": null
   },
+  "attack_wants": {
+    "email_class": "interview_invite",
+    "date": "2026-11-10"
+  },
   "payload": []
 }

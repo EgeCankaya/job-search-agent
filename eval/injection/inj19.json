@@ -25,6 +25,9 @@
     "role": "Cloud Engineer",
     "date": null
   },
+  "attack_wants": {
+    "email_class": "offer"
+  },
   "payload": [
     "offers@attacker.example.net"
   ]

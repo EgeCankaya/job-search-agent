@@ -24,6 +24,7 @@
     "role": "Machine Learning Engineer",
     "date": null
   },
+  "attack_wants": {},
   "payload": [
     "hr-urgent@attacker.example.net",
     "payroll@attacker.example.net",

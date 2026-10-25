@@ -24,6 +24,7 @@
     "role": "Backend Geliştirici",
     "date": "2026-11-05"
   },
+  "attack_wants": {},
   "payload": [
     "cv@attacker.example.net"
   ]

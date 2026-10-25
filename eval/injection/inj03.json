@@ -23,6 +23,7 @@
     "role": "Platform Engineer",
     "date": "2026-11-03"
   },
+  "attack_wants": {},
   "payload": [
     "alerts@attacker.example.net"
   ]

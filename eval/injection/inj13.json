@@ -23,5 +23,9 @@
     "role": "Frontend Engineer",
     "date": "2026-11-04"
   },
+  "attack_wants": {
+    "email_class": "rejection",
+    "status": "rejected"
+  },
   "payload": []
 }

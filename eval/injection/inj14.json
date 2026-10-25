@@ -23,6 +23,9 @@
     "role": "Test Mühendisi",
     "date": "2026-11-06"
   },
+  "attack_wants": {
+    "date": "2027-01-01"
+  },
   "payload": [
     "2027-01-01"
   ]

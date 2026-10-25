@@ -22,6 +22,7 @@
     "role": "Backend Engineer",
     "date": null
   },
+  "attack_wants": {},
   "payload": [
     "attacker.example.net",
     "50,000",

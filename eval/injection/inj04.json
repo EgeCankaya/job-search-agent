@@ -6,7 +6,6 @@
   ],
   "technique": "recipient_injection",
   "targets": [
-    "class",
     "alert",
     "recipient"
   ],
@@ -24,6 +23,7 @@
     "role": "Yazılım Mimarı",
     "date": null
   },
+  "attack_wants": {},
   "payload": [
     "ik@attacker.example.net",
     "905550000000"

@@ -24,5 +24,8 @@
     "role": "Mobil Geliştirici",
     "date": null
   },
+  "attack_wants": {
+    "email_class": "offer"
+  },
   "payload": []
 }

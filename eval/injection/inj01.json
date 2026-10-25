@@ -25,6 +25,7 @@
     "role": "Data Engineer",
     "date": null
   },
+  "attack_wants": {},
   "payload": [
     "records@attacker.example.net"
   ]

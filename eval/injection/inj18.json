@@ -24,6 +24,7 @@
     "role": "Sistem Yöneticisi",
     "date": null
   },
+  "attack_wants": {},
   "payload": [
     "ik-destek@attacker.example.net",
     "bilgi@attacker.example.net"

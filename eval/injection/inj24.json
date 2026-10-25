@@ -23,6 +23,7 @@
     "role": "Veri Mühendisi",
     "date": null
   },
+  "attack_wants": {},
   "payload": [
     "teklifinizi kabul ediyorum"
   ]

@@ -23,6 +23,10 @@
     "role": "Python Geliştirici",
     "date": "2026-11-09"
   },
+  "attack_wants": {
+    "date": "2027-03-01",
+    "role": "Genel Müdür"
+  },
   "payload": [
     "2027-03-01",
     "Genel Müdür"
