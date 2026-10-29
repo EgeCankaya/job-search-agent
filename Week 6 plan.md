@@ -1,7 +1,7 @@
 # Weeks 6 to 7 plan: evaluation and write-up
 
 **Date:** 2026-10-26
-**Status:** OQ-47 (`Design doc edits for OQ-47.md`) **accepted on 2026-10-26** as recommended: (h) as (h1); (n) part 1 only, with (n1) or (n2) decided at going public; (o) on condition of a source check. No emails are labeled yet, and no before-agent time log exists (M7 reports with-agent minutes only). Step 0's documents and step 1 are done (2026-10-26). Next: step 0's read-only checks and the `Evaluate` spike after `aws login`; my labeling; step 2. Week 5 met all three exits on 2026-10-25. Live state: `Project status.md`.
+**Status:** OQ-47 (`Design doc edits for OQ-47.md`) **accepted on 2026-10-26** as recommended: (h) as (h1); (n) part 1 only, with (n1) or (n2) decided at going public; (o) on condition of a source check. No emails are labeled yet, and no before-agent time log exists (M7 reports with-agent minutes only). Step 0's documents and step 1 are done (2026-10-26). Next: step 0's read-only checks and the `Evaluate` spike after `aws login`; my labeling; step 2. Week 5 met all three exits on 2026-10-25. Live state: `Project status.md`. **Amended 2026-10-28 to 2026-10-29 (OQ-47 (d'), (d''), (f''), (j')):** no labeled set of my own email; EV-1s (120 synthetic emails, a frozen split, labeled twice by independent sessions) is the labeled set; M8 and end-to-end recall aren't measured; M7 is my estimate (about 2 hours a week). Sessions may run the Bedrock evaluation commands themselves (2026-10-29). PRD v0.4.9, design doc revision 131.
 **Sources:**
 - PRD v0.4.6: §9 EVAL-1, EVAL-2, OPS-1; §10 NFR-PRIV-3, NFR-PRIV-6, NFR-OBS-1 to 3, NFR-LAT; §11 M1 to M8; §12; §14 weeks 6 to 7; §15; §18 (OQ-7, OQ-8, OQ-17 to OQ-19, OQ-23, OQ-24, OQ-29, OQ-37).
 - The design doc (Claude Doc, revision 116): the evaluation section and table, the components row "CloudWatch + AgentCore Evaluations", the mode table, the build plan.
@@ -37,13 +37,13 @@
 
 **Week 6**
 1. Tier 1 runs on GitHub's runners on every pull request and as the deploy's first job, from recorded replies (EV-1s, EV-3, EV-4), and is green on main.
-2. The EV-1 test split is frozen, and the first full Tier 2 run on main has recorded M1 (per class and per language), M2, M3 and M4 (live Nova). M8 and end-to-end invite recall are not measured (OQ-47 (d')).
+2. EV-1s's test split is frozen, and the first full Tier 2 run on main has recorded M1 (per class and per language), M2, M3 and M4 (live Nova). M8 and end-to-end invite recall are not measured (OQ-47 (d'), (d''))
 3. The gate works: a deliberately weakened prompt fails Tier 1 on a test branch and fails a manual Tier 2 run there, and main passes both (OQ-47 (l)).
 
 **Week 7**
 
-4. M5 and M6 have measured values (with n), and M7 has a measured value or is stated as not measurable (OQ-47 (j)).
-5. EV-6: the EV-1 test split and EV-3 on `qwen3.8:27b`, reported beside Nova.
+4. M5 and M6 have measured values (with n); M7 is stated as not measured, with my estimate (OQ-47 (j')).
+5. EV-6: EV-1s's test split and EV-3 on `qwen3.8:27b`, reported beside Nova.
 6. The README shows only measured numbers, with a "how measured" section, a Mermaid architecture diagram and screenshots made from fictional data.
 7. PRD v0.5.0 confirms or revises the §11 targets and does §18's confirmation pass.
 
@@ -107,11 +107,11 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 - `eval/label_app.py`: Streamlit on 127.0.0.1 (the repo's `.streamlit/config.toml`), port 8502: `uv run --group app streamlit run eval/label_app.py --server.port 8502`. One email at a time: the trimmed text (`trim.py`, exactly what the model sees) and the full text behind a toggle. Fields: class, company, role, key date (date, optional time), language, note. Writes `labels.jsonl` by eval-set ID. Shows progress by class and language.
 - Tests with fakes: the window goes into the query; `found_by` is kept; nothing is printed but counts; the page writes a valid label line; `EVAL_DATA_DIR` inside the repo is refused.
 - **Built 2026-10-26, not committed:** `eval/labeled_set.py` (the store: `emails/<eval id>.eml`, `index.jsonl`, `labels.jsonl`; directory 0700, files 0600; refused inside the repo), `eval/fetch_labeling.py`, `eval/label_app.py`, `tests/unit/test_labeling.py` (23 tests; 880 pass in all). Class and language start unchosen on the page.
-- **Then I start labeling** (about 3 to 4 hours for 300), window by window. The first dry run (2026-10-28, September) found 59 emails, so about five months make the set.
+- ~~Then I start labeling.~~ **Dropped (OQ-47 (d''), 2026-10-29):** the first fetch (59 September emails, in `~/inbox-agent-eval` on my Mac) stays unlabeled, and the tools are kept, unused.
 
-### 2. The synthetic set and the chat suite (OQ-47 (f), (g))
-- I write short pattern notes (no real text). A session drafts `eval/synthetic/syn01.json` … `syn60.json`: 30 Turkish and 30 English; all six classes; about 10 invites; hard cases. Each file: sender, subject, body, optional calendar part, labels.
-- I review every one: accept, edit or drop, and set the labels.
+### 2. The synthetic set and the chat suite (OQ-47 (d''), (f''), (g))
+- A session drafts `eval/synthetic/syn001.json` … `syn120.json` from CLS-1's definitions alone (no real mail, nothing from me): 60 Turkish and 60 English; all six classes; about 20 invites; hard cases (an invite inside a rejection thread, a test link without the word "assessment", a calendar-only invite, a key date after the 2,000-character cut, recruiter outreach that names an interview). Each file: sender, subject, body, optional calendar part, labels.
+- **A second, independent session labels them blind** (it sees the emails, not the labels). Every disagreement is rewritten until it's unambiguous, or dropped; the agreement rate is recorded.
 - `eval/chat/`: a fictional tracker (about 15 rows, mixed statuses and dates relative to a fixed "today") and 40 questions (20 Turkish, 20 English), each with the expected `list_applications` calls and the facts the answer must contain.
 - Schema tests like EV-4's: fictional domains only, every class and language present, every expected call valid against `tools.py`.
 
@@ -134,15 +134,15 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 - Tests: a scripted bad reply set fails each gate; a stale key fails with its message.
 - Then I record (step 3) and push. Tier 1 is green on the GitHub runner.
 
-### 5. The EV-1 runner and scorers (OQ-47 (e))
+### 5. The labeled-set runner and scorers on EV-1s (OQ-47 (e), (d''))
 - `eval/split.py`: ⅓ dev and ⅔ test by class × language, fixed seed; `freeze` writes `manifest.json` with the set version and a hash per label line, and refuses to change a frozen test split.
-- `eval/run_labeled.py --split test|dev --mode cloud|local [--pace 12]` runs the classifier and extraction over the `.eml` files. Scorers:
+- `eval/run_labeled.py --split test|dev --mode cloud|local [--pace 12]` runs the classifier and extraction over EV-1s. Scorers:
   - **M1** per class and language;
   - **M2** with the normalization rules;
   - the "no new miss" comparison against `runs/main-latest.json`.
   - OQ-24's check is reported alongside: the share of labeled fields that fall after the 2,000-character cut.
-- Its output is the scores file: counts, metrics and eval-set IDs.
-- Tests on a fictional mini-set under `tmp_path`: each metric by hand, the freeze refusal, pacing (calls per minute), no Gmail ID or text in the scores.
+- Its output is the scores file: counts, metrics and case IDs.
+- Tests on a fictional mini-set: each metric by hand, the freeze refusal, pacing (calls per minute), no email text in the scores.
 
 ### 6. Tier 2 (OQ-47 (c))
 - `tier2.yml` on `[self-hosted, macOS]`:
@@ -176,7 +176,7 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 - **I decide separately:** the drafting retry tells the model which rule failed (a behavior change in `followup_draft.py`).
 
 ### 11. The first full run and the freeze (week 6)
-- When the set has at least 250 emails (or all my mail holds):
+- When EV-1s and its blind second labeling are done:
   - `split.py freeze`;
   - one Tier 2 run on main (manual dispatch);
   - the baselines recorded in CLAUDE.md.
@@ -212,17 +212,15 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 ## What I do by hand
 - ~~Decide OQ-47 item by item; answer (d) and (j).~~ Done 2026-10-26. Approve the dependencies after a source check.
 - `aws login`, then: the day-8 check, the end-of-week log scan, step 0's read-only checks, the `Evaluate` spike.
-- Write the EV-1s pattern notes; review and label the 60 synthetic emails.
-- **Fetch and label 250 to 300 emails**, reading each window's whole inbox for the job emails the query missed.
-- Record replies with Nova whenever a prompt changes (`eval/record.py`), and commit them with the change.
+- ~~Write the EV-1s pattern notes; review the synthetic emails; fetch and label my own email.~~ Dropped (OQ-47 (d''), (f''), 2026-10-29).
+- ~~Record replies with Nova.~~ Sessions run the Bedrock evaluation commands themselves since 2026-10-29; I commit what they record when I say yes.
 - Push (or say yes to a session's push); run Tier 2 by hand for the first full run and the gate check.
-- Keep a time log for one week (M7); run `ops_report.py` weekly.
+- ~~Keep a time log for M7~~ (my estimate is about 2 hours a week, OQ-47 (j')); run `ops_report.py` weekly, or let a session run it (read-only).
 - Turn on Transaction Search only if the spike says (g2).
 - Check every screenshot for real data; decide (n1) or (n2) and when the repo goes public.
 
 ## Risks
-- **Too few labeled emails or invites.** If my mail holds fewer than 250 job emails or 25 invites, the set is smaller and M1's floor means zero misses. Report what exists, with n. Don't pad the set with synthetic emails (they're EV-1s, which is separate).
-- **Labeling time.** It's mine and it gates step 11. Starting step 1 first is the mitigation.
+- **Synthetic email flatters the classifier.** Emails written from the definitions are cleaner than real mail, so M1 and M2 likely overstate real accuracy. The README says the numbers come from synthetic email; the hard cases and the blind second labeling keep the set honest.
 - **Replies go stale often.** Every prompt change needs a recording on the Mac. If that's a chore, OQ-47 (a2) (a Tier 1 job on the Mac for pushes) is the fallback.
 - **Tier 2 starves live mail.** The pacing cap and the dead-letter alarm cover it. A Tier 2 run is never started during a deploy (one runner, so jobs queue anyway).
 - **`aws login` expires.** Tier 2's weekly run will often fail at the session step. It fails with its own message, and a manual re-run follows.

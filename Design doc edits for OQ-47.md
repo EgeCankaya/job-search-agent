@@ -129,6 +129,57 @@ When the first fetch ran (September: 59 emails from the query), I chose not to r
 
 Applied to PRD v0.4.8 on 2026-10-28. Design doc: no change.
 
+## (d'') Amendment: no labeled set of my own email (decided 2026-10-29)
+
+After the first fetch I chose not to label my own email at all. The options were: skip it; let Claude label it in a session (my email would then go to Anthropic as well as AWS, against NFR-PRIV-6); or a stronger Bedrock model labels it (accuracy would then mean agreement with that model).
+
+**Decision: skip it.** EV-1 is dropped, and the synthetic set becomes the labeled set:
+- **EV-1s grows to 120 emails** (60 Turkish, 60 English; about 20 interview invites; all six classes; hard cases such as an invite inside a rejection thread, a test link with no word "assessment", long emails whose key fact falls after the 2,000-character cut).
+- It gets the split and freeze of item (e): ⅓ dev, ⅔ test, stratified by class × language, frozen at the first full run. Prompts are tuned on dev only.
+- **Who writes and labels it:** a session drafts each email from CLS-1's definitions, with no real mail and no pattern notes from me (I declined them, item (f'') below), and labels it by construction. **A second, independent session labels the same emails blind;** an email the two disagree on is rewritten until it's unambiguous, or dropped. The agreement rate is reported.
+- **M1 and M2 are measured on EV-1s's test split, in both tiers:** Tier 1 from replies, Tier 2 against the live models. The "no new miss" rule applies to it.
+- **What this can't show:** how the classifier does on my real mail. Synthetic emails written by a model are likely easier and more regular than real ones. The README says plainly that the accuracy numbers come from synthetic email, and the CV line says "on a synthetic test set", not "on N labeled emails".
+- The live system's own counts (emails processed, alerts sent, "Possible:" alerts) are reported as operating numbers, with no accuracy claim.
+- The labeling tools from step 1 (`eval/labeled_set.py`, `fetch_labeling.py`, `label_app.py`) are kept in the repo, unused. The 59 September emails fetched on 2026-10-28 sit in `~/inbox-agent-eval` on my Mac; deleting them is mine.
+- NFR-PRIV-6 no longer has anything to govern: no real email is in any evaluation set.
+
+**Alternatives not chosen:** Claude labels my email (a new processor for my email, and NFR-PRIV-6 changes); a Bedrock model labels it (circular accuracy).
+
+## (f'') Amendment: EV-1s needs nothing from me (decided 2026-10-29)
+
+I declined to write pattern notes or review the synthetic emails. The drafting session works from CLS-1's definitions and general knowledge of job-search email, never from my mail, and the blind second labeling in (d'') replaces my review.
+
+## (j') Amendment: M7 is my estimate (2026-10-29)
+
+I won't keep a time log. My estimate of tracking time with the agent is **about 2 hours a week**. M7 is reported as "not measured: no baseline, and the with-agent figure is my estimate of about 2 hours a week", never as a saving.
+
+| PRD section | Change, for (d''), (f''), (j') |
+|---|---|
+| §12 Test sets | EV-1: dropped. EV-1s: 120 emails, the split and freeze, drafted and labeled by a session, checked by a blind second labeling. EV-2: EV-1s only. EV-6: EV-1s's test split and EV-3 |
+| §12 Process | steps 1 to 2 apply to EV-1s; the sampling rule no longer applies |
+| §12 Tier 2 row, Sets | "EV-1 test split" → "EV-1s's test split against the live models" |
+| §11 M1, M2 | measured on EV-1s's test split (synthetic) |
+| §11 M7 | my estimate, not a measurement |
+| §10 NFR-PRIV-6 | no real email is in an evaluation set |
+| §14 weeks 6 to 7 | "250 to 300 labeled emails finished" → "EV-1s (120 synthetic emails) finished and frozen" |
+| §15 step 1 | "the EV-1 test split" → "EV-1s's test split" |
+| §18 OQ-29 | the split applies to EV-1s |
+
+Applied on 2026-10-29: PRD v0.4.9 for (d''), (f''), (j'), and the source Claude Doc revision 120 → 131 for (d'') (ten places, each read back).
+
+| Design doc place | Change |
+|---|---|
+| The CV-gaps paragraph | "precision and recall on emails you label yourself" → "precision and recall on a frozen synthetic test set" |
+| The headline-number paragraph | → recall on a frozen synthetic test set of 120 emails written from the class definitions, labeled twice, with real email kept out of the evaluation sets |
+| The evaluation table, classification row | "Labeled set of 250 to 300 emails, run through the classifier" → "120 synthetic labeled emails (a frozen test split), run through the classifier" |
+| The two-tier paragraph | "Tier 2 runs the private labeled set" → "Tier 2 runs the same sets against the live models" |
+| The CV line | "on 300 labeled emails" → "on a synthetic test set" |
+| The build plan, weeks 6 to 7 | "Finish the 250 to 300 labeled emails" → "Write the 120 synthetic labeled emails" |
+| Second evaluation baseline | "Run the 300 labeled emails" → "Run the synthetic test set and the chat suite" |
+| Private storage | "Keep the raw labeled emails on the Mac only" → "Keep real email out of the evaluation sets: they are synthetic" |
+| Before you switch | "Run the labeled email set on the local model" → "Run the synthetic test set on the local model" |
+| Risks, "Too few labeled interview invites" | fix → "Write about 20 invites into the synthetic set; report n" |
+
 ## (e) The split, the freeze and the scoring rules
 
 **Recommendation:**
@@ -370,6 +421,9 @@ The steps in `Week 6 plan.md`: the labeling tools (1), the synthetic set and the
 | (c) Tier 2 after deploy, weekly and manual; paced; eval-set IDs only leave the Mac | Accept | 2026-10-26 | in chat |
 | (d) EV-1: fetch script, local labeling page, no model pre-fill | Accept | 2026-10-26 | no emails labeled yet |
 | (d') No manual inbox read; M8 and end-to-end recall not measured | Accept | 2026-10-28 | in chat: "ok skip" |
+| (d'') No labeled set of my own email; EV-1s (120, split, blind second labeling) is the labeled set | Accept | 2026-10-29 | in chat: "Skip it" |
+| (f'') EV-1s needs nothing from me | Accept | 2026-10-29 | in chat |
+| (j') M7 is my estimate (about 2 hours a week), not a measurement | Accept | 2026-10-29 | in chat |
 | (e) Split by class × language; the freeze; M1, M2, M8 scoring rules | Accept | 2026-10-26 | in chat |
 | (f) EV-1s drafted by a session from definitions and my notes, reviewed by me | Accept | 2026-10-26 | in chat |
 | (g) EV-3 in-process; M3 scored in code; AgentCore Evaluations on the eval run's spans (spike first) | Accept | 2026-10-26 | the spike picks (g), (g2) or (g3) |
