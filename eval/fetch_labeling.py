@@ -3,17 +3,16 @@ labeled set on the Mac, following the §12 sampling rule.
 
     uv run python eval/fetch_labeling.py --after 2026-09-01 --before 2026-10-01
 
-For the window it stores:
-- (a) every email the ING-1 query returns (today's ATS domains, tracker
-  domains, recruiter senders and subject keywords), as found_by=query;
-- (b) every email I put the Gmail label `eval-manual` on while reading the
-  whole inbox for that window myself, as found_by=manual. An email the query
-  also returned stays found_by=query: only the query's misses count against
-  M8.
+For the window it stores every email the ING-1 query returns (today's ATS
+domains, tracker domains, recruiter senders and subject keywords), as
+found_by=query. Since OQ-47 (d'), that is the whole set: there is no manual
+read of the inbox, so M8 and end-to-end invite recall aren't measured.
 
-Gmail's web addresses don't show the API's message IDs, so the label is how
-(b) reaches the script. Dates are midnight in Istanbul; `--before` is
-exclusive. The read token is the poller's (`inbox-agent-poller`), through my
+`--manual-label NAME` still adds the emails I put that Gmail label on, as
+found_by=manual (Gmail's web addresses don't show the API's message IDs, so
+a label is how they reach the script); an email the query also returned
+stays found_by=query. It is off unless given. Dates are midnight in
+Istanbul; `--before` is exclusive. The read token is the poller's (`inbox-agent-poller`), through my
 `aws login` session, as `scan_logs.py` uses it. The script prints counts
 only, never a subject, a sender or an ID. `--dry-run` counts without saving.
 """
@@ -38,7 +37,6 @@ from inbox_agent.gmail import _MESSAGE_ID, AgentCoreGmailClient, GmailError  # n
 from inbox_agent.query import build_query  # noqa: E402
 
 ISTANBUL = ZoneInfo("Europe/Istanbul")
-MANUAL_LABEL = "eval-manual"
 # A Gmail label name that can't widen the search: no spaces, quotes or operators.
 _LABEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_/-]{0,99}$")
 
@@ -93,13 +91,15 @@ class FetchCounts:
     manual_matched: int = 0
     manual_new: int = 0
     manual_also_query: int = 0  # labeled by me, but the query returned it too
+    manual_label: str | None = None
 
     def lines(self, store: LabeledSet | None) -> list[str]:
-        lines = [
-            f"query:  {self.query_matched} matched, {self.query_new} new",
-            f"manual: {self.manual_matched} labeled {MANUAL_LABEL}, {self.manual_new} new, "
-            f"{self.manual_also_query} also returned by the query",
-        ]
+        lines = [f"query:  {self.query_matched} matched, {self.query_new} new"]
+        if self.manual_label:
+            lines.append(
+                f"manual: {self.manual_matched} labeled {self.manual_label}, {self.manual_new} new, "
+                f"{self.manual_also_query} also returned by the query"
+            )
         if store is not None:
             progress = store.progress()
             found = progress["by_found_by"]
@@ -111,11 +111,11 @@ class FetchCounts:
 
 
 def fetch_window(
-    store: LabeledSet | None, gmail: RawReader, *, query: str, manual: str, window: str, now=None
+    store: LabeledSet | None, gmail: RawReader, *, query: str, manual: str | None = None, window: str, now=None
 ) -> FetchCounts:
-    """Fetch the query's matches, then my manual finds. With no store (a dry
-    run) it only counts."""
-    counts = FetchCounts()
+    """Fetch the query's matches, then my manual finds if a manual search is
+    given. With no store (a dry run) it only counts."""
+    counts = FetchCounts(manual_label=manual.split()[0].removeprefix("label:") if manual else None)
     known = set(store.by_gmail_id()) if store else set()
     query_refs = gmail.search(query)
     query_ids = {ref.message_id for ref in query_refs}
@@ -132,6 +132,8 @@ def fetch_window(
             )
             known.add(ref.message_id)
 
+    if manual is None:
+        return counts
     manual_refs = gmail.search(manual)
     counts.manual_matched = len(manual_refs)
     for ref in manual_refs:
@@ -155,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--after", type=date.fromisoformat, required=True, help="first day, YYYY-MM-DD")
     parser.add_argument("--before", type=date.fromisoformat, required=True, help="day after the last, YYYY-MM-DD")
-    parser.add_argument("--manual-label", default=MANUAL_LABEL)
+    parser.add_argument("--manual-label", help="also fetch emails with this Gmail label (off by default, OQ-47 (d'))")
     parser.add_argument("--dry-run", action="store_true", help="count only; save nothing")
     args = parser.parse_args(argv)
     if args.before <= args.after:
@@ -168,6 +170,11 @@ def main(argv: list[str] | None = None) -> int:
 
     after, before = window_start(args.after), window_start(args.before)
     session = boto3.Session(region_name=settings.AWS_REGION)
+    try:
+        session.client("sts").get_caller_identity()
+    except Exception:
+        print("No AWS session: run `aws login`, then this command again.", file=sys.stderr)
+        return 2
     resources = discover(session.client("cloudformation"), mode="local")
     rows = TrackerTable(session.resource("dynamodb").Table(resources.tracker_table)).rows()
     store = None if args.dry_run else LabeledSet(data_dir()).ensure()
@@ -175,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
         store,
         RawReader(session.client("bedrock-agentcore")),
         query=window_query(rows, after, before),
-        manual=manual_query(args.manual_label, after, before),
+        manual=manual_query(args.manual_label, after, before) if args.manual_label else None,
         window=f"{args.after.isoformat()}..{args.before.isoformat()}",
     )
     print("\n".join(counts.lines(store)))

@@ -108,6 +108,27 @@ The §12 sampling rule stays: for each date window, every email the query return
 
 Design doc: no change.
 
+## (d') Amendment: no manual read of the inbox (decided 2026-10-28)
+
+When the first fetch ran (September: 59 emails from the query), I chose not to read each window's whole inbox by hand: too much work for the result.
+
+**Decision:** the labeled set holds only what the ING-1 query returns.
+- M1 (per class, per language) and M2 are measured on those emails, as before.
+- **M8 (query coverage) and end-to-end invite recall are not measured:** a set built from the query's own hits can't show what the query misses. The README says so.
+- `fetch_labeling.py` searches the query only; `--manual-label` stays as an option, off unless given.
+
+**Alternatives not chosen:** a wider automatic search (job words anywhere in the email) as the stand-in for my read, which would measure M8 against that net; or a hand-read sample of one or two weeks.
+
+| PRD section | Change |
+|---|---|
+| §12 Process step 1, sampling rule | (b), the manual read, is dropped |
+| §11 M1 | end-to-end invite recall: not measured |
+| §11 M8 | not measured |
+| §14 weeks 6 to 7 exit | "M1 to M8 have measured values" → "M1 to M7 …; M8 is not measured" |
+| §18 OQ-37 | Resolved: query hits only |
+
+Applied to PRD v0.4.8 on 2026-10-28. Design doc: no change.
+
 ## (e) The split, the freeze and the scoring rules
 
 **Recommendation:**
@@ -348,6 +369,7 @@ The steps in `Week 6 plan.md`: the labeling tools (1), the synthetic set and the
 | (b) Tier 1 in `check.yml` on every PR and deploy: EV-1s, EV-4, EV-3 | Accept | 2026-10-26 | in chat |
 | (c) Tier 2 after deploy, weekly and manual; paced; eval-set IDs only leave the Mac | Accept | 2026-10-26 | in chat |
 | (d) EV-1: fetch script, local labeling page, no model pre-fill | Accept | 2026-10-26 | no emails labeled yet |
+| (d') No manual inbox read; M8 and end-to-end recall not measured | Accept | 2026-10-28 | in chat: "ok skip" |
 | (e) Split by class × language; the freeze; M1, M2, M8 scoring rules | Accept | 2026-10-26 | in chat |
 | (f) EV-1s drafted by a session from definitions and my notes, reviewed by me | Accept | 2026-10-26 | in chat |
 | (g) EV-3 in-process; M3 scored in code; AgentCore Evaluations on the eval run's spans (spike first) | Accept | 2026-10-26 | the spike picks (g), (g2) or (g3) |

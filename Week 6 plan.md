@@ -13,19 +13,19 @@
   ```bash
   uv run python spikes/agentcore_identity_gmail.py --grant read
   ```
-  Pass: a token with no sign-in prompt, and the query runs. Every poll since 2026-10-20 has used that token, so it very likely works; this run makes it formal.
+  Pass: a token with no sign-in prompt, and the query runs. **Passed 2026-10-28:** a read token for `inbox-agent-poller` with no sign-in; the ING-1 query over the last 7 days returned 19 messages (week 3 exit 4 met).
 - **End of week 5 (about 2026-10-27/28): the log scan again** (week 5 plan step 9):
   ```bash
   uv run python scan_logs.py
   ```
-  Pass: 0 matches in every log group, `CLEAN`.
+  Pass: 0 matches in every log group, `CLEAN`. **Passed 2026-10-28:** 19 processed emails in the last 7 days (all still in Gmail), 32 fragments searched (13 too short), 0 matches in all 11 log groups, `CLEAN`.
 - Both need a fresh `aws login`. My session had expired on 2026-10-26, so none of the read-only checks below could run yet.
 
 ## Checked before planning (2026-10-26)
 
 | Check | Result |
 |---|---|
-| AWS (read-only) | **Not run:** the `aws login` session had expired. The checks are listed in OQ-47 and in step 0 |
+| AWS (read-only) | First attempt: the `aws login` session had expired. **Run later on 2026-10-26, after deploy run 40312699411 (see step 0)** |
 | boto3 in `uv.lock` (1.43.114) | Has `bedrock-agentcore` `Evaluate` (synchronous, takes OpenTelemetry spans and an expected tool trajectory) and batch evaluations from CloudWatch Logs, plus the control-plane evaluator calls. No SDK upgrade needed |
 | AWS's docs on AgentCore Evaluations | LangGraph (Python) is supported through `opentelemetry-instrumentation-langchain` ≥ 0.55.0 or `openinference-instrumentation-langchain` ≥ 0.1.62. The getting-started path assumes spans in CloudWatch (ADOT, Transaction Search). Spans captured on the Mac and passed straight to `Evaluate` aren't documented: a spike decides (OQ-47 (g)) |
 | The design doc | Tier 1 "on GitHub's runners, with synthetic emails, the injection set and the chat suite"; EV-3 "scored with AgentCore Evaluations"; MacBook mode "with a local judge model"; the components row says "Traces". No mention of OpenTelemetry by name |
@@ -37,7 +37,7 @@
 
 **Week 6**
 1. Tier 1 runs on GitHub's runners on every pull request and as the deploy's first job, from recorded replies (EV-1s, EV-3, EV-4), and is green on main.
-2. The EV-1 test split is frozen, and the first full Tier 2 run on main has recorded M1 (per class and per language, plus end-to-end invite recall), M2, M3, M4 (live Nova) and M8.
+2. The EV-1 test split is frozen, and the first full Tier 2 run on main has recorded M1 (per class and per language), M2, M3 and M4 (live Nova). M8 and end-to-end invite recall are not measured (OQ-47 (d')).
 3. The gate works: a deliberately weakened prompt fails Tier 1 on a test branch and fails a manual Tier 2 run there, and main passes both (OQ-47 (l)).
 
 **Week 7**
@@ -72,7 +72,7 @@ Tier 1  check.yml, GitHub runner, every PR and every deploy
   fails on: invite recall < 96%, M4 < 100%, a stale reply
 
 Tier 2  tier2.yml, self-hosted Mac, my aws login; after a deploy that touched src/ eval/ policies/, weekly, manual
-  EV-1 test split (M1, M2, M8, no new miss) + EV-4 live + EV-3 live with AgentCore Evaluations
+  EV-1 test split (M1, M2, no new miss) + EV-4 live + EV-3 live with AgentCore Evaluations
   ≤ 12 model calls a minute per model (live mail shares the quota)
   uploads: scores with eval-set IDs only
 
@@ -88,7 +88,12 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 
 ### 0. Decisions, checks, dependencies, documents
 - ~~I accept or reject each OQ-47 item, and answer the two questions in (d) and (j).~~ Done 2026-10-26.
-- After `aws login`, the read-only checks in OQ-47's first table: the SCP simulation (with `aws:RequestedRegion`), `list-evaluators`, Transaction Search status, the Evaluations pricing page, the Nova quotas.
+- ~~After `aws login`, the read-only checks in OQ-47's first table.~~ **Done 2026-10-26 (read-only):**
+  - SCP simulation with `aws:RequestedRegion` = eu-north-1: `bedrock-agentcore:Evaluate`, `ListEvaluators`, `GetEvaluator`, `logs:StartQuery`, `GetQueryResults`, `ce:GetCostAndUsage`, `cloudwatch:GetMetricData` all **allowed**.
+  - `list-evaluators` in eu-north-1: `Builtin.ToolSelectionAccuracy` and `Builtin.ToolParameterAccuracy` (tool-call level), `Builtin.Correctness` (trace), `Builtin.TrajectoryExactOrderMatch`, `TrajectoryInOrderMatch`, `TrajectoryAnyOrderMatch` and `GoalSuccessRate` (session), among others (19 built-in, plus third-party DeepEval and AutoEval ones).
+  - Transaction Search is **off** (`get-trace-segment-destination`: `XRay`, `ACTIVE`). Only route (g2) would need it on.
+  - Pricing (AWS's page, 2026-10-26): built-in evaluators are billed by token, $0.0024 per 1,000 input and $0.012 per 1,000 output, model included; no Evaluations free tier. At about 1,000 in and 200 out per result, 40 questions × 2 evaluators ≈ $0.40 a Tier 2 run, so about $2 a month at 5 runs. That's inside the design doc's $1 to $3; Tier 2 runs the judge only on the weekly and manual runs if it climbs.
+  - Nova quotas unchanged: cross-Region Micro and Lite at 20 requests and 400,000 tokens a minute; in-Region Lite at 10 and 200,000. The 12-a-minute pace stands.
 - The dependencies in (o): source check, my approval, then `uv add --group eval`.
 - **The `Evaluate` spike** (one fictional EV-3 question, in-process, spans captured in memory, one `Evaluate` call). It decides between (g), (g2) and (g3). It's an AWS call I run, about 1,000 judge tokens.
 - ~~PRD v0.4.7 and the design-doc revision after 116, each design edit read back.~~ **Done 2026-10-26:** PRD v0.4.7 (week 5's records, then OQ-47's rows) and design doc revision 120 (the rows of (a), (g), (h), (k), read back).
@@ -96,13 +101,13 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 ### 1. Labeling tools first (OQ-47 (d)): labeling is the long pole
 - `eval/fetch_labeling.py --after YYYY-MM-DD --before YYYY-MM-DD [--dry-run]`:
   - the ING-1 query with that window, through `query.py` (dates are midnight in Istanbul; `--before` is exclusive);
-  - the emails I put the Gmail label `eval-manual` on while reading the inbox (Gmail's web addresses don't show the API's message IDs, so a label carries my finds); one the query also returned stays `found_by=query`;
+  - **since OQ-47 (d') (2026-10-28) the query's hits only:** no manual read of the inbox. `--manual-label` (off unless given) would add emails I put a Gmail label on;
   - raw `.eml` plus `{found_by, fetched_at}` under `EVAL_DATA_DIR/emails/`;
   - counts printed, no subjects, no senders.
 - `eval/label_app.py`: Streamlit on 127.0.0.1 (the repo's `.streamlit/config.toml`), port 8502: `uv run --group app streamlit run eval/label_app.py --server.port 8502`. One email at a time: the trimmed text (`trim.py`, exactly what the model sees) and the full text behind a toggle. Fields: class, company, role, key date (date, optional time), language, note. Writes `labels.jsonl` by eval-set ID. Shows progress by class and language.
 - Tests with fakes: the window goes into the query; `found_by` is kept; nothing is printed but counts; the page writes a valid label line; `EVAL_DATA_DIR` inside the repo is refused.
 - **Built 2026-10-26, not committed:** `eval/labeled_set.py` (the store: `emails/<eval id>.eml`, `index.jsonl`, `labels.jsonl`; directory 0700, files 0600; refused inside the repo), `eval/fetch_labeling.py`, `eval/label_app.py`, `tests/unit/test_labeling.py` (23 tests; 880 pass in all). Class and language start unchosen on the page.
-- **Then I start labeling** (about 3 to 4 hours for 300), window by window, with the sampling rule.
+- **Then I start labeling** (about 3 to 4 hours for 300), window by window. The first dry run (2026-10-28, September) found 59 emails, so about five months make the set.
 
 ### 2. The synthetic set and the chat suite (OQ-47 (f), (g))
 - I write short pattern notes (no real text). A session drafts `eval/synthetic/syn01.json` … `syn60.json`: 30 Turkish and 30 English; all six classes; about 10 invites; hard cases. Each file: sender, subject, body, optional calendar part, labels.
@@ -132,9 +137,8 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 ### 5. The EV-1 runner and scorers (OQ-47 (e))
 - `eval/split.py`: ⅓ dev and ⅔ test by class × language, fixed seed; `freeze` writes `manifest.json` with the set version and a hash per label line, and refuses to change a frozen test split.
 - `eval/run_labeled.py --split test|dev --mode cloud|local [--pace 12]` runs the classifier and extraction over the `.eml` files. Scorers:
-  - **M1** per class and language, end-to-end invite recall (`manual` invites the query misses count as misses);
+  - **M1** per class and language;
   - **M2** with the normalization rules;
-  - **M8** with `query.py`'s matcher;
   - the "no new miss" comparison against `runs/main-latest.json`.
   - OQ-24's check is reported alongside: the share of labeled fields that fall after the 2,000-character cut.
 - Its output is the scores file: counts, metrics and eval-set IDs.
@@ -192,7 +196,7 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
 - `ops_report.py` for M5 and M6 (the month to date); M7 from my week of time log.
 - The README:
   - what it does, and the architecture (Mermaid);
-  - the measured table (M1 to M8: value, n, date, set version);
+  - the measured table (M1 to M7: value, n, date, set version; M8 and end-to-end recall marked not measured);
   - how measured;
   - the two modes;
   - the safety layers and what was proven live;

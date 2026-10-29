@@ -168,6 +168,14 @@ def test_the_query_finds_first_and_my_manual_finds_count_only_when_the_query_mis
     assert (again.query_new, again.manual_new, reader.fetched) == (0, 0, [])
 
 
+def test_without_a_manual_label_only_the_query_is_searched(store):
+    reader = FakeReader(query_ids=["19a01"], manual_ids=["19a03"])
+    counts = fetch_window(store, reader, query="(from:x.example.com)", window="w", now=NOW)
+    assert (counts.query_new, counts.manual_matched, reader.fetched) == (1, 0, ["19a01"])
+    assert [e.found_by for e in store.index().values()] == ["query"]
+    assert not any(line.startswith("manual") for line in counts.lines(store))
+
+
 def test_a_dry_run_counts_and_saves_nothing():
     reader = FakeReader(query_ids=["19a01"], manual_ids=["19a03"])
     counts = fetch_window(None, reader, query="q", manual="label:eval-manual", window="w")
@@ -177,6 +185,7 @@ def test_a_dry_run_counts_and_saves_nothing():
 def test_the_output_is_counts_only(store):
     reader = FakeReader(query_ids=["19a01"], manual_ids=[])
     lines = fetch_window(store, reader, query="q", manual="label:eval-manual", window="w").lines(store)
+    assert "manual: 0 labeled eval-manual" in "\n".join(lines)
     text = "\n".join(lines)
     assert "19a01" not in text and "ev1-" not in text and "Mülakat" not in text and "kuzey" not in text
     assert "1 emails (1 query, 0 manual), 0 labeled" in text
