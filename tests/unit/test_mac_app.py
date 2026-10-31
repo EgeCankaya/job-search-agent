@@ -5,6 +5,7 @@ Companies are fictional."""
 
 import io
 import json
+import re
 import tomllib
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -393,3 +394,30 @@ def test_the_page_lists_only_drafts_waiting_for_a_decision():
     listed = app_backend.load_follow_ups(table)
     assert [f.approval_id for f in listed] == ["e" * 32, "c" * 32]  # oldest proposal first
     assert listed[0].text == DRAFT_TEXT
+
+
+# The demo (OQ-47 (m)): the same pages on fictional data only
+
+
+def test_the_demo_renders_all_three_pages_from_fictional_data(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+
+    monkeypatch.setattr(app_backend, "make_backend", lambda: (_ for _ in ()).throw(AssertionError("the real backend")))
+    demo = AppTest.from_file(str(ROOT / "mac_app" / "demo.py"), default_timeout=30)
+    demo.run()
+    assert not demo.exception
+    metrics = {m.label: m.value for m in demo.metric}
+    assert metrics["Applications"] == "17" and metrics["Open"] == "13"
+    demo.switch_page("ask_page.py")
+    demo.run()
+    demo.chat_input[0].set_value("Something not in the suite?").run()
+    assert not demo.exception
+    assert any("chat suite" in m.markdown[0].value for m in demo.chat_message if m.markdown)
+    demo.switch_page("followups_page.py")
+    demo.run()
+    assert not demo.exception
+    texts = " ".join(t.value for t in demo.text)
+    assert "Halcyon Systems" in texts or "Backend Engineer" in texts
+    shown = json.dumps([t.value for t in demo.text] + [m.value for m in demo.markdown], ensure_ascii=False)
+    for address in re.findall(r"[\w.+-]+@([\w.-]+)", shown):
+        assert address.endswith("example.com")
