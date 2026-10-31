@@ -3,6 +3,7 @@ through the real graph code with the mode's model.
 
     uv run --all-groups python eval/run_injection.py --mode cloud   # Nova, my aws login session
     uv run --all-groups python eval/run_injection.py --mode local   # Ollama running, qwen3.8:27b
+    uv run --all-groups python eval/run_injection.py --replay       # Tier 1: Nova's recorded replies
 
 For each email under eval/injection/:
 1. the batch path (read_email, classify, upsert_application, notify_owner)
@@ -52,6 +53,7 @@ for path in (ROOT / "src", ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
+from eval.replay import ReplyStore, StaleReply, replay_models, set_case  # noqa: E402
 from inbox_agent.cedar_policies import LOCAL_AGENT, Authorizer, local_policies  # noqa: E402
 from inbox_agent.classes import URGENT_CLASSES, EmailClass  # noqa: E402
 from inbox_agent.tools import GATEWAY_TOOLS, TOOL_SPECS  # noqa: E402
@@ -265,6 +267,8 @@ def run_batch(case: dict, model, authorizer: Authorizer) -> PathRun:
     graph = build_batch_graph(BatchDeps(tools=env.tools, model=model, log=ProcessedLog(FakeTable("message_id")), now=lambda: NOW))
     try:
         run.outcome = handle_new_email(graph, MESSAGE_ID)
+    except StaleReply:
+        raise
     except Exception as error:
         run.error = type(error).__name__
     run.calls, run.rows, run.alerts = env.tools.calls, env.rows(), list(env.topic.published)
@@ -283,6 +287,8 @@ def run_stale(case: dict, model, authorizer: Authorizer) -> PathRun:
     )
     try:
         run.outcome = run_stale_check(deps, CHECK_DATE)
+    except StaleReply:
+        raise
     except Exception as error:
         run.error = type(error).__name__
     run.calls, run.rows, run.alerts = env.tools.calls, env.rows(), list(env.topic.published)
@@ -498,6 +504,11 @@ def mode_models(mode: str) -> dict[str, Metered]:
     return {purpose: Metered(chat_model(purpose, environ), ids[purpose]) for purpose in ("classify", "draft")}
 
 
+def replayed_models() -> dict[str, Metered]:
+    """Tier 1: the cloud models' recorded replies, metered like live ones."""
+    return {purpose: Metered(chat, chat.model_id) for purpose, chat in replay_models(ReplyStore.load("ev4")).items()}
+
+
 def cost(models: dict[str, Metered]) -> float | None:
     total = 0.0
     for metered in models.values():
@@ -563,7 +574,10 @@ def run(mode: str, cases: list[dict], models: dict, authorizer: Authorizer) -> d
 
     classify_model, draft_model = LangChainModel(models["classify"]), LangChainModel(models["draft"])
     started = time.monotonic()
-    results = [run_case(case, classify_model, draft_model, authorizer) for case in cases]
+    results = []
+    for case in cases:
+        set_case(models, case["id"])
+        results.append(run_case(case, classify_model, draft_model, authorizer))
     return summarize(mode, results, time.monotonic() - started, models)
 
 
@@ -591,22 +605,29 @@ def session_ok() -> bool:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="EV-4: the planted injection emails, scored per NFR-SEC-2 (M4).")
-    parser.add_argument("--mode", choices=("cloud", "local"), required=True)
+    parser.add_argument("--mode", choices=("cloud", "local"), default="cloud")
+    parser.add_argument("--replay", action="store_true", help="answer from eval/replies/ev4.json (cloud mode's recorded replies)")
     parser.add_argument("--only", nargs="*", help="case IDs to run (default: all)")
+    parser.add_argument("--out", type=Path, help="where to write the scores (default eval/results/)")
     args = parser.parse_args(argv)
 
     from inbox_agent.logs import setup
 
     setup()
-    if args.mode == "cloud" and not session_ok():
+    if args.mode == "cloud" and not args.replay and not session_ok():
         print("No usable AWS session: run `aws login`, then run this again. Nothing was scored.")
         return 2
     cases = load_cases()
     if args.only:
         cases = [case for case in cases if case["id"] in set(args.only)]
-    summary = run(args.mode, cases, mode_models(args.mode), Authorizer(local_policies()))
-    RESULTS_DIR.mkdir(exist_ok=True)
-    out = RESULTS_DIR / f"injection-{args.mode}-{summary['date']}.json"
+    models = replayed_models() if args.replay else mode_models(args.mode)
+    try:
+        summary = run("replay" if args.replay else args.mode, cases, models, Authorizer(local_policies()))
+    except StaleReply as stale:
+        print(stale)
+        return 3
+    out = args.out or RESULTS_DIR / f"injection-{summary['mode']}-{summary['date']}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     for result in summary["results"]:
         if result["outcome"] != "pass":

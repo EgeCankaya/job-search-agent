@@ -1,0 +1,904 @@
+{
+ "03fa616956c461cf57849143b28193d30ac09c776737fe7aaeb17acf8685a540": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c13",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "recruiter_contact"
+    },
+    "tooluse_nzURl4hg3wDmSfyteX4y1l"
+   ]
+  ],
+  "input_tokens": 644,
+  "output_tokens": 71
+ },
+ "04374cc5e370106812560a55dfb0eea6b898ba406a845fc5e44d33aad7f4623c": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c11",
+  "text": "\n [list_applications(status=\"open\", min_days_since_contact=30)] </tool>",
+  "tool_calls": [],
+  "input_tokens": 651,
+  "output_tokens": 103
+ },
+ "07bd390ce76852e0b881c1eca26677a32f7b8f58f98a8c608223782c1aec25cf": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c10",
+  "text": "You have applied for two roles at Atlas Finans Teknolojileri: Veri Mühendisi and Yazılım Mühendisi.",
+  "tool_calls": [],
+  "input_tokens": 840,
+  "output_tokens": 28
+ },
+ "0aa3b5afd8b3058f9542be2e3ca60fca4f5275eb8d2af512cb3b01cacc494d7b": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c28",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "assessment"
+    },
+    "tooluse_gpu7VI04rGdG9syb2IbDtI"
+   ]
+  ],
+  "input_tokens": 662,
+  "output_tokens": 69
+ },
+ "0be4bd3b62d87686370570604f713e63982768ad2581964341d1749e6459a49b": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c13",
+  "text": "Two recruiters have reached out to you. Doruk Yapay Zeka reached out 11 days ago and Saffron Logistics reached out 10 days ago.",
+  "tool_calls": [],
+  "input_tokens": 832,
+  "output_tokens": 33
+ },
+ "121cde54b18490055b0af8c7e682d7f3d26a201319590c60c80e5a58d265f3f5": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c31",
+  "text": "\nİş alımcılarınızdan Doruk Yapay Zeka ve Saffron Logistics şirketleri sizinle iletişime geçti.",
+  "tool_calls": [],
+  "input_tokens": 843,
+  "output_tokens": 61
+ },
+ "1411f8066c7106f00c697775983cf5ece0b5ff07481621f0a294790bdef75a88": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c23",
+  "text": "",
+  "tool_calls": [],
+  "input_tokens": 649,
+  "output_tokens": 66
+ },
+ "15cc1db0d9442f5ee34b89bba9de27b9ad64282ea143ff88fb8b5bf6bc60c4de": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c26",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "min_days_since_contact": 21
+    },
+    "tooluse_CxJHqB0mOYqfPiq67nYQLk"
+   ]
+  ],
+  "input_tokens": 660,
+  "output_tokens": 121
+ },
+ "15da025a818b77b3a98016de9de25e2c9be25f88019fed103445bace512a1fc7": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c22",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "rejected"
+    },
+    "tooluse_j1CNOe4i6eMNarBRV1jVn9"
+   ]
+  ],
+  "input_tokens": 649,
+  "output_tokens": 68
+ },
+ "15f8ae1bf9fbe833c061f80896b9c7a6c2da0821207852e8867d5a2ad2a337a3": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c25",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Brightpath Analytics",
+     "status": "interviewing"
+    },
+    "tooluse_iEtMwXkDNpib2VraozB0rd"
+   ]
+  ],
+  "input_tokens": 649,
+  "output_tokens": 78
+ },
+ "1ab62d0276bb2455e3b76074b541c7f063920da6b40f0f54361a3ab9e7de9a0c": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c14",
+  "text": "\n\nYou have an upcoming interview with Ege Veri Ltd. Şti. for the role of \"Makine Öğrenmesi Mühendisi\" on 2026-10-29 at 15:00. The last contact was 4 days ago.",
+  "tool_calls": [],
+  "input_tokens": 812,
+  "output_tokens": 114
+ },
+ "1b05dc9aae193605f235ba4286b328938574cb87cdf0e1825b58be0334bb3c59": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c35",
+  "text": "\nAçık başvuru, başvuru sürecinin henüz sonuçlanmamış olduğu anlamına gelir. Başvuru reddedilmemiş veya aday tarafından geri çekilmemişse, başvuru açık olarak kabul edilir. Bu, başvuru sürecinin hala devam ettiği ve sonuçlanmamış olduğu anlamına gelir.",
+  "tool_calls": [],
+  "input_tokens": 652,
+  "output_tokens": 170
+ },
+ "202507e8250c2bd19b2727b4a2c915d36dc55a6729c53834113f4b65626bc26f": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c40",
+  "text": "\nThe assessment deadline for the application at Nehir Analitik is on 2026-11-06.",
+  "tool_calls": [],
+  "input_tokens": 816,
+  "output_tokens": 51
+ },
+ "20373f690d1bae277b24ad46fcc576bbc2218ccc6da880d12037ccbe426b4a86": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c14",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Ege Veri"
+    },
+    "tooluse_1ZaLwX5N8HB812R0X4h8UL"
+   ]
+  ],
+  "input_tokens": 647,
+  "output_tokens": 70
+ },
+ "29e9eed9043723293e0c62eeda87490c62771fd2bd0c2c81dbd36a78e771bcd0": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c21",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "interviewing"
+    },
+    "tooluse_RrV9BFwmVebnPe2ODOkMva"
+   ]
+  ],
+  "input_tokens": 653,
+  "output_tokens": 69
+ },
+ "2efc85012ccf8e69325d9189cd1198fd2e9a760d527b0add112dab7b39a7a2a9": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c40",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Nehir Analitik",
+     "status": "assessment"
+    },
+    "tooluse_g5ks4MNLJZc2ahwaDFVbQ0"
+   ]
+  ],
+  "input_tokens": 657,
+  "output_tokens": 132
+ },
+ "30f9e3ab8a12c9175aae72a1c7ab37c8f7bc9edc16b84922b064692d96284e12": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c33",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "withdrawn"
+    },
+    "tooluse_peC8ocMuJmpO1BK0dOeN33"
+   ]
+  ],
+  "input_tokens": 651,
+  "output_tokens": 64
+ },
+ "3248b29aade1ccacaf5bd0d8fc3232e291574c67525ac12cb536ea378dbd1ad3": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c29",
+  "text": "\nAtlas Finans Teknolojileri'ne başvurduğun pozisyonlar \"Veri Mühendisi\" ve \"Yazılım Mühendisi\" pozisyonlarıdır. </thinking>",
+  "tool_calls": [],
+  "input_tokens": 846,
+  "output_tokens": 55
+ },
+ "32e32eb6c7fe77af423a17e708abeaa95e4c66f4b5be1202744589b1e3c1758b": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c32",
+  "text": "\n\n<response> Yes, you have an upcoming interview with Ege Veri Ltd. Şti. on 2026-10-29 at 15:00. </response>",
+  "tool_calls": [],
+  "input_tokens": 818,
+  "output_tokens": 126
+ },
+ "34dcb319c1f5e7013e46659fd083c46d6e430963fcc212a356656a3e1e5c94a2": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c15",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "withdrawn"
+    },
+    "tooluse_riBrqykOo6EfgTjE0qdrmH"
+   ]
+  ],
+  "input_tokens": 763,
+  "output_tokens": 34
+ },
+ "3740e8fa11237af26bd6542a35b143504a2dd16263fee482fa4a8b3c1c78a4f3": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c09",
+  "text": "\nYou have two assessments to complete. The first one is for the role of Veri Bilimci at Nehir Analitik, and it is due on 2026-11-06. The second one is for the role of Gameplay Programmer at Pinecrest Games, and it is due on 2026-11-02.",
+  "tool_calls": [],
+  "input_tokens": 885,
+  "output_tokens": 97
+ },
+ "3a35c8c609936c641b340ab251d7d0b3e1d513620c011940f18c92dd36fc634e": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c38",
+  "text": "\n\nThe next step for your application to Kuzey Yazılım A.Ş. is an interview scheduled for 2026-11-03 at 10:00.",
+  "tool_calls": [],
+  "input_tokens": 815,
+  "output_tokens": 99
+ },
+ "42ab535806a9b6d64af8c6819f1dc9c26c7e2927c1dd86557a8474c1e8d373cd": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c24",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Halcyon Systems"
+    },
+    "tooluse_oCdUAbeuOq82A6d6CjPM7q"
+   ]
+  ],
+  "input_tokens": 647,
+  "output_tokens": 64
+ },
+ "454b5e4e3146c86717572f08522386af86eb72533142ee09491883ff06239918": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c19",
+  "text": "\n\nThere are 4 applications that are still at the applied stage and have gone at least 14 days without contact. They are:\n\n1. Atlas Finans Teknolojileri for the role of Veri Mühendisi, last contacted on 2026-09-20 (36 days ago)\n2. Atlas Finans Teknolojileri for the role of Yazılım Mühendisi, last contacted on 2026-10-12 (14 days ago)\n3. Halcyon Systems for the role of Backend Engineer, last contacted on 2026-09-28 (28 days ago)\n4. Mavi Lojistik for the role of Veri Analisti, last contacted on 2026-10-02 (24 days ago)",
+  "tool_calls": [],
+  "input_tokens": 950,
+  "output_tokens": 206
+ },
+ "48850a363a932fd0ae8adb19135e23acd845a411f5c127c3867fa4c3be0fb060": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c08",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "applied"
+    },
+    "tooluse_QL6QttB29Y2l8ew7bHpxiL"
+   ]
+  ],
+  "input_tokens": 647,
+  "output_tokens": 63
+ },
+ "54b0d85b87e5236e11e8d06106cbc83679bcb2e028d36fc14a9a90ee342964ea": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c37",
+  "text": "\n\nBaşvuru aşamasında olup en az 14 gündür iletişim olmayan başvurularınız şunlardır:\n\n1. **Atlas Finans Teknolojileri** - Veri Mühendisi rolü için başvuru. Son iletişim: 2026-09-20 (36 gün önce)\n2. **Halcyon Systems** - Backend Engineer rolü için başvuru. Son iletişim: 2026-09-28 (28 gün önce)\n3. **Mavi Lojistik** - Veri Analisti rolü için başvuru. Son iletişim: 2026-10-02 (24 gün önce)",
+  "tool_calls": [],
+  "input_tokens": 971,
+  "output_tokens": 213
+ },
+ "5a170a3266309e9f3f2beb0bbd4ec445e114cf4ff4b10a02591fc6c886f86e68": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c34",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "open"
+    },
+    "tooluse_rrqAoTCS7lzkaIMzwUOlu9"
+   ]
+  ],
+  "input_tokens": 652,
+  "output_tokens": 69
+ },
+ "5a6f32fb1faea96b3c4edbc42eefec2290d171b11226eabd3f9d1f7bc60f382a": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c24",
+  "text": "\nHalcyon Systems için başvurunuzun durumu \"applied\" (başvuru yapıldı) olarak geçiyor. Son iletişim tarihi 28 gün öncesiydi.",
+  "tool_calls": [],
+  "input_tokens": 767,
+  "output_tokens": 76
+ },
+ "5b5cb726956bd76389654f1f057dec8aad8cb0c4d6f662cfe243622d53cdc69e": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c37",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "min_days_since_contact": 14,
+     "status": "applied"
+    },
+    "tooluse_eAXWf0dI2HD1IXpNS5QzH7"
+   ]
+  ],
+  "input_tokens": 675,
+  "output_tokens": 155
+ },
+ "5f1228f1010816bd80f6e2c25e877b1e7231830369b5d99735567bfbc64b5066": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c17",
+  "text": "\nAn 'open' application means that the application is neither rejected nor withdrawn. It is still in progress and has not been closed by the company.",
+  "tool_calls": [],
+  "input_tokens": 649,
+  "output_tokens": 74
+ },
+ "5f9a2a1fd07c8f3949b8bc04a7d007d6f513b1ef3ad5bd33053088395aa6bca0": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c10",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Atlas Finans Teknolojileri"
+    },
+    "tooluse_8FTEZKVoGYSaRvRvEJAkbz"
+   ]
+  ],
+  "input_tokens": 651,
+  "output_tokens": 56
+ },
+ "6152468e9e7980e3c668f0b2ece3d1ba48fa5eb033ec27e00da0460f304322fd": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c02",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "rejected"
+    },
+    "tooluse_wsc70dZZ8HqTjBfrAdOzp6"
+   ]
+  ],
+  "input_tokens": 642,
+  "output_tokens": 60
+ },
+ "61fe98422cc8020b41d2378ed003c14dba849d2702d482f890c6ff881355b788": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c12",
+  "text": "\nThe status of your application at Saffron Logistics is recruiter_contact. The last contact was on 2026-10-16, which is 10 days ago.",
+  "tool_calls": [],
+  "input_tokens": 769,
+  "output_tokens": 46
+ },
+ "625064bf06c57304b390e024411cc557b6f0165ab1d13d62d5588484422cde82": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c09",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "assessment"
+    },
+    "tooluse_4VV7e6kxTbqw0OzgIJO5fA"
+   ]
+  ],
+  "input_tokens": 650,
+  "output_tokens": 59
+ },
+ "627f2a68439f2edccf05e632621882dc4e558e02132379ec0265e7ea08a639ad": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c19",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "min_days_since_contact": 14,
+     "status": "applied"
+    },
+    "tooluse_vXAkHkD9i5U00mWA1pfEmm"
+   ]
+  ],
+  "input_tokens": 654,
+  "output_tokens": 78
+ },
+ "64f0517bbb561d6ca6c9eb6fe0f138a408d4ee611abf6c795b7578cd44ef0132": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c33",
+  "text": "\nCopperleaf Software'daki Platform Engineer pozisyonu başvurusunu geri çektiniz. Son iletişim tarihi 2026-10-01 ve bu tarihten bu yana 25 gün geçti.",
+  "tool_calls": [],
+  "input_tokens": 772,
+  "output_tokens": 91
+ },
+ "6633b1f09e2212254547105baf81a95f314edba9659ece9eb7a8c10fdfce3081": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c22",
+  "text": "Üç şirket seni reddetti: Helix Harbor, Kumsal Yazılım ve Tuna Lojistik.",
+  "tool_calls": [],
+  "input_tokens": 877,
+  "output_tokens": 28
+ },
+ "66c4b7b19dcb2f13d886cc314a644c9fd59f2bf916a4cefa27cfb806687a1268": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c15",
+  "text": "You have withdrawn your application for the role of Platform Engineer at Copperleaf Software. The last contact was on 2026-10-01, which is 25 days ago.",
+  "tool_calls": [],
+  "input_tokens": 884,
+  "output_tokens": 42
+ },
+ "6aa6fe87428ff10692f22d507ab94a97fa4df17872fb31114aafc1afa2415d1b": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c26",
+  "text": "Üç haftadan fazladır haber almadığınız başvurular şunlardır:\n\n1. **Atlas Finans Teknolojileri** - Veri Mühendisi rolü için başvuru. Son iletişim tarihi: 2026-09-20. İletişimden bu yana 36 gün geçti.\n2. **Halcyon Systems** - Backend Engineer rolü için başvuru. Son iletişim tarihi: 2026-09-28. İletişimden bu yana 28 gün geçti.\n\nBu başvurular için üç haftadan fazladır haber alamadığınızı belirttim.",
+  "tool_calls": [],
+  "input_tokens": 946,
+  "output_tokens": 172
+ },
+ "6fcc38c1286459abc3af35fa471f3a4eab24e7d91e22264a0a147907a36e1330": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c08",
+  "text": "You have 4 applications that are still at the applied stage. Here are the details:\n\n1. **Atlas Finans Teknolojileri** - Role: Veri Mühendisi - Last contact: 2026-09-20 (36 days ago)\n2. **Atlas Finans Teknolojileri** - Role: Yazılım Mühendisi - Last contact: 2026-10-12 (14 days ago)\n3. **Halcyon Systems** - Role: Backend Engineer - Last contact: 2026-09-28 (28 days ago)\n4. **Mavi Lojistik** - Role: Veri Analisti - Last contact: 2026-10-02 (24 days ago)",
+  "tool_calls": [],
+  "input_tokens": 932,
+  "output_tokens": 169
+ },
+ "6ff5dfe3784a5918204ee4905b9f1adf16ba3fb93a72b6d235b7463738e886a7": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c03",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "offer"
+    },
+    "tooluse_mwfuk7FehVvZ0sQvINizuQ"
+   ]
+  ],
+  "input_tokens": 643,
+  "output_tokens": 57
+ },
+ "710d7dbd17b4acc919e5d1870009d3129422d5d56ba0c806d377b094a2a6b387": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c31",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "recruiter_contact"
+    },
+    "tooluse_DOPtwU64R5TDSj9UtA82LQ"
+   ]
+  ],
+  "input_tokens": 655,
+  "output_tokens": 76
+ },
+ "7380b9cf96bd0b2083bfebca6da33eb84350fad668413ce3fa7a634796f6ab97": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c20",
+  "text": "The next step with Kuzey Yazılım A.Ş. is an interview scheduled for 2026-11-03 at 10:00.",
+  "tool_calls": [],
+  "input_tokens": 812,
+  "output_tokens": 38
+ },
+ "8116bdb4a6b1ce4b29eaa56f410303b1c6284e7444a8dd1a6ccc1288d2aeeeeb": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c05",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Brightpath Analytics",
+     "status": "interviewing"
+    },
+    "tooluse_jkVkAwvZjyuEfQ0hp9GQuY"
+   ]
+  ],
+  "input_tokens": 645,
+  "output_tokens": 82
+ },
+ "83b7dd48be7a74c7dcba83afddba21496cecc273efe086e32547f22ea49adba1": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c36",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Orbitale",
+     "status": "open"
+    },
+    "tooluse_uaylhms3J41tpv2L7qqEdx"
+   ]
+  ],
+  "input_tokens": 651,
+  "output_tokens": 69
+ },
+ "8429fbf7e56713053d4326b83310572540900eb9e8ee49bc92afeb4b53a0756a": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c20",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Kuzey Yazılım"
+    },
+    "tooluse_8VRxiwiGRhtFGud82GRpWf"
+   ]
+  ],
+  "input_tokens": 649,
+  "output_tokens": 68
+ },
+ "8eb265b8c2d1e224df235d54fd534e1ab660a6668e4841b23785a069840e0b9a": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c16",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {},
+    "tooluse_77s7Xft1VSIW1kSKcYusUK"
+   ]
+  ],
+  "input_tokens": 644,
+  "output_tokens": 60
+ },
+ "99746a1ffef153060d0d198ec552474a96473c812f266adbfc9d39b2d7a5a131": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c18",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Orbitale",
+     "status": "open"
+    },
+    "tooluse_riKsJWNF2s2jsLq1CLXK5C"
+   ]
+  ],
+  "input_tokens": 645,
+  "output_tokens": 75
+ },
+ "9d972691854484347957cc7cdf233b07fece6d18a348f1224bfcd2d6f3f9ab1a": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c04",
+  "text": "\n\nThe status of your application at Halcyon Systems is \"applied\". It has been 28 days since the last contact.",
+  "tool_calls": [],
+  "input_tokens": 769,
+  "output_tokens": 56
+ },
+ "9e7b3be60dc04e800fc4e5ca1f353e32ae5b62c120401e29420bc009bd93ce48": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c36",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Orbitale",
+     "status": "open"
+    },
+    "tooluse_bwx8SPtnjgZiyo7mNcCpIR"
+   ]
+  ],
+  "input_tokens": 790,
+  "output_tokens": 54
+ },
+ "a0b3a63a88e722875f2a007ea8a4d35d5e03fce47b7c09b20d4ca7ab6e914035": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c01",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "interviewing"
+    },
+    "tooluse_giGQPjsHYjY4UE9phaPLYc"
+   ]
+  ],
+  "input_tokens": 646,
+  "output_tokens": 46
+ },
+ "a4e1f03d3a764872aced932ffe1fe0e0ded4d4113f4fb9480d59a3586aa7bf11": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c38",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Kuzey Yazılım"
+    },
+    "tooluse_FFhiufFczEUxUDR3oMsfSX"
+   ]
+  ],
+  "input_tokens": 652,
+  "output_tokens": 73
+ },
+ "a7dd9cd89fca6ab435f1d0575078062249a90750423fb91e280696f027f2e01c": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c36",
+  "text": "Evet, Orbitale için başvurunuz hala açık. Şu anda \"interviewing\" aşamasındasınız ve son temasınızın üzerinden 5 gün geçti. Sonraki adım, CTO ile yapılacak olan son görüşmedir ve saat henüz belirlenmedi.",
+  "tool_calls": [],
+  "input_tokens": 929,
+  "output_tokens": 84
+ },
+ "a7e2c7040ba0801ce7922b6a4c4d4a05a5be72fe99c60952657842d2485cf924": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c12",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Saffron Logistics"
+    },
+    "tooluse_fzh0UIbjjFNYgT5ogi6rIN"
+   ]
+  ],
+  "input_tokens": 644,
+  "output_tokens": 63
+ },
+ "b46382e315b3b8e1c51a1c6efdccc736104ce731f1f853f0cc1a4a981afb40fd": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c03",
+  "text": "\nYou have one job offer from Starling Mobility for the role of Backend Engineer. The offer was made on 2026-10-23 and you have until 6 November to reply. \nYou have one job offer from Starling Mobility for the role of Backend Engineer. The offer was made on 2026-10-23 and you have until 6 November to reply.",
+  "tool_calls": [],
+  "input_tokens": 775,
+  "output_tokens": 99
+ },
+ "b96282a58bb76d9c10dc333c815b691feeb538ac7e166ed233fd0a1ea207d16c": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c28",
+  "text": "\n\nVeri Bilimci rolü için Nehir Analitik şirketinde değerlendirmeniz 2026-11-06'da sona eriyor ve en son iletişimden bu yana 2 gün geçti. Gameplay Programmer rolü için Pinecrest Games şirketinde değerlendirmeniz 2026-11-02'de sona eriyor ve en son iletişimden bu yana 3 gün geçti.",
+  "tool_calls": [],
+  "input_tokens": 897,
+  "output_tokens": 152
+ },
+ "b9aee72d9ce3d7077433c6c33198c3e88930d83a2d57f433eaeba41419dd8c9c": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c01",
+  "text": "\nYou are interviewing for 4 applications.",
+  "tool_calls": [],
+  "input_tokens": 1047,
+  "output_tokens": 35
+ },
+ "ba34f403c7560260b130126baffbe3494c7ff36d06d21d393e49baa455f192b2": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c16",
+  "text": "Here are all the applications in your tracker:\n\n1. **Atlas Finans Teknolojileri** - Veri Mühendisi - applied - last contact: 2026-09-20 (36 days ago)\n2. **Atlas Finans Teknolojileri** - Yazılım Mühendisi - applied - last contact: 2026-10-12 (14 days ago)\n3. **Brightpath Analytics** - Data Engineer - interviewing - last contact: 2026-10-20 (6 days ago)\n4. **Copperleaf Software** - Platform Engineer - withdrawn - last contact: 2026-10-01 (25 days ago)\n5. **Doruk Yapay Zeka** - Makine Öğrenmesi Mühendisi - recruiter_contact - last contact: 2026-10-15 (11 days ago)\n6. **Ege Veri Ltd. Şti.** - Makine Öğrenmesi Mühendisi - interviewing - last contact: 2026-10-22 (4 days ago)\n7. **Halcyon Systems** - Backend Engineer - applied - last contact: 2026-09-28 (28 days ago)\n8. **Helix Harbor** - Software Engineer - rejected - last contact: 2026-10-14 (12 days ago)\n9. **Kumsal Yazılım** - Yazılım Mühendisi - rejected - last contact: 2026-10-14 (12 days ago)\n10. **Kuzey Yazılım A.Ş.** - Backend Geliştirici - interviewing - last contact: 2026-10-20 (6 days ago)\n11. **Mavi Lojistik** - Veri Analisti - applied - last contact: 2026-10-02 (24 days ago)\n12. **Nehir Analitik** - Veri Bilimci - assessment - last contact: 2026-10-24 (2 days ago)\n13. **Orbitale** - Frontend Engineer - interviewing - last contact: 2026-10-21 (5 days ago)\n14. **Pinecrest Games** - Gameplay Programmer - assessment - last contact: 2026-10-23 (3 days ago)\n15. **Saffron Logistics** - Backend Engineer - recruiter_contact - last contact: 2026-10-16 (10 days ago)\n16. **Starling Mobility** - Backend Engineer - offer - last contact: 2026-10-23 (3 days ago)\n17. **Tuna Lojistik** - Veri Analisti - rejected - last contact: 2026-10-16 (10 days ago)",
+  "tool_calls": [],
+  "input_tokens": 1813,
+  "output_tokens": 646
+ },
+ "bd1dbbe27ea81ea6a817e8815b08ad82a387b8851a06d30adcd12406b42a8983": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c30",
+  "text": "\n\n[list_applications(status=\"open\", min_days_since_contact=30)] </tool>",
+  "tool_calls": [],
+  "input_tokens": 671,
+  "output_tokens": 88
+ },
+ "c36b0c34a03f3f5abaeda1902a61fd3947cd13d6e893f25e0bf8b823d9fcb5da": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c32",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Ege Veri"
+    },
+    "tooluse_8RcsznPqwZdNIiJ3GQT1fs"
+   ]
+  ],
+  "input_tokens": 653,
+  "output_tokens": 75
+ },
+ "c821447f43952bdf3cc18d051e07fceeacff89b94df120c03bc814d371c60db2": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c07",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "open"
+    },
+    "tooluse_DsF2V1F1wgF0XfXSY2XgY7"
+   ]
+  ],
+  "input_tokens": 644,
+  "output_tokens": 56
+ },
+ "c8682b367014e635cb1f83e1f7a9aa15c9c5b092a9106556fc9982366ffd2e11": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c18",
+  "text": "\n\nYour application at Orbitale is still open. You are currently in the \"interviewing\" stage, with a final interview with the CTO scheduled. The last contact was on 2026-10-21, which was 5 days ago.",
+  "tool_calls": [],
+  "input_tokens": 784,
+  "output_tokens": 87
+ },
+ "c8d371d24f0d59447baa027c0c7cf5ffdbbd688330050ce0d7111fc24f1d3303": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c39",
+  "text": "\nKumsal Yazılım başvurunuz reddedildi. Son iletişim 12 gün önce gerçekleşti.",
+  "tool_calls": [],
+  "input_tokens": 779,
+  "output_tokens": 61
+ },
+ "c92e16f488ac87b707e6039f193ce0a62cb48fdce3a1461521fd88b585d57f38": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c02",
+  "text": "\nThe companies that have rejected you are: Helix Harbor, Kumsal Yazılım, and Tuna Lojistik.",
+  "tool_calls": [],
+  "input_tokens": 870,
+  "output_tokens": 53
+ },
+ "cc00db55735202b3dff55ae48fa17a2ab85f823097075914c278690ac9353ffb": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c06",
+  "text": "\n\n[list_applications(status=\"open\", min_days_since_contact=21)] </tool>",
+  "tool_calls": [],
+  "input_tokens": 652,
+  "output_tokens": 93
+ },
+ "cd6f6c715bce9d0e94280cc4fc9555ccec99302a32710d8ffb43ca9585df8fe8": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c21",
+  "text": "Şu anda 4 başvurunuz mülakat aşamasında.",
+  "tool_calls": [],
+  "input_tokens": 1054,
+  "output_tokens": 19
+ },
+ "d0a74787f8c73c49358b36acd56a1e8d45d2a2fb41d605f6ed8b3facdbd38262": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c27",
+  "text": "\n\nAçık başvuru sayınız 13'tür.",
+  "tool_calls": [],
+  "input_tokens": 1610,
+  "output_tokens": 51
+ },
+ "d3d088db7fb5d5d091cfdfc5c05a0636f27b2c672eff4a0901ca3224f93fb783": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c34",
+  "text": "Tüm başvurularınızı listeledim. İşte detaylar:\n\n1. **Atlas Finans Teknolojileri**\n   - Rol: Veri Mühendisi\n   - Durum: applied\n   - Son İletişim: 2026-09-20\n   - İletişimden Geçen Günler: 36\n\n2. **Atlas Finans Teknolojileri**\n   - Rol: Yazılım Mühendisi\n   - Durum: applied\n   - Son İletişim: 2026-10-12\n   - İletişimden Geçen Günler: 14\n\n3. **Brightpath Analytics**\n   - Rol: Data Engineer\n   - Durum: interviewing\n   - Son İletişim: 2026-10-20\n   - Önemli Tarih: 2026-11-05T14:00\n   - Önemli Tarih Türü: interview\n   - İletişimden Geçen Günler: 6\n\n4. **Doruk Yapay Zeka**\n   - Rol: Makine Öğrenmesi Mühendisi\n   - Durum: recruiter_contact\n   - Son İletişim: 2026-10-15\n   - İletişimden Geçen Günler: 11\n\n5. **Ege Veri Ltd. Şti.**\n   - Rol: Makine Öğrenmesi Mühendisi\n   - Durum: interviewing\n   - Son İletişim: 2026-10-22\n   - Önemli Tarih: 2026-10-29T15:00\n   - Önemli Tarih Türü: interview\n   - İletişimden Geçen Günler: 4\n\n6. **Halcyon Systems**\n   - Rol: Backend Engineer\n   - Durum: applied\n   - Son İletişim: 2026-09-28\n   - İletişimden Geçen Günler: 28\n\n7. **Kuzey Yazılım A.Ş.**\n   - Rol: Backend Geliştirici\n   - Durum: interviewing\n   - Son İletişim: 2026-10-20\n   - Önemli Tarih: 2026-11-03T10:00\n   - Önemli Tarih Türü: interview\n   - İletişimden Geçen Günler: 6\n\n8. **Mavi Lojistik**\n   - Rol: Veri Analisti\n   - Durum: applied\n   - Son İletişim: 2026-10-02\n   - İletişimden Geçen Günler: 24\n\n9. **Nehir Analitik**\n   - Rol: Veri Bilimci\n   - Durum: assessment\n   - Son İletişim: 2026-10-24\n   - Önemli Tarih: 2026-11-06\n   - Önemli Tarih Türü: assessment_deadline\n   - İletişimden Geçen Günler: 2\n\n10. **Orbitale**\n    - Rol: Frontend Engineer\n    - Durum: interviewing\n    - Son İletişim: 2026-10-21\n    - Sonraki Adım: Final interview with the CTO, time to be agreed\n    - İletişimden Geçen Günler: 5\n\n11. **Pinecrest Games**\n    - Rol: Gameplay Programmer\n    - Durum: assessment\n    - Son İletişim: 2026-10-23\n    - Önemli Tarih: 2026-11-02T23:59\n    - Önemli Tarih Türü: assessment_deadline\n    - İletişimden Geçen Günler: 3\n\n12. **Saffron Logistics**\n    - Rol: Backend Engineer\n    - Durum: recruiter_contact\n    - Son İletişim: 2026-10-16\n    - İletişimden Geçen Günler: 10\n\n13. **Starling Mobility**\n    - Rol: Backend Engineer\n    - Durum",
+  "tool_calls": [],
+  "input_tokens": 1614,
+  "output_tokens": 1000
+ },
+ "d3d565fd79ccbffa2c6d99f0350dd37cece972de567ed320853ca4fa97164ada": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c29",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Atlas Finans Teknolojileri"
+    },
+    "tooluse_rspR9AF1tcPihqPXJvoOHq"
+   ]
+  ],
+  "input_tokens": 657,
+  "output_tokens": 75
+ },
+ "dcb6b75a5254964d4f9e5aa97640d497e76f6afaff57a28f9d13c74ab7b924f9": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c39",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Kumsal Yazılım"
+    },
+    "tooluse_OFQpy4BIrpVWmAzqNwFoDn"
+   ]
+  ],
+  "input_tokens": 648,
+  "output_tokens": 72
+ },
+ "df402dfc6c1459d34b5b88f1bb36958b7d18b0899e7fdb400a872c05c606063e": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c04",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "company": "Halcyon Systems"
+    },
+    "tooluse_IYEq6Ajn7JkE8spKBz9Rn3"
+   ]
+  ],
+  "input_tokens": 649,
+  "output_tokens": 64
+ },
+ "e5a57ae947e596dc8ff973209d2305f3bee874252ce94b0d30ab33d35b1e1dd8": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c07",
+  "text": "\n\nYou have 13 open applications.",
+  "tool_calls": [],
+  "input_tokens": 1606,
+  "output_tokens": 38
+ },
+ "ebaa25cb6fd893c76f11853608709ffb813554a0071c2b1217da1cc22c850eb4": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c27",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "open"
+    },
+    "tooluse_WiQ1DUqF1QIMu9ao68Np7e"
+   ]
+  ],
+  "input_tokens": 648,
+  "output_tokens": 75
+ },
+ "ee12e264e55ffd5d98fc16c4a7c820279b3f22477262d7854c180c2b16cfb48e": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c15",
+  "text": "",
+  "tool_calls": [
+   [
+    "list_applications",
+    {
+     "status": "withdrawn"
+    },
+    "tooluse_Lz32BMqBKPy2pB1HVdx35h"
+   ]
+  ],
+  "input_tokens": 642,
+  "output_tokens": 59
+ },
+ "eee8242e96bcf4b3ecb639f4ef0c2dc8884e970ffd208cd3e005f86bf17c97b3": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c25",
+  "text": "\n\nThe interview with Brightpath Analytics is scheduled for 2026-11-05 at 14:00.",
+  "tool_calls": [],
+  "input_tokens": 807,
+  "output_tokens": 79
+ },
+ "f17f476549dbfc0727f9a82578b601624988627cb523fb93ae2d3d12ee3a2901": {
+  "model_id": "eu.amazon.nova-lite-v1:0",
+  "case": "c05",
+  "text": "\nYour interview with Brightpath Analytics is scheduled for 2026-11-05 at 14:00.",
+  "tool_calls": [],
+  "input_tokens": 803,
+  "output_tokens": 69
+ }
+}
