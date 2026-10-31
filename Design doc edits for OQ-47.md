@@ -65,6 +65,24 @@ Tier 1 must run on GitHub's runners and on pull requests (§12), with no AWS cre
 
 Design doc: no change.
 
+## (b') Amendment: Tier 1's invite gate reports until the classifier catches invites inside a rejection (decided 2026-10-31)
+
+The first recording with Nova (2026-10-29, the classifier prompt of `ac98e12`) scored EV-1s's frozen test split at invite recall 92.9% (13 of 14). The miss, syn014, turns down one role and invites me to interview for another; Nova Micro listed rejection and recruiter outreach, not interview_invite. Three of the four dev emails of the same kind, added after the freeze, were missed too. A prompt revision tuned on dev didn't beat the original on dev, and on the test split it lowered M2 and let inj09 through (M4 23/24), so it was reverted. As (b) reads, Tier 1 would then fail on main, and no push would deploy.
+
+**Decision:**
+- Tier 1's invite-recall floor (96% on EV-1s's test split) is **reported, not gating**, until the classifier catches invites inside a rejection. The job summary shows it under "reported only".
+- A stale reply and M4 below 100% still fail Tier 1.
+- `INVITE_GATE_BLOCKS` in `eval/tier1.py` turns the gate back on, in the same change that makes the recorded replies pass it.
+- Next: Nova Lite for classification, tried on dev only, reported before any prompt or model changes.
+- Tier 2 is unchanged.
+
+| PRD section | Change |
+|---|---|
+| §12 Tier 1 row, Gate | "Invite recall on EV-1s < 96%" → reported only until the classifier catches invites inside a rejection [OQ-47 (b')]; injection pass rate < 100% and a missing or stale reply still fail |
+| §18 OQ-47 | amendment (b') |
+
+Design doc: no change.
+
 ## (c) Tier 2: when it runs, how it paces, and what leaves the Mac
 
 **Recommendation:**
@@ -424,6 +442,7 @@ The steps in `Week 6 plan.md`: the labeling tools (1), the synthetic set and the
 | (d'') No labeled set of my own email; EV-1s (120, split, blind second labeling) is the labeled set | Accept | 2026-10-29 | in chat: "Skip it" |
 | (f'') EV-1s needs nothing from me | Accept | 2026-10-29 | in chat |
 | (j') M7 is my estimate (about 2 hours a week), not a measurement | Accept | 2026-10-29 | in chat |
+| (b') Tier 1's invite-recall floor reported only until the classifier catches invites inside a rejection; stale replies and M4 still fail Tier 1 | Accept | 2026-10-31 | in the head session's chat: "yes to A–C, commit" |
 | (e) Split by class × language; the freeze; M1, M2, M8 scoring rules | Accept | 2026-10-26 | in chat |
 | (f) EV-1s drafted by a session from definitions and my notes, reviewed by me | Accept | 2026-10-26 | in chat |
 | (g) EV-3 in-process; M3 scored in code; AgentCore Evaluations on the eval run's spans (spike first) | Accept | 2026-10-26 | the spike picks (g), (g2) or (g3) |
