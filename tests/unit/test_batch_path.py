@@ -213,3 +213,19 @@ def test_a_written_row_adds_one_company_event_without_email_text():
     assert key == "kuzey yazilim"
     assert text.startswith("2026-10-19: interview invite email about Backend Engineer; status now interviewing")
     assert "IGNORE" not in text and "Mülakat" not in text and SUBJECT not in text
+
+
+@pytest.mark.parametrize("copied", ["2026-10-19T09:40:00+00:00", "2026-10-19T12:40:30+03:00", "2026-10-19T09:40"])
+def test_a_date_copied_from_the_arrival_time_is_dropped(copied):
+    """CLS-2: the model sometimes gives the quoted Date line as the key date."""
+    env = Env(model=FakeModel(reply(date=copied)))
+    env.run()
+    [row] = env.rows()
+    assert "key_date" not in row
+    assert "date" not in env.tools.calls[-1][1]
+
+
+def test_a_key_date_on_the_arrival_day_is_kept():
+    env = Env(model=FakeModel(reply(date="2026-10-19T16:00")))
+    env.run()
+    assert env.rows()[0]["key_date"] == "2026-10-19T16:00:00"

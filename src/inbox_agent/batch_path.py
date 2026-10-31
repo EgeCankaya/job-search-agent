@@ -70,6 +70,18 @@ def _names_a_company(company: str | None) -> bool:
     return True
 
 
+def _not_the_arrival(extracted: date | datetime | None, received_at: str) -> date | datetime | None:
+    """CLS-2: never a guessed date. The model sometimes copies the quoted
+    Date line, which is when the email arrived, when the text gives no
+    interview time or deadline (EV-1s, 2026-10-29). A date-time within a
+    minute of the arrival is that, not a key date."""
+    if not isinstance(extracted, datetime):
+        return extracted
+    received = datetime.fromisoformat(received_at)
+    compared = extracted if extracted.tzinfo else extracted.replace(tzinfo=received.tzinfo)
+    return None if abs((compared - received).total_seconds()) < 60 else extracted
+
+
 def company_event(received_on: date, result: Classification, row: dict, key_date: date | datetime | None) -> str:
     """One line for the company's summary: the class, the row's status and
     dates. The extracted role is the only text from the email (NFR-PRIV-3)."""
@@ -99,7 +111,7 @@ def build_batch_graph(deps: BatchDeps):
         result = classify(trimmed, deps.model)
         invite_start = email.get("calendar_start")
         # The invite's start wins over a date from the body (CLS-2).
-        when = parse_date_or_datetime(invite_start) if invite_start else result.date
+        when = parse_date_or_datetime(invite_start) if invite_start else _not_the_arrival(result.date, email["received_at"])
         company = result.company if _names_a_company(result.company) else None
         return {"classification": result, "key_date": when, "company": company, "role": result.role}
 
