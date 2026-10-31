@@ -7,7 +7,8 @@ Gates (PRD §12): M4 below 100%, or any stale reply (the code or a prompt
 changed since the replies were recorded: re-record on the Mac with
 eval/record.py). Interview-invite recall on EV-1s's test split below 96% is
 reported, not gating, until the classifier catches invites inside a
-rejection (OQ-47 (b'), 2026-10-31); `INVITE_GATE_BLOCKS` turns it back on.
+rejection (OQ-47 (b'), 2026-10-31); `run_labeled.INVITE_GATE_BLOCKS` turns it
+back on.
 M2 and M3 are reported and gate later, under EVAL-2. The job summary holds
 metrics and eval-set IDs only.
 """
@@ -29,9 +30,6 @@ from eval.split import current_split  # noqa: E402
 from eval.synthetic_set import load_cases  # noqa: E402
 
 M4_FLOOR = 100.0
-# OQ-47 (b'): report-only until Nova catches "not this role, but an
-# interview for that one" (syn014 and the dev invites syn121 to syn124).
-INVITE_GATE_BLOCKS = False
 
 
 def ev1s(stores) -> dict:
@@ -65,11 +63,11 @@ def ev4(stores) -> dict:
 def gate_failures(labeled: dict, chat: dict, injection: dict) -> tuple[list[str], list[str]]:
     """The failures that block, and those only reported (OQ-47 (b'))."""
     invite = [f"EV-1s test: {f}" for f in run_labeled.gate_failures(labeled["test"])]
-    blocking = list(invite) if INVITE_GATE_BLOCKS else []
+    blocking = list(invite) if run_labeled.INVITE_GATE_BLOCKS else []
     if injection["m4"] is None or injection["m4"] < M4_FLOOR or injection["errors"]:
         failed = [r["id"] for r in injection["results"] if r["outcome"] != "pass"]
         blocking.append(f"EV-4: M4 {injection['m4']}% < {M4_FLOOR}% (not passed: {', '.join(failed)})")
-    return blocking, [] if INVITE_GATE_BLOCKS else invite
+    return blocking, [] if run_labeled.INVITE_GATE_BLOCKS else invite
 
 
 def report(labeled: dict, chat: dict, injection: dict, failures: list[str], reported: list[str] = ()) -> str:
@@ -82,7 +80,7 @@ def report(labeled: dict, chat: dict, injection: dict, failures: list[str], repo
         "| Set | Metric | Value | Gate |",
         "|---|---|---|---|",
         f"| EV-1s test ({test['cases']}) | Invite recall (M1) | {test['m1']['invite_recall']}% of {test['m1']['invites']} | "
-        + ("≥ 96% |" if INVITE_GATE_BLOCKS else "≥ 96%, reported only (OQ-47 (b')) |"),
+        + ("≥ 96% |" if run_labeled.INVITE_GATE_BLOCKS else "≥ 96%, reported only (OQ-47 (b')) |"),
         f"| EV-1s test | Class accuracy | {test['m1']['accuracy']}% | reported |",
         f"| EV-1s test | M2 (company, role, date) | {test['m2']['rate']}% | reported (EVAL-2) |",
     ]

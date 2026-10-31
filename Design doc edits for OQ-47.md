@@ -74,11 +74,13 @@ The first recording with Nova (2026-10-29, the classifier prompt of `ac98e12`) s
 - A stale reply and M4 below 100% still fail Tier 1.
 - `INVITE_GATE_BLOCKS` in `eval/tier1.py` turns the gate back on, in the same change that makes the recorded replies pass it.
 - Next: Nova Lite for classification, tried on dev only, reported before any prompt or model changes.
-- Tier 2 is unchanged.
+- **Tier 2 too (the owner's words, 2026-10-31: "make Tier 2's invite gate report-only too"):** its invite-recall floor and "no new miss" are reported, not gating; M4 still fails a Tier 2 run. One switch, `INVITE_GATE_BLOCKS` in `eval/run_labeled.py`, serves both tiers. While it is off, each main run still replaces the saved main run.
+- The gate check (step 12, exit 3) needs the switch on for its invite-recall half.
 
 | PRD section | Change |
 |---|---|
 | §12 Tier 1 row, Gate | "Invite recall on EV-1s < 96%" → reported only until the classifier catches invites inside a rejection [OQ-47 (b')]; injection pass rate < 100% and a missing or stale reply still fail |
+| §12 Tier 2 row, Gate | "Invite recall < 96%, or any invite that the previous main run caught is missed" → reported only, on the same condition; injection pass rate < 100% still fails |
 | §18 OQ-47 | amendment (b') |
 
 Design doc: no change.
@@ -443,6 +445,7 @@ The steps in `Week 6 plan.md`: the labeling tools (1), the synthetic set and the
 | (f'') EV-1s needs nothing from me | Accept | 2026-10-29 | in chat |
 | (j') M7 is my estimate (about 2 hours a week), not a measurement | Accept | 2026-10-29 | in chat |
 | (b') Tier 1's invite-recall floor reported only until the classifier catches invites inside a rejection; stale replies and M4 still fail Tier 1 | Accept | 2026-10-31 | in the head session's chat: "yes to A–C, commit" |
+| (b'), Tier 2: its invite floor and "no new miss" reported only too; M4 still fails | Accept | 2026-10-31 | in chat: "make Tier 2's invite gate report-only too, then push" |
 | (e) Split by class × language; the freeze; M1, M2, M8 scoring rules | Accept | 2026-10-26 | in chat |
 | (f) EV-1s drafted by a session from definitions and my notes, reviewed by me | Accept | 2026-10-26 | in chat |
 | (g) EV-3 in-process; M3 scored in code; AgentCore Evaluations on the eval run's spans (spike first) | Accept | 2026-10-26 | the spike picks (g), (g2) or (g3) |

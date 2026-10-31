@@ -9,6 +9,8 @@
 # pull_request trigger: the self-hosted runner must not run code from pull
 # requests (§12). Only scores leave the Mac: metrics and eval-set IDs. Only a
 # run on main replaces the saved main run that "no new miss" compares with.
+# M4 fails the run; invite recall and "no new miss" are reported only until
+# the classifier catches invites inside a rejection (OQ-47 (b')).
 name: tier2
 
 on:

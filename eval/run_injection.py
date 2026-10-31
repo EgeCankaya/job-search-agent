@@ -53,6 +53,7 @@ for path in (ROOT / "src", ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
+from eval.pacing import DEFAULT_PER_MINUTE, Paced, limiter_for  # noqa: E402
 from eval.replay import ReplyStore, StaleReply, replay_models, set_case  # noqa: E402
 from inbox_agent.cedar_policies import LOCAL_AGENT, Authorizer, local_policies  # noqa: E402
 from inbox_agent.classes import URGENT_CLASSES, EmailClass  # noqa: E402
@@ -486,7 +487,8 @@ class Metered:
             self.output_tokens += int(usage.get("output_tokens", 0))
 
 
-def mode_models(mode: str) -> dict[str, Metered]:
+def mode_models(mode: str, per_minute: int = DEFAULT_PER_MINUTE) -> dict[str, Metered]:
+    """The mode's models; in cloud mode paced, as live mail shares the Nova quota (OQ-47 (c))."""
     from inbox_agent import settings
     from inbox_agent.model import chat_model
 
@@ -501,7 +503,11 @@ def mode_models(mode: str) -> dict[str, Metered]:
         ids = {"classify": environ["CLASSIFIER_MODEL_ID"], "draft": environ["CHAT_MODEL_ID"]}
     else:
         ids = {"classify": settings.LOCAL_MODEL_ID, "draft": settings.LOCAL_MODEL_ID}
-    return {purpose: Metered(chat_model(purpose, environ), ids[purpose]) for purpose in ("classify", "draft")}
+    def chat(purpose: str):
+        model = chat_model(purpose, environ)
+        return Paced(model, limiter_for(ids[purpose], per_minute)) if mode == "cloud" else model
+
+    return {purpose: Metered(chat(purpose), ids[purpose]) for purpose in ("classify", "draft")}
 
 
 def replayed_models() -> dict[str, Metered]:

@@ -246,3 +246,28 @@ def test_the_scores_hold_no_email_text():
     scores = run_labeled.score(CASES, {c["id"]: _honest(c) for c in CASES})
     text = json.dumps(scores, ensure_ascii=False)
     assert "example.com" not in text and "Brightpath" not in text
+
+
+def test_the_runner_reports_the_invite_gate_and_fails_once_it_blocks(monkeypatch, tmp_path, capsys):
+    """OQ-47 (b'): both tiers read the same switch, and a run with no replies is still stale."""
+    store = replay.ReplyStore("ev1s")
+    models = recording(store, ("classify",), ScriptedChat())
+    run_labeled.run(CASES, {p: run_injection.Metered(c, c.model_id) for p, c in models.items()})
+    monkeypatch.setattr(replay.ReplyStore, "load", classmethod(lambda cls, name, directory=None: store))
+    arguments = ["--replay", "--split", "test", "--out", str(tmp_path / "scores.json")]
+    assert run_labeled.main(arguments) == 0
+    assert "REPORTED ONLY" in capsys.readouterr().out
+    monkeypatch.setattr(run_labeled, "INVITE_GATE_BLOCKS", True)
+    assert run_labeled.main(arguments) == 1
+    monkeypatch.setattr(replay.ReplyStore, "load", classmethod(lambda cls, name, directory=None: cls(name)))
+    assert run_labeled.main(arguments) == 3
+
+
+def test_live_injection_runs_are_paced_in_cloud_mode_only(monkeypatch):
+    """OQ-47 (c): Tier 2's EV-4 stays under the rate; Ollama has no quota to share."""
+    from inbox_agent import model
+
+    monkeypatch.setattr(model, "chat_model", lambda purpose, environ: ScriptedChat())
+    cloud = run_injection.mode_models("cloud")
+    assert all(isinstance(m.chat, pacing.Paced) and m.chat.limiter.per_minute == 12 for m in cloud.values())
+    assert not any(isinstance(m.chat, pacing.Paced) for m in run_injection.mode_models("local").values())

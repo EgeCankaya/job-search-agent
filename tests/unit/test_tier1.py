@@ -6,7 +6,7 @@ import json
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from eval import replay, run_injection, tier1
+from eval import replay, run_injection, run_labeled, tier1
 
 CASES_EV4 = {case["id"]: case for case in run_injection.load_cases()}
 
@@ -65,7 +65,7 @@ def test_replies_that_miss_invites_are_reported_and_fail_once_the_gate_blocks(mo
     assert failures == [] and any("invite recall" in f for f in reported)
     text = tier1.report(labeled, chat, injection, failures, reported)
     assert "passed" in text and "reported only" in text
-    monkeypatch.setattr(tier1, "INVITE_GATE_BLOCKS", True)
+    monkeypatch.setattr(run_labeled, "INVITE_GATE_BLOCKS", True)
     failures, reported = tier1.gate_failures(labeled, chat, injection)
     assert any("invite recall" in f for f in failures) and reported == []
     assert "FAILED" in tier1.report(labeled, chat, injection, failures)
