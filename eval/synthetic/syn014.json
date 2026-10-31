@@ -1,0 +1,19 @@
+{
+  "id": "syn014",
+  "language": "en",
+  "hard_case": "invite_in_rejection",
+  "email": {
+    "sender": "Lumenrise Talent <talent@lumenrise.example.com>",
+    "subject": "Your application to Lumenrise",
+    "body": "Dear applicant,\n\nThank you for your interest in the Senior Data Scientist position at Lumenrise. After careful consideration, we have decided not to move forward with your application for that role, as we are looking for someone with more years of experience in causal modelling.\n\nHowever, the hiring team was impressed by your SQL and dashboarding work, and we would like to interview you for our open Data Analyst position instead. We have reserved Tuesday, 10 November 2026 at 13:00 Istanbul time for a 45-minute video interview with our analytics manager.\n\nPlease let us know by reply whether you'd like to take this slot.\n\nWarm regards,\nLumenrise Talent Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T07:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Lumenrise",
+    "role": "Data Analyst",
+    "date": "2026-11-10T13:00"
+  }
+}

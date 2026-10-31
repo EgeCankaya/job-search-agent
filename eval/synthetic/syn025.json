@@ -1,0 +1,19 @@
+{
+  "id": "syn025",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Copperleaf Software Talent Community <community@copperleaf.example.com>",
+    "subject": "New roles at Copperleaf Software you might like",
+    "body": "Hi,\n\nAs a member of our talent community, here are this month's new openings at Copperleaf Software:\n\n- Senior Platform Engineer (Istanbul)\n- Site Reliability Engineer (Remote)\n- Engineering Manager, Infrastructure (Istanbul)\n\nSee all openings: https://careers.copperleaf.example.com\n\nCopperleaf Software Talent Community",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T09:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Copperleaf Software",
+    "role": null,
+    "date": null
+  }
+}

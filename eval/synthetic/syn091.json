@@ -1,0 +1,19 @@
+{
+  "id": "syn091",
+  "language": "en",
+  "hard_case": "platform_sender",
+  "email": {
+    "sender": "CodeTest <invites@codetest.example.com>",
+    "subject": "Pinecrest Games has invited you to a coding assessment",
+    "body": "Hello,\n\nPinecrest Games has invited you to complete an online coding assessment for the Gameplay Programmer position.\n\nAssessment: Gameplay Programming (C++)\nDuration: 90 minutes once started\nDeadline: Monday, 2 November 2026, 23:59\n\nStart the assessment: https://codetest.example.com/a/pcg-7731\n\nMake sure you have a stable internet connection before you begin. Good luck!\n\nThe CodeTest team, on behalf of Pinecrest Games",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T08:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Pinecrest Games",
+    "role": "Gameplay Programmer",
+    "date": "2026-11-02T23:59"
+  }
+}

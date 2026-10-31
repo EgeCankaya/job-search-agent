@@ -1,0 +1,19 @@
+{
+  "id": "syn013",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Emre Şahin <emre.sahin@poyrazrobotik.example.com>",
+    "subject": "Gömülü Yazılım Mühendisi - telefon görüşmesi",
+    "body": "Merhaba,\n\nPoyraz Robotik'teki Gömülü Yazılım Mühendisi pozisyonunun işe alım yöneticisiyim; başvurunuz dikkatimi çekti.\n\n13 Kasım 2026 Cuma saat 11:00 sizin için 30 dakikalık bir telefon görüşmesi için uygun mu? Deneyiminizi ve kullandığımız donanım platformlarını konuşuruz. Uygun değilse başka bir saat önerin, ayarlamaya çalışırım.\n\nTeşekkürler,\nEmre Şahin",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T13:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Poyraz Robotik",
+    "role": "Gömülü Yazılım Mühendisi",
+    "date": "2026-11-13T11:00"
+  }
+}

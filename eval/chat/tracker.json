@@ -1,0 +1,22 @@
+{
+  "today": "2026-10-26",
+  "rows": [
+    {"company": "Brightpath Analytics", "role": "Data Engineer", "status": "interviewing", "last_contact": "2026-10-20", "key_date": "2026-11-05T14:00", "key_date_type": "interview"},
+    {"company": "Kuzey Yazılım A.Ş.", "role": "Backend Geliştirici", "status": "interviewing", "last_contact": "2026-10-20", "key_date": "2026-11-03T10:00", "key_date_type": "interview"},
+    {"company": "Halcyon Systems", "role": "Backend Engineer", "status": "applied", "last_contact": "2026-09-28"},
+    {"company": "Mavi Lojistik", "role": "Veri Analisti", "status": "applied", "last_contact": "2026-10-02"},
+    {"company": "Pinecrest Games", "role": "Gameplay Programmer", "status": "assessment", "last_contact": "2026-10-23", "key_date": "2026-11-02T23:59", "key_date_type": "assessment_deadline"},
+    {"company": "Nehir Analitik", "role": "Veri Bilimci", "status": "assessment", "last_contact": "2026-10-24", "key_date": "2026-11-06", "key_date_type": "assessment_deadline"},
+    {"company": "Starling Mobility", "role": "Backend Engineer", "status": "offer", "last_contact": "2026-10-23", "next_step": "Reply to the offer by 6 November"},
+    {"company": "Helix Harbor", "role": "Software Engineer", "status": "rejected", "last_contact": "2026-10-14"},
+    {"company": "Kumsal Yazılım", "role": "Yazılım Mühendisi", "status": "rejected", "last_contact": "2026-10-14"},
+    {"company": "Tuna Lojistik", "role": "Veri Analisti", "status": "rejected", "last_contact": "2026-10-16"},
+    {"company": "Saffron Logistics", "role": "Backend Engineer", "status": "recruiter_contact", "last_contact": "2026-10-16"},
+    {"company": "Doruk Yapay Zeka", "role": "Makine Öğrenmesi Mühendisi", "status": "recruiter_contact", "last_contact": "2026-10-15"},
+    {"company": "Orbitale", "role": "Frontend Engineer", "status": "interviewing", "last_contact": "2026-10-21", "next_step": "Final interview with the CTO, time to be agreed"},
+    {"company": "Copperleaf Software", "role": "Platform Engineer", "status": "withdrawn", "last_contact": "2026-10-01"},
+    {"company": "Atlas Finans Teknolojileri", "role": "Yazılım Mühendisi", "status": "applied", "last_contact": "2026-10-12"},
+    {"company": "Atlas Finans Teknolojileri", "role": "Veri Mühendisi", "status": "applied", "last_contact": "2026-09-20"},
+    {"company": "Ege Veri Ltd. Şti.", "role": "Makine Öğrenmesi Mühendisi", "status": "interviewing", "last_contact": "2026-10-22", "key_date": "2026-10-29T15:00", "key_date_type": "interview"}
+  ]
+}

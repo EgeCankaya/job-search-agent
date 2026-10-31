@@ -1,0 +1,19 @@
+{
+  "id": "syn018",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Barış Koçak <baris.kocak@gelincik.example.com>",
+    "subject": "Gelincik Sağlık'ta Kurucu Mühendis",
+    "body": "Merhaba,\n\nKliniklere yönelik araçlar geliştiren erken aşama bir girişim olan Gelincik Sağlık'ın kurucu ortağıyım. Tohum yatırım turumuzu yeni kapattık ve ürünü benimle birlikte geliştirecek bir Kurucu Mühendis arıyorum.\n\nKüçük ve güvenilir backend sistemleri üzerine yazdığınız blog yazısını okudum; üzerinde çalıştığımız problemlerden keyif alacağınızı düşünüyorum. Daha fazlasını duymak ister misiniz?\n\nBarış Koçak\nKurucu Ortak, Gelincik Sağlık",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T19:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Gelincik Sağlık",
+    "role": "Kurucu Mühendis",
+    "date": null
+  }
+}

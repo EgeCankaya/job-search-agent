@@ -1,0 +1,19 @@
+{
+  "id": "syn017",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Noah Kim <noah.kim@glimmer.example.com>",
+    "subject": "Founding Engineer at Glimmer Health",
+    "body": "Hi,\n\nI'm the co-founder of Glimmer Health, an early-stage startup building tools for clinics. We've just raised our seed round, and I'm looking for a Founding Engineer to build the product with me.\n\nI read your blog post on building small, reliable backends, and I think you'd enjoy the problems we're working on. Would you be open to hearing more?\n\nNoah Kim\nCo-founder, Glimmer Health",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T18:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Glimmer Health",
+    "role": "Founding Engineer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn066",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "HireFlow Accounts <accounts@hireflow.example.com>",
+    "subject": "Your HireFlow password was changed",
+    "body": "Hello,\n\nThe password for your HireFlow candidate account was changed. If you made this change, no action is needed.\n\nIf you didn't change your password, reset it now at https://hireflow.example.com/reset and contact support.\n\nThe HireFlow team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-18T20:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

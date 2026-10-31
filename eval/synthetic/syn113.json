@@ -1,0 +1,19 @@
+{
+  "id": "syn113",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Helix Harbor Recruiting <recruiting@helixharbor.example.com>",
+    "subject": "Update on your application to Helix Harbor",
+    "body": "Dear applicant,\n\nThank you for applying for the Software Engineer position at Helix Harbor. We received many strong applications, and after careful review we have decided not to move forward with yours at this time.\n\nWe wish you every success in your job search.\n\nKind regards,\nHelix Harbor Recruiting",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-14T08:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Helix Harbor",
+    "role": "Software Engineer",
+    "date": null
+  }
+}

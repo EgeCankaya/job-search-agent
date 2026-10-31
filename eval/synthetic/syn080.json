@@ -1,0 +1,19 @@
+{
+  "id": "syn080",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Amir Haddad <amir.haddad@sablewood.example.com>",
+    "subject": "Case study for the Data Scientist role at Sablewood Media",
+    "body": "Hi,\n\nAs discussed, the next stage for the Data Scientist role at Sablewood Media is a case study.\n\nThe attached dataset holds a sample of anonymised viewing sessions. We'd like you to build a simple churn model, explain the features you chose, and summarise what you would try next. Please send your notebook and a short write-up by Tuesday, 3 November 2026.\n\nThere's no need to spend more than four hours on it.\n\nAll the best,\nAmir Haddad\nHead of Data Science",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T16:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Sablewood Media",
+    "role": "Data Scientist",
+    "date": "2026-11-03"
+  }
+}

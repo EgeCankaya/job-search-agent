@@ -1,0 +1,19 @@
+{
+  "id": "syn023",
+  "language": "tr",
+  "hard_case": "newsletter_mentions_interview",
+  "email": {
+    "sender": "KariyerPortal Blog <blog@kariyerportal.example.com>",
+    "subject": "Teknik mülakatta başarılı olmanın 5 yolu",
+    "body": "Bu hafta KariyerPortal blogda:\n\n1. Düşüncelerinizi sesli ifade edin\n2. Kod yazmadan önce soru sorun\n3. Çözümünüzü küçük örneklerle test edin\n4. Tasarımınızın artı ve eksilerini bilin\n5. Mülakatçınıza sormak için iki soru hazırlayın\n\nYazının tamamı: https://kariyerportal.example.com/blog/mulakat\n\nBu e-postayı KariyerPortal kariyer ipuçları bültenine abone olduğunuz için alıyorsunuz.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-16T06:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

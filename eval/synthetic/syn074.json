@@ -1,0 +1,19 @@
+{
+  "id": "syn074",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Atlas Finans Teknolojileri <kariyer@atlasfinans.example.com>",
+    "subject": "Atlas Finans Teknolojileri - mülakat zamanınızı seçin",
+    "body": "Merhaba,\n\nYazılım Mühendisi pozisyonuna yaptığınız başvuru için teşekkür ederiz. Sizi bir sonraki aşama olan teknik mülakata davet ediyoruz.\n\nÖnümüzdeki iki hafta içinde size uygun olan 60 dakikalık bir zaman dilimini aşağıdaki bağlantıdan seçebilirsiniz:\n\nhttps://randevu.atlasfinans.example.com/mulakat/af-3391\n\nHerhangi bir sorunuz olursa bu e-postaya yanıt verebilirsiniz.\n\nSaygılarımızla,\nAtlas Finans Teknolojileri İşe Alım Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T11:05:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Atlas Finans Teknolojileri",
+    "role": "Yazılım Mühendisi",
+    "date": null
+  }
+}

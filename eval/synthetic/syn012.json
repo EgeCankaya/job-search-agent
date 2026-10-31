@@ -1,0 +1,19 @@
+{
+  "id": "syn012",
+  "language": "en",
+  "hard_case": "newsletter_mentions_interview",
+  "email": {
+    "sender": "JobNest Career Tips <tips@jobnest.example.com>",
+    "subject": "5 ways to ace your next technical interview",
+    "body": "This week on the JobNest blog:\n\n1. Practise thinking out loud\n2. Ask clarifying questions before you code\n3. Test your solution with small examples\n4. Know the trade-offs of your design\n5. Prepare two questions for your interviewer\n\nRead the full article: https://jobnest.example.com/blog/ace-interview\n\nYou are receiving this email because you subscribed to JobNest career tips.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-16T07:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

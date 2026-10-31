@@ -1,0 +1,19 @@
+{
+  "id": "syn061",
+  "language": "tr",
+  "hard_case": "invite_and_assessment",
+  "email": {
+    "sender": "Can Öztürk <can.ozturk@laleodeme.example.com>",
+    "subject": "Lale Ödeme Sistemleri - ödev ve teknik görüşme",
+    "body": "Merhaba,\n\nTanışma görüşmemiz için teşekkürler. Backend Mühendisi pozisyonu için sizinle sürece devam etmek istiyoruz.\n\nBir sonraki aşama iki bölümden oluşuyor:\n1. Yaklaşık iki saat sürecek kısa bir ödev. Detaylar ayrı bir e-postayla gelecek; çözümünüzü 8 Kasım 2026 tarihine kadar göndermenizi rica ederiz.\n2. 11 Kasım 2026 Çarşamba saat 16:00'da, çözümünüzü birlikte inceleyeceğimiz ve API tasarımı üzerine konuşacağımız teknik görüşme.\n\nGörüşme saatinin size uygun olup olmadığını teyit eder misiniz?\n\nTeşekkürler,\nCan Öztürk\nTeknik İşe Alım Uzmanı",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T09:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Lale Ödeme Sistemleri",
+    "role": "Backend Mühendisi",
+    "date": "2026-11-11T16:00"
+  }
+}

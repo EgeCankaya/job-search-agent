@@ -1,0 +1,19 @@
+{
+  "id": "syn048",
+  "language": "en",
+  "hard_case": "invite_and_assessment",
+  "email": {
+    "sender": "Grace Whitfield <grace.whitfield@tidewell.example.com>",
+    "subject": "Tidewell Health - Backend Engineer: take-home and technical interview",
+    "body": "Hi,\n\nThanks for your time on the intro call. We'd like to move you forward for the Backend Engineer role at Tidewell Health.\n\nThe next stage has two parts:\n1. A short take-home exercise (about 2 hours). You'll get the instructions from our test platform shortly; please submit it by Sunday, 8 November 2026.\n2. A technical interview on Wednesday, 11 November 2026 at 16:00, where we'll go through your solution together and talk about API design.\n\nPlease confirm that the interview time works for you.\n\nThanks,\nGrace Whitfield\nTechnical Recruiter",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T11:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Tidewell Health",
+    "role": "Backend Engineer",
+    "date": "2026-11-11T16:00"
+  }
+}

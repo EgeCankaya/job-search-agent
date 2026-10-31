@@ -1,0 +1,19 @@
+{
+  "id": "syn124",
+  "language": "tr",
+  "hard_case": "invite_in_rejection",
+  "email": {
+    "sender": "Lavanta Analitik Kariyer <kariyer@lavanta.example.com>",
+    "subject": "Lavanta Analitik - başvurunuz hakkında",
+    "body": "Merhaba,\n\nLavanta Analitik'teki Veri Bilimci pozisyonu için başvurunuzu değerlendirdik; maalesef bu pozisyon için sürece sizinle devam etmeyeceğiz.\n\nÖte yandan, Veri Analisti pozisyonumuz için sizinle görüşmek isteriz. Mülakat için size uygun bir zamanı şu bağlantıdan seçebilirsiniz: https://randevu.lavanta.example.com/va\n\nİyi çalışmalar,\nLavanta Analitik Kariyer",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T11:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Lavanta Analitik",
+    "role": "Veri Analisti",
+    "date": null
+  }
+}

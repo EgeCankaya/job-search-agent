@@ -1,0 +1,19 @@
+{
+  "id": "syn086",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "İşİlanları <bildirim@isilanlari.example.com>",
+    "subject": "Bu hafta 4 işe alımcı profilinizi görüntüledi",
+    "body": "Profiliniz ilgi görüyor!\n\nBu hafta 4 işe alımcı İşİlanları profilinizi görüntüledi. Kim olduklarını görmek için İşİlanları Plus'a geçin.\n\nProfil istatistikleriniz: https://isilanlari.example.com/istatistik\n\nE-posta tercihlerinizi yönetin: https://isilanlari.example.com/tercihler",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T05:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

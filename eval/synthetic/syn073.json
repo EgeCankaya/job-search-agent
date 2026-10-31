@@ -1,0 +1,19 @@
+{
+  "id": "syn073",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Arjun Mehta <arjun.mehta@kelpwave.example.com>",
+    "subject": "Your forecasting project on GitHub",
+    "body": "Hi,\n\nI lead the machine learning team at Kelpwave. I found your time-series forecasting project on GitHub and really liked how you structured the evaluation.\n\nWe're hiring a Machine Learning Engineer to work on demand forecasting for our marketplace. If you're open to new opportunities, I'd love to tell you more about the role.\n\nThanks,\nArjun Mehta\nML Lead, Kelpwave",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-15T09:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Kelpwave",
+    "role": "Machine Learning Engineer",
+    "date": null
+  }
+}

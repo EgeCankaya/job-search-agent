@@ -1,0 +1,19 @@
+{
+  "id": "syn122",
+  "language": "en",
+  "hard_case": "invite_in_rejection",
+  "email": {
+    "sender": "Grace Lin <grace.lin@marigold.example.com>",
+    "subject": "Marigold Health: an update on your application",
+    "body": "Hi,\n\nWe've reviewed your application for the Product Manager role at Marigold Health, and unfortunately we won't be moving forward with it.\n\nOur data team, however, is hiring a Data Product Analyst, and the hiring manager would like to interview you for that role. Please pick a 45-minute slot for the interview here: https://calendar.marigold.example.com/book/dpa\n\nBest wishes,\nGrace Lin\nRecruiter, Marigold Health",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T13:05:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Marigold Health",
+    "role": "Data Product Analyst",
+    "date": null
+  }
+}

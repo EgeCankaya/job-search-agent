@@ -1,0 +1,19 @@
+{
+  "id": "syn004",
+  "language": "tr",
+  "hard_case": "job_digest_html",
+  "email": {
+    "sender": "KariyerPortal İlanlar <ilan@kariyerportal.example.com>",
+    "subject": "Size uygun 8 yeni ilan: Yazılım Geliştirici",
+    "body": null,
+    "html": "<html><body>\n<h2>Aramanıza uygun yeni ilanlar: Yazılım Geliştirici</h2>\n<table>\n<tr><td><b>Yazılım Geliştirici</b> - Ilık Bankacılık - İstanbul (hibrit)</td></tr>\n<tr><td><b>Kıdemli Yazılım Geliştirici</b> - Çakıl Perakende - Uzaktan</td></tr>\n<tr><td><b>.NET Yazılım Geliştirici</b> - Martılı Telekom - Ankara</td></tr>\n<tr><td><b>Full Stack Yazılım Geliştirici</b> - Ladin Yazılım - İzmir</td></tr>\n<tr><td><a href=\"https://kariyerportal.example.com/ara/yg\">8 ilanın tamamını gör</a></td></tr>\n</table>\n<p style=\"font-size:11px\">Bu e-postayı iş alarmı oluşturduğunuz için alıyorsunuz. <a href=\"https://kariyerportal.example.com/abonelik\">Abonelikten çık</a></p>\n</body></html>",
+    "calendar": null,
+    "received_at": "2026-10-13T05:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

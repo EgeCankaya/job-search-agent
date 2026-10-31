@@ -1,0 +1,19 @@
+{
+  "id": "syn087",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Oakridge Analytics HR <hr@oakridge.example.com>",
+    "subject": "Your Data Analyst application",
+    "body": "Dear candidate,\n\nThank you for applying for the Data Analyst role at Oakridge Analytics. Unfortunately, we won't be taking your application further on this occasion.\n\nWe were impressed by your profile, so with your permission we will keep your CV on file and contact you if a suitable role opens up in the next twelve months.\n\nWith best wishes,\nOakridge Analytics HR",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-16T09:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Oakridge Analytics",
+    "role": "Data Analyst",
+    "date": null
+  }
+}

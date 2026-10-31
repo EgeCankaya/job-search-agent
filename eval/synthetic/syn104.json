@@ -1,0 +1,19 @@
+{
+  "id": "syn104",
+  "language": "tr",
+  "hard_case": "rejection_in_invite_thread",
+  "email": {
+    "sender": "Okan Güneş <okan.gunes@selvirobotik.example.com>",
+    "subject": "Ynt: Mülakat daveti - Robotik Yazılım Mühendisi",
+    "body": "Merhaba,\n\nSelvi Robotik olarak bizimle görüştüğünüz için teşekkür ederiz. Maalesef Robotik Yazılım Mühendisi pozisyonu için başvurunuzla ilerlememe kararı aldık. Zaman ayırdığınız için teşekkür eder, başarılar dileriz.\n\nOkan\n\n12 Eki 2026 Pzt 10:05 tarihinde Okan Güneş <okan.gunes@selvirobotik.example.com> şunu yazdı:\n> Robotik Yazılım Mühendisi pozisyonu için sizi 16 Ekim 2026 Cuma saat 11:00'de\n> mülakata davet etmek istiyoruz. Saatin uygun olup olmadığını teyit eder misiniz?",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T10:35:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Selvi Robotik",
+    "role": "Robotik Yazılım Mühendisi",
+    "date": null
+  }
+}

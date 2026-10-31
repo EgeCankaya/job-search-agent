@@ -1,0 +1,19 @@
+{
+  "id": "syn123",
+  "language": "tr",
+  "hard_case": "invite_in_rejection",
+  "email": {
+    "sender": "Kızılcık Yazılım İK <ik@kizilcik.example.com>",
+    "subject": "Kızılcık Yazılım başvurunuz",
+    "body": "Merhaba,\n\nKızılcık Yazılım'daki Kıdemli Backend Geliştirici pozisyonuna gösterdiğiniz ilgi için teşekkür ederiz. Bu pozisyon için daha uzun süreli dağıtık sistem deneyimi aradığımızdan başvurunuzla ilerleyemiyoruz.\n\nBununla birlikte, Backend Geliştirici pozisyonumuz için sizinle bir mülakat yapmak istiyoruz. Mülakatı 18 Kasım 2026 Çarşamba saat 14:30'da çevrim içi olarak planladık; yaklaşık bir saat sürecek.\n\nUygunluğunuzu yanıt vererek bildirir misiniz?\n\nSaygılarımızla,\nKızılcık Yazılım İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T09:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Kızılcık Yazılım",
+    "role": "Backend Geliştirici",
+    "date": "2026-11-18T14:30"
+  }
+}

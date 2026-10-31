@@ -1,0 +1,19 @@
+{
+  "id": "syn044",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Ethan Clarke <ethan.clarke@cobaltharbor.example.com>",
+    "subject": "Great news from Cobalt Harbor",
+    "body": "Hi,\n\nThank you for all the time you've spent with us over the last few weeks. I'm very happy to tell you that the team would like to offer you the Data Engineer role at Cobalt Harbor.\n\nOur People team will send the formal offer letter with the full compensation details in the next two days. In the meantime, feel free to reply with any questions.\n\nWelcome aboard, we hope!\nEthan Clarke\nEngineering Manager",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T17:05:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Cobalt Harbor",
+    "role": "Data Engineer",
+    "date": null
+  }
+}

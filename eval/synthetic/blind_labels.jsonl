@@ -1,0 +1,124 @@
+{"id": "syn001", "email_class": "assessment", "company": "Akça Fintek", "role": "Ürün Analisti", "date": "2026-11-09", "language": "tr", "unsure": ""}
+{"id": "syn002", "email_class": "rejection", "company": "Meridian Cloud", "role": "Cloud Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn003", "email_class": "assessment", "company": "Vadi Eğitim Teknolojileri", "role": "Frontend Geliştirici", "date": "2026-11-05T18:00", "language": "tr", "unsure": ""}
+{"id": "syn004", "email_class": "other", "company": null, "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn005", "email_class": "interview_invite", "company": "Mavi Lojistik", "role": "Veri Analisti", "date": "2026-11-10T10:30", "language": "tr", "unsure": ""}
+{"id": "syn006", "email_class": "interview_invite", "company": "Pusula Sağlık", "role": "Veri Mühendisi", "date": "2026-11-06T11:00", "language": "tr", "unsure": ""}
+{"id": "syn007", "email_class": "offer", "company": "Ege Veri", "role": "Makine Öğrenmesi Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn008", "email_class": "assessment", "company": "Kule Sigorta Teknoloji", "role": "Test Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn009", "email_class": "interview_invite", "company": "Orbitale", "role": "Frontend Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn010", "email_class": "offer", "company": "Mercan Turizm Teknoloji", "role": "Yazılım Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn011", "email_class": "interview_invite", "company": "Bluefjord Data", "role": "Machine Learning Engineer", "date": "2026-11-09T11:00", "language": "en", "unsure": ""}
+{"id": "syn012", "email_class": "other", "company": null, "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn013", "email_class": "interview_invite", "company": "Poyraz Robotik", "role": "Gömülü Yazılım Mühendisi", "date": "2026-11-13T11:00", "language": "tr", "unsure": ""}
+{"id": "syn014", "email_class": "interview_invite", "company": "Lumenrise", "role": "Data Analyst", "date": "2026-11-10T13:00", "language": "en", "unsure": ""}
+{"id": "syn015", "email_class": "other", "company": "Narin Teknoloji", "role": null, "date": null, "language": "tr", "unsure": "employer webinar; unclear if it counts as hiring company"}
+{"id": "syn016", "email_class": "rejection", "company": "Glasshouse Labs", "role": "Frontend Developer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn017", "email_class": "recruiter_outreach", "company": "Glimmer Health", "role": "Founding Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn018", "email_class": "recruiter_outreach", "company": "Gelincik Sağlık", "role": "Kurucu Mühendis", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn019", "email_class": "offer", "company": "Çınar Perakende", "role": "Veri Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn020", "email_class": "recruiter_outreach", "company": "Riverstone Insurance", "role": "QA Automation Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn021", "email_class": "interview_invite", "company": "Redwater Robotics", "role": "Robotics Software Engineer", "date": "2026-11-16T10:00", "language": "en", "unsure": ""}
+{"id": "syn022", "email_class": "assessment", "company": "Dalga İletişim", "role": "Ağ Mühendisi", "date": "2026-11-04", "language": "tr", "unsure": ""}
+{"id": "syn023", "email_class": "other", "company": null, "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn024", "email_class": "interview_invite", "company": "Brightpath Analytics", "role": "Data Engineer", "date": "2026-11-05T14:00", "language": "en", "unsure": ""}
+{"id": "syn025", "email_class": "other", "company": "Copperleaf Software", "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn026", "email_class": "interview_invite", "company": "Ashgrove Fintech", "role": "Data Engineer", "date": "2026-11-12T11:00", "language": "en", "unsure": ""}
+{"id": "syn027", "email_class": "other", "company": "Pamuk Enerji", "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn028", "email_class": "assessment", "company": "Willowbank Retail", "role": "Frontend Developer", "date": "2026-10-28T12:00", "language": "en", "unsure": ""}
+{"id": "syn029", "email_class": "offer", "company": "Nimbus Forge", "role": "Machine Learning Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn030", "email_class": "other", "company": "Bulut Mobilite", "role": "iOS Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn031", "email_class": "other", "company": "Stonebridge Media", "role": "Product Analyst", "date": null, "language": "en", "unsure": ""}
+{"id": "syn032", "email_class": "rejection", "company": "Tuna Lojistik", "role": "Veri Analisti", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn033", "email_class": "recruiter_outreach", "company": "Kalkan Siber", "role": "Güvenlik Analisti", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn034", "email_class": "rejection", "company": "Elmstead Robotics", "role": "Robotics Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn035", "email_class": "other", "company": "Driftwood Analytics", "role": "Data Analyst", "date": null, "language": "en", "unsure": ""}
+{"id": "syn036", "email_class": "assessment", "company": "Ilgaz Siber Güvenlik", "role": "Siber Güvenlik Uzmanı", "date": "2026-11-02T23:59", "language": "tr", "unsure": ""}
+{"id": "syn037", "email_class": "offer", "company": "Verdant Grid", "role": "DevOps Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn038", "email_class": "other", "company": "Gökkuşağı Yazılım", "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn039", "email_class": "interview_invite", "company": "Quillstone", "role": "Software Engineer", "date": "2026-11-13T09:30", "language": "en", "unsure": ""}
+{"id": "syn040", "email_class": "recruiter_outreach", "company": "Albatros Oyun", "role": "Oyun Araçları Geliştirici", "date": null, "language": "tr", "unsure": "mentions old role filled (rejection?) but email is outreach for new role"}
+{"id": "syn041", "email_class": "assessment", "company": "Bora Otomotiv Yazılım", "role": "Gömülü Sistemler Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn042", "email_class": "interview_invite", "company": "Yıldız Enerji", "role": "Veri Analisti", "date": "2026-11-09T13:00", "language": "tr", "unsure": ""}
+{"id": "syn043", "email_class": "rejection", "company": "Kartal Oyun", "role": "Oyun Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn044", "email_class": "offer", "company": "Cobalt Harbor", "role": "Data Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn045", "email_class": "recruiter_outreach", "company": "Thistle Consulting", "role": "Data Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn046", "email_class": "rejection", "company": "Uzay Teknoloji", "role": "Yapay Zeka Stajyeri", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn047", "email_class": "other", "company": "Yonca Yazılım", "role": "Backend Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn048", "email_class": "interview_invite", "company": "Tidewell Health", "role": "Backend Engineer", "date": "2026-11-11T16:00", "language": "en", "unsure": ""}
+{"id": "syn049", "email_class": "offer", "company": "Larkspur Learning", "role": "Software Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn050", "email_class": "recruiter_outreach", "company": "Fırat Lojistik Teknoloji", "role": "Backend Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn051", "email_class": "rejection", "company": "Orkide Yazılım", "role": "Mobil Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn052", "email_class": "assessment", "company": "Nehir Analitik", "role": "Veri Bilimci", "date": "2026-11-06", "language": "tr", "unsure": ""}
+{"id": "syn053", "email_class": "recruiter_outreach", "company": "Çağlayan Danışmanlık", "role": "Veri Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn054", "email_class": "offer", "company": "Zeytin Tarım Teknolojileri", "role": "Backend Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn055", "email_class": "recruiter_outreach", "company": "Ekin Sigorta", "role": "Test Otomasyon Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn056", "email_class": "other", "company": null, "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn057", "email_class": "recruiter_outreach", "company": "Asena Ödeme Hizmetleri", "role": "Kıdemli Python Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn058", "email_class": "interview_invite", "company": "Copperleaf Software", "role": "Platform Engineer", "date": "2026-11-04T15:30", "language": "en", "unsure": ""}
+{"id": "syn059", "email_class": "other", "company": "Larchmont Tech", "role": null, "date": null, "language": "en", "unsure": "employer webinar; unclear if it counts as hiring company"}
+{"id": "syn060", "email_class": "recruiter_outreach", "company": "Saffron Logistics", "role": "Backend Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn061", "email_class": "interview_invite", "company": "Lale Ödeme Sistemleri", "role": "Backend Mühendisi", "date": "2026-11-11T16:00", "language": "tr", "unsure": ""}
+{"id": "syn062", "email_class": "other", "company": "Wexford Labs", "role": "Software Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn063", "email_class": "rejection", "company": "Fidan Sağlık Teknoloji", "role": "Veri Bilimci", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn064", "email_class": "interview_invite", "company": "Halcyon Systems", "role": "Backend Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn065", "email_class": "other", "company": null, "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn066", "email_class": "other", "company": null, "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn067", "email_class": "interview_invite", "company": "Kuzey Yazılım A.Ş.", "role": "Backend Geliştirici", "date": "2026-11-05T14:00", "language": "tr", "unsure": ""}
+{"id": "syn068", "email_class": "other", "company": "Elmwood Software", "role": "Backend Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn069", "email_class": "other", "company": "Kayra Analitik", "role": "Veri Analisti", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn070", "email_class": "recruiter_outreach", "company": "Nilüfer Teknoloji", "role": "Veri Platform Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn071", "email_class": "assessment", "company": "Ironbridge Security", "role": "Site Reliability Engineer", "date": "2026-11-09", "language": "en", "unsure": ""}
+{"id": "syn072", "email_class": "other", "company": "Orchard Mobility", "role": "iOS Developer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn073", "email_class": "recruiter_outreach", "company": "Kelpwave", "role": "Machine Learning Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn074", "email_class": "interview_invite", "company": "Atlas Finans Teknolojileri", "role": "Yazılım Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn075", "email_class": "rejection", "company": "Saltmarsh Payments", "role": "Backend Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn076", "email_class": "other", "company": null, "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn077", "email_class": "recruiter_outreach", "company": "Corvid Security", "role": "Security Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn078", "email_class": "other", "company": "Rota Yazılım", "role": "Yazılım Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn079", "email_class": "assessment", "company": "Kestrel AI", "role": "AI Engineer", "date": "2026-11-05T18:00", "language": "en", "unsure": ""}
+{"id": "syn080", "email_class": "assessment", "company": "Sablewood Media", "role": "Data Scientist", "date": "2026-11-03", "language": "en", "unsure": ""}
+{"id": "syn081", "email_class": "recruiter_outreach", "company": "Doruk Yapay Zeka", "role": "Makine Öğrenmesi Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn082", "email_class": "interview_invite", "company": "Toros Mobilite", "role": "Mobil Uygulama Geliştirici", "date": "2026-11-16T09:30", "language": "tr", "unsure": ""}
+{"id": "syn083", "email_class": "rejection", "company": "Kumsal Yazılım", "role": "Yazılım Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn084", "email_class": "rejection", "company": "Gümüş Fintek", "role": "Backend Geliştirici", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn085", "email_class": "other", "company": "Kelso Energy", "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn086", "email_class": "other", "company": null, "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn087", "email_class": "rejection", "company": "Oakridge Analytics", "role": "Data Analyst", "date": null, "language": "en", "unsure": ""}
+{"id": "syn088", "email_class": "recruiter_outreach", "company": "Arclight Payments", "role": "Senior Python Developer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn089", "email_class": "other", "company": "Mira Yapay Zeka", "role": "Veri Bilimci", "date": null, "language": "tr", "unsure": "candidate withdrew; closed by request, not declined"}
+{"id": "syn090", "email_class": "recruiter_outreach", "company": "Pebblebrook Data", "role": "Analytics Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn091", "email_class": "assessment", "company": "Pinecrest Games", "role": "Gameplay Programmer", "date": "2026-11-02T23:59", "language": "en", "unsure": ""}
+{"id": "syn092", "email_class": "rejection", "company": "Brookvale Health", "role": "Data Scientist", "date": null, "language": "en", "unsure": ""}
+{"id": "syn093", "email_class": "assessment", "company": "Granite Peak Insurance", "role": "QA Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn094", "email_class": "assessment", "company": "Göktaşı Yazılım", "role": "Java Geliştirici", "date": "2026-10-28T12:00", "language": "tr", "unsure": ""}
+{"id": "syn095", "email_class": "other", "company": null, "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn096", "email_class": "rejection", "company": "Foxglove Software", "role": "Software Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn097", "email_class": "assessment", "company": "Fernhill Energy", "role": "Cloud Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn098", "email_class": "interview_invite", "company": "Defne Oyun Stüdyosu", "role": "Unity Geliştirici", "date": "2026-11-12T15:00", "language": "tr", "unsure": ""}
+{"id": "syn099", "email_class": "rejection", "company": "Wavecrest Studios", "role": "Data Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn100", "email_class": "rejection", "company": "Pelin Bilişim", "role": "Sistem Yöneticisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn101", "email_class": "other", "company": "Selin Medya", "role": "Ürün Analisti", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn102", "email_class": "offer", "company": "Starling Mobility", "role": "Backend Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn103", "email_class": "rejection", "company": "Marlow Digital", "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn104", "email_class": "rejection", "company": "Selvi Robotik", "role": "Robotik Yazılım Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn105", "email_class": "rejection", "company": "Juniper Freight", "role": "DevOps Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn106", "email_class": "recruiter_outreach", "company": "Sarp Veri", "role": "Analitik Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn107", "email_class": "assessment", "company": "Silverline Logistics", "role": "Data Analyst", "date": "2026-11-06", "language": "en", "unsure": ""}
+{"id": "syn108", "email_class": "other", "company": "Bramblewood Retail", "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn109", "email_class": "rejection", "company": "Ada Sigorta Teknoloji", "role": "DevOps Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn110", "email_class": "other", "company": "Çiçek Perakende", "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn111", "email_class": "rejection", "company": "Rüzgar Enerji", "role": "Yazılım Test Uzmanı", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn112", "email_class": "rejection", "company": "Ayışığı Medya", "role": null, "date": null, "language": "tr", "unsure": ""}
+{"id": "syn113", "email_class": "rejection", "company": "Helix Harbor", "role": "Software Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn114", "email_class": "recruiter_outreach", "company": "Brightmoor Tech", "role": "Data Platform Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn115", "email_class": "other", "company": null, "role": null, "date": null, "language": "en", "unsure": ""}
+{"id": "syn116", "email_class": "recruiter_outreach", "company": "Hollowell Games", "role": "Tools Programmer", "date": null, "language": "en", "unsure": "mentions old role filled (rejection?) but email is outreach for new role"}
+{"id": "syn117", "email_class": "offer", "company": "Kestane Medya", "role": "Veri Analisti", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn118", "email_class": "rejection", "company": "Thornbury Systems", "role": "Platform Engineer", "date": null, "language": "en", "unsure": ""}
+{"id": "syn119", "email_class": "other", "company": "Cinderford AI", "role": "Data Scientist", "date": null, "language": "en", "unsure": "candidate withdrew; closed by request, not declined"}
+{"id": "syn120", "email_class": "interview_invite", "company": "Sedir Bulut", "role": "DevOps Mühendisi", "date": null, "language": "tr", "unsure": ""}
+{"id": "syn121", "email_class": "interview_invite", "company": "Fenwick Robotics", "role": "Robotics Software Engineer", "date": "2026-11-19T10:30", "language": "en", "unsure": ""}
+{"id": "syn122", "email_class": "interview_invite", "company": "Marigold Health", "role": "Data Product Analyst", "date": null, "language": "en", "unsure": ""}
+{"id": "syn123", "email_class": "interview_invite", "company": "Kızılcık Yazılım", "role": "Backend Geliştirici", "date": "2026-11-18T14:30", "language": "tr", "unsure": ""}
+{"id": "syn124", "email_class": "interview_invite", "company": "Lavanta Analitik", "role": "Veri Analisti", "date": null, "language": "tr", "unsure": ""}

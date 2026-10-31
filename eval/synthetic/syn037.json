@@ -1,0 +1,19 @@
+{
+  "id": "syn037",
+  "language": "en",
+  "hard_case": "offer_with_tasks",
+  "email": {
+    "sender": "Verdant Grid People Team <people@verdantgrid.example.com>",
+    "subject": "Offer of employment - DevOps Engineer",
+    "body": "Dear candidate,\n\nWe are pleased to offer you the position of DevOps Engineer at Verdant Grid, as set out in the attached offer letter.\n\nTo accept, please sign the letter and complete the background check form through the link in the attachment. Once the background check is complete, we'll confirm your start date and send your onboarding schedule.\n\nWe look forward to welcoming you to the team.\n\nKind regards,\nVerdant Grid People Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T08:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Verdant Grid",
+    "role": "DevOps Engineer",
+    "date": null
+  }
+}

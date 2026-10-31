@@ -1,0 +1,19 @@
+{
+  "id": "syn117",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Ece Doğan <ece.dogan@kestanemedya.example.com>",
+    "subject": "Güncellenmiş teklif - Veri Analisti",
+    "body": "Merhaba,\n\nDünkü açık görüşmeniz için teşekkür ederim. İşe alım yöneticimizle konuştum ve Veri Analisti pozisyonu için teklifimizi iyileştirebiliyoruz:\n\n- Brüt maaş 1.150.000 TL'ye yükseltildi\n- Tek seferlik 50.000 TL katılım bonusu\n- Haftada üç gün uzaktan çalışma\n\nGüncellenmiş teklif mektubu ekte. Uygun olup olmadığını bana bildirir misiniz?\n\nSevgiler,\nEce Doğan\nİşe Alım Uzmanı, Kestane Medya",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T15:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Kestane Medya",
+    "role": "Veri Analisti",
+    "date": null
+  }
+}

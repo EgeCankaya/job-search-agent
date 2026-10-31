@@ -1,0 +1,19 @@
+{
+  "id": "syn078",
+  "language": "tr",
+  "hard_case": "post_interview_thanks",
+  "email": {
+    "sender": "Volkan Özkan <volkan.ozkan@rotayazilim.example.com>",
+    "subject": "Bugünkü görüşmemiz için teşekkürler",
+    "body": "Merhaba,\n\nBugün Rota Yazılım'daki Yazılım Mühendisi pozisyonu için bizimle görüşmeye zaman ayırdığınız için teşekkür ederiz. Ekip sohbetten çok keyif aldı.\n\nBu hafta son birkaç adayla da görüşüyoruz; önümüzdeki haftanın başında size bir güncelleme ileteceğiz.\n\nİyi akşamlar,\nVolkan Özkan\nMühendislik Müdürü",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T16:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Rota Yazılım",
+    "role": "Yazılım Mühendisi",
+    "date": null
+  }
+}

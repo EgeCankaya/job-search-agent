@@ -1,0 +1,19 @@
+{
+  "id": "syn060",
+  "language": "en",
+  "hard_case": "outreach_mentions_interview",
+  "email": {
+    "sender": "Helena Novak <helena.novak@saffron.example.com>",
+    "subject": "Backend Engineer role at Saffron Logistics",
+    "body": "Hello,\n\nI'm reaching out from Saffron Logistics. We're growing our routing team and looking for a Backend Engineer with Go or Java experience, which matches your profile.\n\nIf you're interested, the next step would be an interview with our engineering lead. Just reply to this email and I'll set it up.\n\nBest regards,\nHelena Novak\nTalent Acquisition, Saffron Logistics",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-16T11:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Saffron Logistics",
+    "role": "Backend Engineer",
+    "date": null
+  }
+}

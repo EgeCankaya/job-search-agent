@@ -1,0 +1,19 @@
+{
+  "id": "syn030",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Bulut Mobilite Kariyer <kariyer@bulutmobilite.example.com>",
+    "subject": "Başvurunuz değerlendirme aşamasında",
+    "body": "Merhaba,\n\nBulut Mobilite'deki iOS Geliştirici pozisyonuna yaptığınız başvurunun şu anda işe alım ekibi tarafından değerlendirildiğini bildirmek isteriz.\n\nBir gelişme olduğunda size haber vereceğiz. Sabrınız için teşekkür ederiz.\n\nBulut Mobilite Kariyer",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T09:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Bulut Mobilite",
+    "role": "iOS Geliştirici",
+    "date": null
+  }
+}

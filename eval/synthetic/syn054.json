@@ -1,0 +1,19 @@
+{
+  "id": "syn054",
+  "language": "tr",
+  "hard_case": "offer_with_tasks",
+  "email": {
+    "sender": "Zeytin Tarım Teknolojileri İK <ik@zeytintarim.example.com>",
+    "subject": "İş teklifi - Backend Geliştirici",
+    "body": "Sayın aday,\n\nZeytin Tarım Teknolojileri'nde Backend Geliştirici pozisyonu için size ekteki teklif mektubunda belirtilen koşullarla iş teklif etmekten memnuniyet duyarız.\n\nTeklifi kabul etmeniz halinde, imzalı teklif mektubunu ve işe giriş için gereken belgeleri (sağlık raporu, adli sicil kaydı, diploma fotokopisi) bize iletmenizi rica ederiz. Belgeler tamamlandığında işe başlangıç tarihinizi teyit edeceğiz.\n\nSaygılarımızla,\nZeytin Tarım Teknolojileri İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T07:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Zeytin Tarım Teknolojileri",
+    "role": "Backend Geliştirici",
+    "date": null
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "syn011",
+  "language": "en",
+  "hard_case": "calendar_only_invite",
+  "email": {
+    "sender": "Priya Nair <priya.nair@bluefjord.example.com>",
+    "subject": "Invitation: Bluefjord Data - Machine Learning Engineer technical interview @ Mon 9 Nov 2026 11:00 - 12:00 (GMT+3)",
+    "body": "Bluefjord Data - Machine Learning Engineer technical interview\n\nJoin with video call: https://meet.example.com/bfd-ml-tech\n\nOrganizer: priya.nair@bluefjord.example.com\n\nInvitation from the calendar. You are receiving this because you are an attendee of the event.",
+    "html": null,
+    "calendar": {
+      "start": "20261109T110000",
+      "tzid": "Europe/Istanbul",
+      "summary": "Bluefjord Data - Machine Learning Engineer technical interview"
+    },
+    "received_at": "2026-10-26T10:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Bluefjord Data",
+    "role": "Machine Learning Engineer",
+    "date": "2026-11-09T11:00"
+  }
+}

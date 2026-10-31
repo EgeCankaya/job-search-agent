@@ -1,0 +1,19 @@
+{
+  "id": "syn105",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Ravi Shah <ravi.shah@juniperfreight.example.com>",
+    "subject": "DevOps Engineer application - Juniper Freight",
+    "body": "Hi,\n\nThanks for applying for the DevOps Engineer role at Juniper Freight and for speaking with me on the phone.\n\nWe've decided to move ahead with candidates who have more hands-on Kubernetes experience, so we won't be taking your application to the next stage.\n\nIf it helps, I'm happy to share more detailed feedback. Just reply to this email.\n\nRegards,\nRavi Shah\nTalent Partner",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T15:35:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Juniper Freight",
+    "role": "DevOps Engineer",
+    "date": null
+  }
+}

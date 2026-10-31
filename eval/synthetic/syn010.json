@@ -1,0 +1,19 @@
+{
+  "id": "syn010",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Gizem Polat <gizem.polat@mercanturizm.example.com>",
+    "subject": "Mercan Turizm Teknoloji - iş teklifi",
+    "body": "Merhaba,\n\nYazılım Mühendisi pozisyonu için size iş teklifimizi iletmekten büyük mutluluk duyuyoruz!\n\nTeklif mektubunuz ekte yer alıyor. Özetle:\n- Yıllık brüt maaş: 1.400.000 TL\n- İşe başlangıç: 4 Ocak 2027 Pazartesi\n- Özel sağlık sigortası, yemek kartı ve yıllık eğitim bütçesi\n\nKararınızı 6 Kasım 2026 tarihine kadar bize iletmenizi rica ederiz. Sorularınız için bir görüşme ayarlayabiliriz.\n\nTebrikler!\nGizem Polat\nİnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T11:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Mercan Turizm Teknoloji",
+    "role": "Yazılım Mühendisi",
+    "date": null
+  }
+}

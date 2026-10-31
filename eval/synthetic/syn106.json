@@ -1,0 +1,19 @@
+{
+  "id": "syn106",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Tolga Er <tolga.er@sarpveri.example.com>",
+    "subject": "Ynt: Sarp Veri - Analitik Mühendisi",
+    "body": "Merhaba,\n\nÖnceki mesajım gözünüzden kaçmış olabilir diye tekrar yazıyorum. Sarp Veri'de hâlâ bir Analitik Mühendisi arıyoruz ve dbt deneyiminizin ekibe çok katkı sağlayacağını düşünüyorum.\n\nKonuşmak isterseniz haber verin.\n\nKolay gelsin,\nTolga Er\nİşe Alım Uzmanı, Sarp Veri",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T09:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Sarp Veri",
+    "role": "Analitik Mühendisi",
+    "date": null
+  }
+}

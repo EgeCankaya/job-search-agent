@@ -1,0 +1,19 @@
+{
+  "id": "syn064",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Halcyon Systems via HireFlow <no-reply@hireflow.example.com>",
+    "subject": "Next step: schedule your technical interview with Halcyon Systems",
+    "body": "Hello,\n\nGood news! The Halcyon Systems hiring team has reviewed your application for Backend Engineer and would like to move you to the technical interview stage.\n\nPlease choose a 60-minute slot that suits you using the scheduling page below. Slots are available over the next two weeks.\n\nBook your interview: https://hireflow.example.com/schedule/h7k2p9\n\nIf none of the times work, reply to this email and we'll find another option.\n\nThanks,\nThe Halcyon Systems Recruiting Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T13:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Halcyon Systems",
+    "role": "Backend Engineer",
+    "date": null
+  }
+}

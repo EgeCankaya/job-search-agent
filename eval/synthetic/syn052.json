@@ -1,0 +1,19 @@
+{
+  "id": "syn052",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Ayşe Koç <ayse.koc@nehiranalitik.example.com>",
+    "subject": "Nehir Analitik - Veri Bilimci ödevi",
+    "body": "Merhaba,\n\nVeri Bilimci pozisyonuna gösterdiğiniz ilgi için teşekkür ederiz. Bir sonraki adım olarak kısa bir ev ödevi hazırlamanızı istiyoruz.\n\nEkteki veri seti, bir e-ticaret sitesinin anonimleştirilmiş sipariş kayıtlarını içeriyor. Müşteri kaybını tahmin eden basit bir model kurup seçtiğiniz değişkenleri açıklayan kısa bir rapor hazırlamanızı ve 6 Kasım 2026 Cuma tarihine kadar bize göndermenizi rica ederiz.\n\nÖdev yaklaşık dört saat sürmeli.\n\nSaygılarımla,\nAyşe Koç\nVeri Bilimi Ekip Lideri",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-24T11:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Nehir Analitik",
+    "role": "Veri Bilimci",
+    "date": "2026-11-06"
+  }
+}

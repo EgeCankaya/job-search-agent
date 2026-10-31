@@ -1,0 +1,19 @@
+{
+  "id": "syn111",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "KariyerPortal <bildirim@kariyerportal.example.com>",
+    "subject": "Başvuru durumunuz güncellendi",
+    "body": "Merhaba,\n\nRüzgar Enerji firmasının Yazılım Test Uzmanı ilanına yaptığınız başvurunun durumu güncellendi: Olumsuz.\n\nRüzgar Enerji'ye gösterdiğiniz ilgi için teşekkür ederiz. Diğer başvurularınızı KariyerPortal hesabınızdan görebilirsiniz.\n\nBu ileti KariyerPortal tarafından Rüzgar Enerji adına otomatik olarak gönderilmiştir.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-17T05:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Rüzgar Enerji",
+    "role": "Yazılım Test Uzmanı",
+    "date": null
+  }
+}

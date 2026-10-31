@@ -1,0 +1,19 @@
+{
+  "id": "syn083",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Kumsal Yazılım İK <ik@kumsalyazilim.example.com>",
+    "subject": "Kumsal Yazılım başvurunuz hakkında",
+    "body": "Sayın aday,\n\nKumsal Yazılım'daki Yazılım Mühendisi pozisyonuna gösterdiğiniz ilgi için teşekkür ederiz. Çok sayıda güçlü başvuru aldık ve dikkatli bir değerlendirme sonucunda başvurunuzla ilerlemeyeceğimizi bildirmek isteriz.\n\nİş arayışınızda başarılar dileriz.\n\nSaygılarımızla,\nKumsal Yazılım İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-14T07:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Kumsal Yazılım",
+    "role": "Yazılım Mühendisi",
+    "date": null
+  }
+}

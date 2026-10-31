@@ -1,0 +1,19 @@
+{
+  "id": "syn093",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Granite Peak Insurance Careers <careers@granitepeak.example.com>",
+    "subject": "Online aptitude test - QA Engineer application",
+    "body": "Dear candidate,\n\nThank you for applying for the QA Engineer role at Granite Peak Insurance. Every candidate at this stage completes an online aptitude test covering logical and numerical reasoning.\n\nThe test takes about 40 minutes and can be done whenever suits you. Please use the personal link below.\n\nhttps://tests.granitepeak.example.com/apt/77k1\n\nKind regards,\nGranite Peak Insurance Recruitment",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T07:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Granite Peak Insurance",
+    "role": "QA Engineer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn002",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Meridian Cloud Careers <careers@meridiancloud.example.com>",
+    "subject": "Cloud Engineer position at Meridian Cloud",
+    "body": "Hello,\n\nThank you for your interest in the Cloud Engineer role at Meridian Cloud. We wanted to let you know that the position has now been filled.\n\nWe appreciate the time you took to apply and hope you'll consider us for future openings.\n\nBest regards,\nMeridian Cloud Careers",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-15T12:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Meridian Cloud",
+    "role": "Cloud Engineer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn116",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Hollowell Games Recruiting <recruiting@hollowell.example.com>",
+    "subject": "A new role at Hollowell Games",
+    "body": "Hi,\n\nYou applied to Hollowell Games last year for a Gameplay Programmer position. That role has since been filled, but we've just opened a Tools Programmer position and your profile came to mind.\n\nIf you'd like to be considered, reply to this email and we'll send you the details.\n\nBest wishes,\nHollowell Games Recruiting",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T14:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Hollowell Games",
+    "role": "Tools Programmer",
+    "date": null
+  }
+}

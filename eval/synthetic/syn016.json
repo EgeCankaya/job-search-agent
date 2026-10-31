@@ -1,0 +1,19 @@
+{
+  "id": "syn016",
+  "language": "en",
+  "hard_case": "rejection_mentions_interview",
+  "email": {
+    "sender": "Megan Shaw <megan.shaw@glasshouse.example.com>",
+    "subject": "Following up on your interview",
+    "body": "Hi,\n\nThank you for interviewing for the Frontend Developer role at Glasshouse Labs last week, and for the effort you put into the technical session.\n\nAfter a lot of discussion, we've decided to proceed with another candidate whose experience is closer to what the team needs right now. This was a difficult decision, and we enjoyed getting to know you.\n\nIf you'd like feedback on your interviews, just reply and I'll set up a short call.\n\nAll the best,\nMegan Shaw\nRecruiter",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T16:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Glasshouse Labs",
+    "role": "Frontend Developer",
+    "date": null
+  }
+}

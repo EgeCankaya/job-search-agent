@@ -1,0 +1,19 @@
+{
+  "id": "syn043",
+  "language": "tr",
+  "hard_case": "rejection_after_assessment",
+  "email": {
+    "sender": "Kartal Oyun İşe Alım <isealim@kartaloyun.example.com>",
+    "subject": "Kodlama ödevi sonucunuz",
+    "body": "Merhaba,\n\nKartal Oyun'daki Oyun Geliştirici pozisyonu için kodlama ödevini tamamladığınız için teşekkür ederiz. Mühendislerimiz çözümünüzü dikkatle inceledi.\n\nMaalesef sonuçlarınız bu aşama için belirlediğimiz seviyeye ulaşmadı, bu nedenle başvurunuzla ilerlemeyeceğiz. Altı ay sonra yeniden başvurabilirsiniz.\n\nİyi dileklerimizle,\nKartal Oyun İşe Alım Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T12:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Kartal Oyun",
+    "role": "Oyun Geliştirici",
+    "date": null
+  }
+}

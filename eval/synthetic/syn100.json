@@ -1,0 +1,19 @@
+{
+  "id": "syn100",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Pelin Bilişim Kariyer <kariyer@pelinbilisim.example.com>",
+    "subject": "Sistem Yöneticisi pozisyonu",
+    "body": "Merhaba,\n\nPelin Bilişim'deki Sistem Yöneticisi pozisyonuna yaptığınız başvuru için teşekkür ederiz. Pozisyonun doldurulduğunu bilgilerinize sunarız.\n\nBaşvurmak için ayırdığınız zaman için teşekkür eder, gelecekteki ilanlarımızı da takip etmenizi dileriz.\n\nSaygılarımızla,\nPelin Bilişim Kariyer",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-15T10:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Pelin Bilişim",
+    "role": "Sistem Yöneticisi",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn090",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Mark Ellis <mark.ellis@pebblebrook.example.com>",
+    "subject": "Re: Analytics Engineer at Pebblebrook Data",
+    "body": "Hi,\n\nJust bumping my earlier message in case it got buried. We're still looking for an Analytics Engineer at Pebblebrook Data, and I think your dbt experience would be valuable to the team.\n\nLet me know if you'd like to chat about it.\n\nCheers,\nMark Ellis\nRecruiter, Pebblebrook Data",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T10:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Pebblebrook Data",
+    "role": "Analytics Engineer",
+    "date": null
+  }
+}

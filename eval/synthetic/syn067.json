@@ -1,0 +1,19 @@
+{
+  "id": "syn067",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Elif Yılmaz <elif.yilmaz@kuzeyyazilim.example.com>",
+    "subject": "Kuzey Yazılım - Backend Geliştirici teknik mülakat daveti",
+    "body": "Merhaba,\n\nKuzey Yazılım A.Ş. bünyesindeki Backend Geliştirici pozisyonuna yaptığınız başvuru için teşekkür ederiz. Başvurunuzu olumlu değerlendirdik ve sizi teknik mülakata davet etmek istiyoruz.\n\nMülakat 5 Kasım 2026 Perşembe günü saat 14:00'te Maslak'taki ofisimizde yapılacak ve yaklaşık bir saat sürecek. Görüşmede ekip liderimiz ve iki kıdemli geliştiricimiz yer alacak.\n\nUygunluğunuzu bu e-postaya yanıt vererek teyit etmenizi rica ederiz.\n\nSaygılarımızla,\nElif Yılmaz\nİnsan Kaynakları Uzmanı",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T08:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Kuzey Yazılım A.Ş.",
+    "role": "Backend Geliştirici",
+    "date": "2026-11-05T14:00"
+  }
+}

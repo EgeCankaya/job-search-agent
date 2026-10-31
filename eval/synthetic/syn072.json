@@ -1,0 +1,19 @@
+{
+  "id": "syn072",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Orchard Mobility Careers <careers@orchard.example.com>",
+    "subject": "Your application is under review",
+    "body": "Hello,\n\nWe wanted to let you know that your application for the iOS Developer role at Orchard Mobility is now under review by the hiring team.\n\nWe'll be in touch once there's an update. Thank you for your patience.\n\nOrchard Mobility Careers",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T10:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Orchard Mobility",
+    "role": "iOS Developer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn059",
+  "language": "en",
+  "hard_case": "event_invite_not_interview",
+  "email": {
+    "sender": "Larchmont Tech Events <events@larchmont.example.com>",
+    "subject": "You're invited: Larchmont Tech careers webinar",
+    "body": "Hi,\n\nYou're invited to our careers webinar on Thursday, 5 November 2026 at 18:00! Meet engineers from our platform and mobile teams, hear about our hiring process, and ask questions live.\n\nRegister here: https://larchmont.example.com/webinar\n\nSpaces are limited, so register early.\n\nThe Larchmont Tech Events Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-15T11:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Larchmont Tech",
+    "role": null,
+    "date": null
+  }
+}

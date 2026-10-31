@@ -1,0 +1,19 @@
+{
+  "id": "syn039",
+  "language": "en",
+  "hard_case": "key_date_after_cut",
+  "email": {
+    "sender": "Quillstone Recruiting <recruiting@quillstone.example.com>",
+    "subject": "Quillstone: your final-round onsite interview",
+    "body": "Hi,\n\nCongratulations! We're pleased to invite you to the final-round onsite interview for the Software Engineer role at Quillstone. This email has everything you need to prepare, so please read it to the end, where you'll find your interview date and time.\n\nAbout the day\nThe onsite is the last step of our process. It usually takes about four hours, including a short break and lunch with members of the team. There are no trick questions: we want to see how you think, how you communicate and how you work with others. You are welcome to ask as many questions as you like during every session, and we encourage it.\n\nSession 1: system design (60 minutes)\nYou'll design a service with one of our senior engineers. We are interested in how you reason about trade-offs, how you scope the problem and how you would evolve the design over time. You can use the whiteboard or a laptop, whichever you prefer. Please don't worry about drawing the perfect diagram; the conversation matters more than the picture.\n\nSession 2: pair programming (60 minutes)\nYou'll work on a small, realistic problem in a language of your choice, together with an engineer from the team you would join. We provide a laptop with common editors and languages installed. If you would rather bring your own machine, let us know in advance so we can set up guest network access for you.\n\nSession 3: lunch with the team (45 minutes)\nThis is not an interview. It's a chance for you to meet people you might work with and ask them anything about life at Quillstone, from how we plan our work to how we run on-call.\n\nSession 4: conversation with the hiring manager (45 minutes)\nWe'll talk about your experience, the kind of work you enjoy, and what you are looking for in your next role. This is also a good time to ask about team goals for the next year.\n\nGetting here\nOur office is on the third floor of the Riverside building. Please bring a photo ID for the reception desk. Visitor parking is available in the basement; tell the attendant you are visiting Quillstone. If you use public transport, the nearest metro station is a five-minute walk away.\n\nAccessibility\nIf you need any adjustments for the day, such as extra time, a quiet room or step-free access, reply to this email and we will arrange it. Your request will stay between you and the recruiting team.\n\nExpenses\nIf you travel from another city, we will reimburse reasonable travel costs. Please keep your receipts and send them to us after the visit.\n\nYour interview\nYour onsite interview is scheduled for Friday, 13 November 2026 at 09:30. Please arrive ten minutes early and ask for Hannah at reception.\n\nLooking forward to meeting you,\nHannah Reed\nRecruiting Lead",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T12:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Quillstone",
+    "role": "Software Engineer",
+    "date": "2026-11-13T09:30"
+  }
+}

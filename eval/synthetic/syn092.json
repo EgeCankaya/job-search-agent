@@ -1,0 +1,19 @@
+{
+  "id": "syn092",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Brookvale Health Careers <careers@brookvale.example.com>",
+    "subject": "Data Scientist - application outcome",
+    "body": "Thank you for applying for the Data Scientist role at Brookvale Health. We will not be moving forward with your application.\n\nBrookvale Health Careers",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T06:55:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Brookvale Health",
+    "role": "Data Scientist",
+    "date": null
+  }
+}

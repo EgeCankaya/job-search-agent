@@ -1,0 +1,19 @@
+{
+  "id": "syn085",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Kelso Energy Careers <careers@kelso.example.com>",
+    "subject": "Complete your candidate profile",
+    "body": "Hi,\n\nYour candidate profile on the Kelso Energy careers portal is 60% complete. Profiles with a CV and work history are more likely to be matched with our openings.\n\nFinish your profile: https://careers.kelso.example.com/profile\n\nKelso Energy Careers",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-17T09:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Kelso Energy",
+    "role": null,
+    "date": null
+  }
+}

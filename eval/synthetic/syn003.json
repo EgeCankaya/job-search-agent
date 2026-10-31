@@ -1,0 +1,19 @@
+{
+  "id": "syn003",
+  "language": "tr",
+  "hard_case": "test_without_the_word",
+  "email": {
+    "sender": "Vadi Eğitim Teknolojileri <kariyer@vadiegitim.example.com>",
+    "subject": "Frontend Geliştirici başvurunuz - sonraki adım",
+    "body": "Merhaba,\n\nVadi Eğitim Teknolojileri'ndeki Frontend Geliştirici pozisyonuna başvurduğunuz için teşekkürler.\n\nSonraki adım olarak aşağıdaki bağlantıdaki üç problemi çözmenizi bekliyoruz. İlk problemi açtığınız andan itibaren 90 dakikanız olacak ve istediğiniz dili kullanabilirsiniz. Bağlantı 5 Kasım 2026 Perşembe saat 18:00'e kadar açık kalacak.\n\nhttps://problemler.vadiegitim.example.com/basla/v2k9\n\nGönderiminizden sonraki bir hafta içinde size dönüş yapacağız.\n\nİyi çalışmalar,\nVadi Eğitim Teknolojileri İşe Alım",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T08:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Vadi Eğitim Teknolojileri",
+    "role": "Frontend Geliştirici",
+    "date": "2026-11-05T18:00"
+  }
+}

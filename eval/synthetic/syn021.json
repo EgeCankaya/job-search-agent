@@ -1,0 +1,19 @@
+{
+  "id": "syn021",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Redwater Robotics Careers <careers@redwater.example.com>",
+    "subject": "Interview confirmed: Robotics Software Engineer",
+    "body": "Hello,\n\nThis email confirms your in-person interview for the Robotics Software Engineer position at Redwater Robotics on Monday, 16 November 2026 at 10:00.\n\nAddress: Redwater Robotics, Building B, Innovation Park\nDuration: about 2 hours\nInterviewers: Dr. Elena Park (Controls) and Sam Okafor (Perception)\n\nPlease bring a photo ID. If you need to reschedule, reply at least 24 hours in advance.\n\nRegards,\nRedwater Robotics Careers",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-24T09:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Redwater Robotics",
+    "role": "Robotics Software Engineer",
+    "date": "2026-11-16T10:00"
+  }
+}

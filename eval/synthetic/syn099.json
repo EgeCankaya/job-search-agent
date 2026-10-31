@@ -1,0 +1,19 @@
+{
+  "id": "syn099",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Lena Fischer <lena.fischer@wavecrest.example.com>",
+    "subject": "Data Engineer role at Wavecrest Studios",
+    "body": "Hi,\n\nI'm writing to let you know that Wavecrest Studios has paused hiring for the Data Engineer role because of a change in our budget for next year. As a result, we are closing the position and won't be continuing with any of the applications we received.\n\nI'm sorry for the disappointing news, and thank you for your interest in joining us.\n\nKind regards,\nLena Fischer\nTalent Acquisition",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T14:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Wavecrest Studios",
+    "role": "Data Engineer",
+    "date": null
+  }
+}

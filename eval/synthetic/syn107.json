@@ -1,0 +1,19 @@
+{
+  "id": "syn107",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Rachel Moss <rachel.moss@silverline.example.com>",
+    "subject": "Silverline Logistics - Data Analyst take-home exercise",
+    "body": "Hi,\n\nThank you for your interest in the Data Analyst role at Silverline Logistics. As the next step, we'd like you to complete a short take-home exercise.\n\nYou'll find a CSV of delivery data attached. Please answer the five questions in the brief using SQL or Python, and send us your queries and a one-page summary of your findings by Friday, 6 November 2026.\n\nIt should take about three hours. Let me know if anything in the brief is unclear.\n\nBest regards,\nRachel Moss\nPeople Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-24T10:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Silverline Logistics",
+    "role": "Data Analyst",
+    "date": "2026-11-06"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn070",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Aslı Karaca <asli.karaca@nilufertek.example.com>",
+    "subject": "Nilüfer Teknoloji'de Veri Platform Mühendisi pozisyonu",
+    "body": "Merhaba,\n\nBen Aslı, Nilüfer Teknoloji'de teknik işe alım uzmanıyım. Profilinizi inceledim ve Veri Platform Mühendisi pozisyonumuzla ilgilenebileceğinizi düşündüm. Altı kişilik bir ekiple akış verisi platformumuz üzerinde çalışacaksınız.\n\nİlgilenirseniz iş tanımını ve maaş aralığını sizinle paylaşmaktan memnuniyet duyarım; bu e-postaya dönüş yapmanız yeterli.\n\nSevgiler,\nAslı Karaca",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-14T12:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Nilüfer Teknoloji",
+    "role": "Veri Platform Mühendisi",
+    "date": null
+  }
+}

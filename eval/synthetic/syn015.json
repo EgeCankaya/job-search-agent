@@ -1,0 +1,19 @@
+{
+  "id": "syn015",
+  "language": "tr",
+  "hard_case": "event_invite_not_interview",
+  "email": {
+    "sender": "Narin Teknoloji Etkinlik <etkinlik@narinteknoloji.example.com>",
+    "subject": "Davetlisiniz: Narin Teknoloji kariyer webinarı",
+    "body": "Merhaba,\n\n5 Kasım 2026 Perşembe saat 18:00'deki kariyer webinarımıza davetlisiniz! Platform ve mobil ekiplerimizden mühendislerle tanışın, işe alım sürecimizi dinleyin ve sorularınızı canlı olarak sorun.\n\nKayıt için: https://narinteknoloji.example.com/webinar\n\nKontenjan sınırlı, erken kayıt olmanızı öneririz.\n\nNarin Teknoloji Etkinlik Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-15T10:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Narin Teknoloji",
+    "role": null,
+    "date": null
+  }
+}

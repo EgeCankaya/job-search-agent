@@ -1,0 +1,19 @@
+{
+  "id": "syn062",
+  "language": "en",
+  "hard_case": "post_interview_thanks",
+  "email": {
+    "sender": "Ben Harper <ben.harper@wexford.example.com>",
+    "subject": "Thanks for your time today",
+    "body": "Hi,\n\nThanks for taking the time to speak with us today about the Software Engineer role at Wexford Labs. The team enjoyed the conversation.\n\nWe're meeting the last few candidates this week and will be in touch with an update early next week.\n\nBest,\nBen Harper\nEngineering Manager",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T17:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Wexford Labs",
+    "role": "Software Engineer",
+    "date": null
+  }
+}

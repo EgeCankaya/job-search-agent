@@ -1,0 +1,19 @@
+{
+  "id": "syn049",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Chloe Bennett <chloe.bennett@larkspur.example.com>",
+    "subject": "Updated offer - Software Engineer at Larkspur Learning",
+    "body": "Hi,\n\nThanks for the open conversation yesterday. I spoke with the hiring manager, and we're able to improve our offer for the Software Engineer role:\n\n- Base salary raised to 1,300,000 TRY\n- A one-off signing bonus of 60,000 TRY\n- Fully remote, with one team week in the office each quarter\n\nThe revised offer letter is attached. Let me know if this works for you.\n\nBest,\nChloe Bennett\nRecruiter, Larkspur Learning",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T13:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Larkspur Learning",
+    "role": "Software Engineer",
+    "date": null
+  }
+}

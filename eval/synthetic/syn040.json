@@ -1,0 +1,19 @@
+{
+  "id": "syn040",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Albatros Oyun İşe Alım <isealim@albatrosoyun.example.com>",
+    "subject": "Albatros Oyun'da yeni bir pozisyon",
+    "body": "Merhaba,\n\nGeçen yıl Albatros Oyun'daki Oynanış Programcısı pozisyonuna başvurmuştunuz. O pozisyon dolduruldu, ancak yeni açtığımız Oyun Araçları Geliştirici pozisyonu için aklımıza siz geldiniz.\n\nDeğerlendirilmek isterseniz bu e-postaya yanıt verin, ayrıntıları gönderelim.\n\nİyi dileklerimizle,\nAlbatros Oyun İşe Alım",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T13:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Albatros Oyun",
+    "role": "Oyun Araçları Geliştirici",
+    "date": null
+  }
+}

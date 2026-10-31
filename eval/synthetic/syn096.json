@@ -1,0 +1,19 @@
+{
+  "id": "syn096",
+  "language": "en",
+  "hard_case": "rejection_after_assessment",
+  "email": {
+    "sender": "Foxglove Software Recruiting <recruiting@foxglove.example.com>",
+    "subject": "Your coding assessment results",
+    "body": "Hi,\n\nThank you for completing the coding assessment for the Software Engineer role at Foxglove Software. Our engineers reviewed your submission carefully.\n\nUnfortunately, your results did not meet the bar we've set for this stage, so we won't be moving forward with your application. You are welcome to apply again in six months.\n\nBest wishes,\nFoxglove Software Recruiting",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T13:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Foxglove Software",
+    "role": "Software Engineer",
+    "date": null
+  }
+}

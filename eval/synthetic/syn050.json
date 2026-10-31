@@ -1,0 +1,19 @@
+{
+  "id": "syn050",
+  "language": "tr",
+  "hard_case": "outreach_mentions_interview",
+  "email": {
+    "sender": "Nazlı Bulut <nazli.bulut@firatlojistik.example.com>",
+    "subject": "Fırat Lojistik Teknoloji - Backend Geliştirici pozisyonu",
+    "body": "Merhaba,\n\nFırat Lojistik Teknoloji'den yazıyorum. Rota optimizasyonu ekibimizi büyütüyoruz ve Go ya da Java deneyimi olan bir Backend Geliştirici arıyoruz; profiliniz bu tanıma uyuyor.\n\nİlgilenirseniz bir sonraki adım ekip liderimizle bir mülakat olur. Bu e-postaya yanıt vermeniz yeterli, gerisini ben ayarlarım.\n\nSaygılarımla,\nNazlı Bulut\nYetenek Kazanımı, Fırat Lojistik Teknoloji",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-16T10:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Fırat Lojistik Teknoloji",
+    "role": "Backend Geliştirici",
+    "date": null
+  }
+}

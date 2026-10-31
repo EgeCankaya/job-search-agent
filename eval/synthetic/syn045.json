@@ -1,0 +1,19 @@
+{
+  "id": "syn045",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Iris Cooper <iris.cooper@thistle.example.com>",
+    "subject": "Six-month Data Engineer contract at Thistle Consulting",
+    "body": "Hi,\n\nThistle Consulting is looking for a Data Engineer for a six-month contract, starting in December, to help a retail client move their warehouse to the cloud. It's fully remote, with a competitive day rate.\n\nWould this be of interest? I'd be glad to share more.\n\nBest,\nIris Cooper\nResourcing Manager",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T12:25:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Thistle Consulting",
+    "role": "Data Engineer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn088",
+  "language": "en",
+  "hard_case": "agency_names_client",
+  "email": {
+    "sender": "Daniel Price <daniel.price@talentbridge.example.com>",
+    "subject": "Senior Python Developer opportunity with Arclight Payments",
+    "body": "Hi,\n\nI'm a recruiter at TalentBridge Recruitment, and I'm working with our client Arclight Payments on a Senior Python Developer role in their payments platform team. It's hybrid, two days a week in their Istanbul office, and the team uses Python, PostgreSQL and Kafka.\n\nYour background looks like a strong fit. Would you be interested in hearing more? If so, reply with a good number to reach you, or just reply here.\n\nBest,\nDaniel Price\nTalentBridge Recruitment",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-13T10:05:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Arclight Payments",
+    "role": "Senior Python Developer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn075",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Saltmarsh Payments via HireFlow <no-reply@hireflow.example.com>",
+    "subject": "Your application status has changed",
+    "body": "Hello,\n\nThe status of your application for Backend Engineer at Saltmarsh Payments has changed to: Not selected.\n\nThank you for your interest in Saltmarsh Payments. You can view your other applications in your candidate account.\n\nThis is an automated message from HireFlow on behalf of Saltmarsh Payments.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-17T03:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Saltmarsh Payments",
+    "role": "Backend Engineer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn020",
+  "language": "en",
+  "hard_case": "outreach_via_job_board",
+  "email": {
+    "sender": "JobNest Messages <messages@jobnest.example.com>",
+    "subject": "New message from a recruiter at Riverstone Insurance",
+    "body": "You have a new message on JobNest.\n\nFrom: Anna Wright, Recruiter at Riverstone Insurance\n\n\"Hi, I saw your profile on JobNest and wanted to ask whether you'd consider a QA Automation Engineer role at Riverstone Insurance. We work with Playwright and Python. Let me know if you'd like to hear more.\"\n\nReply on JobNest: https://jobnest.example.com/messages/r81\n\nYou received this email because you have message notifications turned on.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T07:05:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Riverstone Insurance",
+    "role": "QA Automation Engineer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn033",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Kalkan Siber Yetenek <yetenek@kalkansiber.example.com>",
+    "subject": "Profilinize uygun bir pozisyon",
+    "body": "Merhaba,\n\nKalkan Siber'de bulut güvenliği ve tehdit tespiti üzerine çalışacak bir Güvenlik Analisti pozisyonumuz açıldı. Deneyiminize bakarak bu rol için çok uygun olabileceğinizi düşünüyoruz.\n\nDaha fazla bilgi almak isterseniz bu mesaja yanıt verin, ayrıntıları gönderelim.\n\nSaygılarımızla,\nKalkan Siber Yetenek Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-17T07:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Kalkan Siber",
+    "role": "Güvenlik Analisti",
+    "date": null
+  }
+}

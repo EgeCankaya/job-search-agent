@@ -1,0 +1,19 @@
+{
+  "id": "syn084",
+  "language": "tr",
+  "hard_case": "rejection_mentions_interview",
+  "email": {
+    "sender": "Seda Kurt <seda.kurt@gumusfintek.example.com>",
+    "subject": "Mülakatınızın ardından",
+    "body": "Merhaba,\n\nGeçen hafta Gümüş Fintek'teki Backend Geliştirici pozisyonu için mülakata katıldığınız ve teknik oturuma emek verdiğiniz için teşekkür ederiz.\n\nUzun bir değerlendirmenin ardından, deneyimi ekibin şu anki ihtiyaçlarına daha yakın olan başka bir adayla ilerlemeye karar verdik. Zor bir karardı; sizi tanımaktan keyif aldık.\n\nMülakatlarınızla ilgili geri bildirim almak isterseniz yanıt vermeniz yeterli, kısa bir görüşme ayarlarım.\n\nBaşarılar dilerim,\nSeda Kurt\nİşe Alım Uzmanı",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-19T15:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Gümüş Fintek",
+    "role": "Backend Geliştirici",
+    "date": null
+  }
+}

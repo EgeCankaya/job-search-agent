@@ -1,0 +1,19 @@
+{
+  "id": "syn057",
+  "language": "tr",
+  "hard_case": "agency_names_client",
+  "email": {
+    "sender": "Selim Tekin <selim.tekin@kariyerkoprusu.example.com>",
+    "subject": "Asena Ödeme Hizmetleri - Kıdemli Python Geliştirici fırsatı",
+    "body": "Merhaba,\n\nKariyer Köprüsü Danışmanlık'ta işe alım danışmanıyım. Müşterimiz Asena Ödeme Hizmetleri'nin ödeme platformu ekibi için Kıdemli Python Geliştirici arıyoruz. Pozisyon hibrit; haftada iki gün İstanbul ofisinde çalışılıyor ve ekip Python, PostgreSQL ve Kafka kullanıyor.\n\nDeneyiminiz bu pozisyona çok uygun görünüyor. Ayrıntıları duymak ister misiniz? İlgilenirseniz bu e-postaya yanıt vermeniz yeterli.\n\nSaygılarımla,\nSelim Tekin\nKariyer Köprüsü Danışmanlık",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-13T09:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Asena Ödeme Hizmetleri",
+    "role": "Kıdemli Python Geliştirici",
+    "date": null
+  }
+}

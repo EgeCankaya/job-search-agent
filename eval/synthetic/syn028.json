@@ -1,0 +1,19 @@
+{
+  "id": "syn028",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Willowbank Retail via HireFlow <no-reply@hireflow.example.com>",
+    "subject": "Reminder: your coding challenge for Willowbank Retail expires soon",
+    "body": "Hi,\n\nThis is a reminder that you haven't yet submitted the coding challenge for the Frontend Developer role at Willowbank Retail.\n\nThe challenge expires on Wednesday, 28 October 2026 at 12:00. After that, the link will no longer work.\n\nOpen the challenge: https://hireflow.example.com/c/wbr-2210\n\nGood luck,\nWillowbank Retail Recruiting",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T12:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Willowbank Retail",
+    "role": "Frontend Developer",
+    "date": "2026-10-28T12:00"
+  }
+}

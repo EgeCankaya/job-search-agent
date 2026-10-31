@@ -1,0 +1,19 @@
+{
+  "id": "syn063",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Fidan Sağlık Teknoloji <kariyer@fidansaglik.example.com>",
+    "subject": "Veri Bilimci başvuru sonucu",
+    "body": "Fidan Sağlık Teknoloji'deki Veri Bilimci pozisyonuna başvurduğunuz için teşekkür ederiz. Başvurunuzla ilerlemeyeceğiz.\n\nFidan Sağlık Teknoloji Kariyer",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T06:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Fidan Sağlık Teknoloji",
+    "role": "Veri Bilimci",
+    "date": null
+  }
+}

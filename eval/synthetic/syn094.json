@@ -1,0 +1,19 @@
+{
+  "id": "syn094",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Göktaşı Yazılım <kariyer@goktasi.example.com>",
+    "subject": "Hatırlatma: kodlama ödevinizin süresi doluyor",
+    "body": "Merhaba,\n\nGöktaşı Yazılım'daki Java Geliştirici pozisyonu için gönderdiğimiz kodlama ödevini henüz teslim etmediğinizi hatırlatmak isteriz.\n\nÖdevin süresi 28 Ekim 2026 Çarşamba saat 12:00'de doluyor. Bu saatten sonra bağlantı çalışmayacak.\n\nÖdeve gitmek için: https://kariyer.goktasi.example.com/odev/gy-7714\n\nBaşarılar,\nGöktaşı Yazılım İşe Alım Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T10:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Göktaşı Yazılım",
+    "role": "Java Geliştirici",
+    "date": "2026-10-28T12:00"
+  }
+}

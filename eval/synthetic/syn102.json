@@ -1,0 +1,19 @@
+{
+  "id": "syn102",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Nadia Brooks <nadia.brooks@starling.example.com>",
+    "subject": "Your offer from Starling Mobility",
+    "body": "Hi,\n\nI'm delighted to share that we'd like to offer you the Backend Engineer position at Starling Mobility!\n\nYour offer letter is attached. In summary:\n- Annual base salary: 1,450,000 TRY\n- Start date: Monday, 4 January 2027\n- 25 days of paid leave, private health insurance and a learning budget\n\nPlease let us know your decision by Friday, 6 November 2026. I'm happy to set up a call if you have any questions about the offer.\n\nCongratulations!\nNadia Brooks\nTalent Acquisition",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T10:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Starling Mobility",
+    "role": "Backend Engineer",
+    "date": null
+  }
+}

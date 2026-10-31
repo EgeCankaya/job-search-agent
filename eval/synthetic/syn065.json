@@ -1,0 +1,19 @@
+{
+  "id": "syn065",
+  "language": "tr",
+  "hard_case": "contest_not_assessment",
+  "email": {
+    "sender": "KodSınav Topluluk <topluluk@kodsinav.example.com>",
+    "subject": "Ekim kodlama yarışması başladı",
+    "body": "Merhaba,\n\nAylık KodSınav kodlama yarışması başladı! 31 Ekim 2026 Cumartesi tarihine kadar dört algoritma problemini çözün, sıralamada yükselin ve ödül kazanın.\n\nYarışmaya katıl: https://kodsinav.example.com/aylik\n\nİyi kodlamalar,\nKodSınav Topluluk ekibi\n\nBu e-postayı KodSınav hesabınız olduğu için alıyorsunuz. Abonelikten çık: https://kodsinav.example.com/abonelik",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T06:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

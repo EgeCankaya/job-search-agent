@@ -1,0 +1,19 @@
+{
+  "id": "syn076",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "KariyerPortal Hesap <hesap@kariyerportal.example.com>",
+    "subject": "KariyerPortal şifreniz değiştirildi",
+    "body": "Merhaba,\n\nKariyerPortal aday hesabınızın şifresi değiştirildi. Bu değişikliği siz yaptıysanız bir şey yapmanıza gerek yok.\n\nŞifrenizi siz değiştirmediyseniz hemen https://kariyerportal.example.com/sifre adresinden sıfırlayın ve destek ekibiyle iletişime geçin.\n\nKariyerPortal ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-18T19:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

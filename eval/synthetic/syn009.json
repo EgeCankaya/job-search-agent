@@ -1,0 +1,19 @@
+{
+  "id": "syn009",
+  "language": "en",
+  "hard_case": "invite_without_time",
+  "email": {
+    "sender": "Lucas Ferreira <lucas.ferreira@orbitale.example.com>",
+    "subject": "Orbitale: next step for the Frontend Engineer role",
+    "body": "Hi,\n\nCongratulations on passing the technical round for the Frontend Engineer role! The panel gave very positive feedback on your component design and testing approach.\n\nWe would like to invite you to the final interview, a conversation with our CTO about product thinking and how you work with designers. Our recruiting coordinator will contact you in the next few days to agree a time that suits you.\n\nWell done so far, and speak soon.\n\nBest,\nLucas Ferreira\nEngineering Manager, Orbitale",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T15:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Orbitale",
+    "role": "Frontend Engineer",
+    "date": null
+  }
+}

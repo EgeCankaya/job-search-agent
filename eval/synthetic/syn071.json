@@ -1,0 +1,19 @@
+{
+  "id": "syn071",
+  "language": "en",
+  "hard_case": "platform_sender",
+  "email": {
+    "sender": "HackLab <no-reply@hacklab.example.com>",
+    "subject": "Ironbridge Security: your systems troubleshooting exercise",
+    "body": "Hello,\n\nIronbridge Security would like you to complete a hands-on troubleshooting exercise as part of your application for Site Reliability Engineer.\n\nYou'll get access to a small Linux environment with three broken services. Fix as many as you can and write a short note on each fix. The environment can be started any time before Monday, 9 November 2026 and stays available for 3 hours after you start it.\n\nLaunch: https://hacklab.example.com/env/ibs-sre-41\n\nHackLab, on behalf of Ironbridge Security",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T09:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Ironbridge Security",
+    "role": "Site Reliability Engineer",
+    "date": "2026-11-09"
+  }
+}

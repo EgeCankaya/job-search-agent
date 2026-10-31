@@ -1,0 +1,19 @@
+{
+  "id": "syn058",
+  "language": "en",
+  "hard_case": "reschedule",
+  "email": {
+    "sender": "Ines Moreau <ines.moreau@copperleaf.example.com>",
+    "subject": "Change of time: your Platform Engineer interview at Copperleaf Software",
+    "body": "Hi there,\n\nI'm sorry for the short notice, but one of the interviewers is no longer available on Tuesday, 3 November 2026 at 10:00. Could we move your Platform Engineer interview to Wednesday, 4 November 2026 at 15:30 instead? The format stays the same: 60 minutes on Google Meet with two engineers from the infrastructure team.\n\nI've updated the calendar invitation. If the new time doesn't suit you, just let me know.\n\nKind regards,\nInes Moreau\nRecruiting Coordinator, Copperleaf Software",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T08:05:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Copperleaf Software",
+    "role": "Platform Engineer",
+    "date": "2026-11-04T15:30"
+  }
+}

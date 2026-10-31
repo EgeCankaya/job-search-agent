@@ -1,0 +1,19 @@
+{
+  "id": "syn035",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Driftwood Analytics via HireFlow <no-reply@hireflow.example.com>",
+    "subject": "We received your application for Data Analyst",
+    "body": "Hi,\n\nThank you for applying for the Data Analyst position at Driftwood Analytics. We have received your application and our team will review it.\n\nYou can check the status of your application at any time in your candidate account.\n\nDriftwood Analytics Recruiting\n\nThis is an automated message. Please do not reply.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-12T19:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Driftwood Analytics",
+    "role": "Data Analyst",
+    "date": null
+  }
+}

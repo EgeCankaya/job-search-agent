@@ -1,0 +1,19 @@
+{
+  "id": "syn103",
+  "language": "en",
+  "hard_case": "role_not_named",
+  "email": {
+    "sender": "Marlow Digital <jobs@marlowdigital.example.com>",
+    "subject": "Thank you for your interest in Marlow Digital",
+    "body": "Hello,\n\nThank you for your interest in Marlow Digital. After reviewing your application, we have decided not to proceed further.\n\nWe appreciate the time you spent and wish you success in your career.\n\nMarlow Digital Recruitment",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-24T08:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Marlow Digital",
+    "role": null,
+    "date": null
+  }
+}

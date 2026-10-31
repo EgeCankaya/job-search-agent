@@ -1,0 +1,19 @@
+{
+  "id": "syn034",
+  "language": "en",
+  "hard_case": "rejection_in_invite_thread",
+  "email": {
+    "sender": "Paul Turner <paul.turner@elmstead.example.com>",
+    "subject": "Re: Interview invitation - Robotics Engineer",
+    "body": "Hi,\n\nThank you for meeting with us at Elmstead Robotics. Unfortunately we have decided not to move forward with your application for the Robotics Engineer role. We appreciate your time and wish you the best.\n\nPaul\n\nOn Mon, 12 Oct 2026 at 10:02, Paul Turner <paul.turner@elmstead.example.com> wrote:\n> We'd like to invite you to an interview for the Robotics Engineer role on\n> Friday 16 October 2026 at 11:00. Please confirm if the time works.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T11:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Elmstead Robotics",
+    "role": "Robotics Engineer",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn056",
+  "language": "en",
+  "hard_case": "contest_not_assessment",
+  "email": {
+    "sender": "CodeTest Community <community@codetest.example.com>",
+    "subject": "The October coding challenge is live",
+    "body": "Hi coder,\n\nThe monthly CodeTest coding challenge is open! Solve four algorithm problems before Saturday, 31 October 2026 to climb the leaderboard and win prizes.\n\nJoin the challenge: https://codetest.example.com/monthly\n\nHappy coding,\nThe CodeTest Community team\n\nYou are receiving this because you have a CodeTest account. Unsubscribe: https://codetest.example.com/unsubscribe",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T07:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

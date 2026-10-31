@@ -1,0 +1,19 @@
+{
+  "id": "syn108",
+  "language": "en",
+  "hard_case": "survey_mentions_interview",
+  "email": {
+    "sender": "Bramblewood Retail Talent <talent@bramblewood.example.com>",
+    "subject": "Tell us about your interview experience",
+    "body": "Hi,\n\nYou recently interviewed with Bramblewood Retail. We'd love to hear how it went, whatever the outcome.\n\nThe survey takes about three minutes and your answers are anonymous: https://survey.bramblewood.example.com/cx\n\nThank you for helping us improve,\nBramblewood Retail Talent Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T08:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Bramblewood Retail",
+    "role": null,
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn001",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Deniz Çelik <deniz.celik@akcafintek.example.com>",
+    "subject": "Akça Fintek - Ürün Analisti vaka çalışması",
+    "body": "Merhaba,\n\nGörüştüğümüz gibi, Ürün Analisti pozisyonu için bir sonraki aşama bir vaka çalışması.\n\nEkteki dokümanda, mobil uygulamamızdaki ödeme akışının dönüşüm verilerini bulacaksınız. Akıştaki en büyük kaybı bulup çözüm önerilerinizi anlatan en fazla beş sayfalık bir sunum hazırlamanızı ve 9 Kasım 2026 Pazartesi tarihine kadar bize göndermenizi rica ederiz.\n\nKolay gelsin,\nDeniz Çelik\nÜrün Müdürü",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T14:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Akça Fintek",
+    "role": "Ürün Analisti",
+    "date": "2026-11-09"
+  }
+}

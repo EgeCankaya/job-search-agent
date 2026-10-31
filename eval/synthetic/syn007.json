@@ -1,0 +1,19 @@
+{
+  "id": "syn007",
+  "language": "tr",
+  "hard_case": "offer_in_interview_thread",
+  "email": {
+    "sender": "Murat Erdem <murat.erdem@egeveri.example.com>",
+    "subject": "Ynt: Final görüşmesi - Makine Öğrenmesi Mühendisi",
+    "body": "Merhaba,\n\nGeçen hafta final görüşmesine geldiğiniz için teşekkürler. Tanıştığınız herkes çok olumlu görüş bildirdi ve size Ege Veri'deki Makine Öğrenmesi Mühendisi pozisyonunu teklif etmekten büyük mutluluk duyuyorum. Ücret ve yan hakları içeren teklif mektubu ekte.\n\nBirkaç gün düşünün; konuşmak isterseniz beni arayabilirsiniz.\n\nSaygılarımla,\nMurat\n\n12 Eki 2026 Pzt 09:20 tarihinde Murat Erdem <murat.erdem@egeveri.example.com> şunu yazdı:\n> Merhaba, sizi 15 Ekim Perşembe saat 14:00'te ofisimizde final görüşmesine\n> davet etmek istiyoruz. Saatin uygun olup olmadığını teyit eder misiniz?",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T08:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Ege Veri Ltd. Şti.",
+    "role": "Makine Öğrenmesi Mühendisi",
+    "date": null
+  }
+}

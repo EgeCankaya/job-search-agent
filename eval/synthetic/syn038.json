@@ -1,0 +1,19 @@
+{
+  "id": "syn038",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Gökkuşağı Yazılım Yetenek Topluluğu <topluluk@gokkusagi.example.com>",
+    "subject": "Gökkuşağı Yazılım'da size uygun yeni pozisyonlar",
+    "body": "Merhaba,\n\nYetenek topluluğumuzun bir üyesi olarak bu ay Gökkuşağı Yazılım'da açılan yeni pozisyonlar:\n\n- Kıdemli Platform Mühendisi (İstanbul)\n- Site Güvenilirlik Mühendisi (Uzaktan)\n- Mühendislik Müdürü, Altyapı (İstanbul)\n\nTüm pozisyonlar: https://kariyer.gokkusagi.example.com\n\nGökkuşağı Yazılım Yetenek Topluluğu",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T08:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Gökkuşağı Yazılım",
+    "role": null,
+    "date": null
+  }
+}

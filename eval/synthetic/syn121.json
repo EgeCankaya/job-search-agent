@@ -1,0 +1,19 @@
+{
+  "id": "syn121",
+  "language": "en",
+  "hard_case": "invite_in_rejection",
+  "email": {
+    "sender": "Fenwick Robotics Talent <talent@fenwick.example.com>",
+    "subject": "Your Senior Robotics Engineer application at Fenwick Robotics",
+    "body": "Hi,\n\nThank you for applying for the Senior Robotics Engineer role at Fenwick Robotics. We've filled that position with an internal candidate, so we won't be taking your application for it further.\n\nThat said, your motion-planning work stood out to the team, and we'd like to interview you for our Robotics Software Engineer opening. We've set aside Thursday, 19 November 2026 at 10:30 for a one-hour video interview with the planning team.\n\nCould you reply to confirm the time?\n\nKind regards,\nFenwick Robotics Talent Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-27T08:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Fenwick Robotics",
+    "role": "Robotics Software Engineer",
+    "date": "2026-11-19T10:30"
+  }
+}

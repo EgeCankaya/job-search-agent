@@ -1,0 +1,19 @@
+{
+  "id": "syn053",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Pınar Acar <pinar.acar@caglayan.example.com>",
+    "subject": "Çağlayan Danışmanlık - altı aylık Veri Mühendisi projesi",
+    "body": "Merhaba,\n\nÇağlayan Danışmanlık olarak Aralık ayında başlayacak, altı ay sürecek bir proje için Veri Mühendisi arıyoruz. Proje, bir perakende müşterimizin veri ambarını buluta taşımayı kapsıyor. Çalışma tamamen uzaktan ve günlük ücret rekabetçi.\n\nİlginizi çekerse daha fazla bilgi paylaşmaktan memnuniyet duyarım.\n\nSaygılarımla,\nPınar Acar\nKaynak Planlama Müdürü",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T11:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Çağlayan Danışmanlık",
+    "role": "Veri Mühendisi",
+    "date": null
+  }
+}

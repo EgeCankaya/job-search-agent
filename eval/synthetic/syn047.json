@@ -1,0 +1,19 @@
+{
+  "id": "syn047",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "KariyerPortal <bildirim@kariyerportal.example.com>",
+    "subject": "İşlem gerekli: başvurunuz eksik",
+    "body": "Merhaba,\n\nYonca Yazılım firmasının Backend Geliştirici ilanına yaptığınız başvuruda özgeçmiş eksik. Özgeçmişi olmayan başvurular değerlendirilemiyor.\n\nÖzgeçmişinizi yükleyin: https://kariyerportal.example.com/basvuru/yy-901\n\nKariyerPortal, Yonca Yazılım adına",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-24T11:15:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Yonca Yazılım",
+    "role": "Backend Geliştirici",
+    "date": null
+  }
+}

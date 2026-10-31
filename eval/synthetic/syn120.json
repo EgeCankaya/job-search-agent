@@ -1,0 +1,19 @@
+{
+  "id": "syn120",
+  "language": "tr",
+  "hard_case": "invite_without_time",
+  "email": {
+    "sender": "Merve Arslan <merve.arslan@sedirbulut.example.com>",
+    "subject": "Sedir Bulut - son aşama görüşmesi",
+    "body": "Merhaba,\n\nTeknik mülakatı başarıyla geçtiğinizi bildirmekten memnuniyet duyuyoruz. DevOps Mühendisi pozisyonu için sizi son aşama olarak genel müdürümüzle bir görüşmeye davet etmek istiyoruz.\n\nAsistanımız önümüzdeki günlerde size uygun bir saati belirlemek için sizinle iletişime geçecek.\n\nBaşarılarınızın devamını dileriz.\n\nSaygılarımla,\nMerve Arslan\nMühendislik Müdürü, Sedir Bulut",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T14:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Sedir Bulut",
+    "role": "DevOps Mühendisi",
+    "date": null
+  }
+}

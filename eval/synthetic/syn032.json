@@ -1,0 +1,19 @@
+{
+  "id": "syn032",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Tuna Lojistik İK <ik@tunalojistik.example.com>",
+    "subject": "Veri Analisti başvurunuz",
+    "body": "Sayın aday,\n\nTuna Lojistik'teki Veri Analisti pozisyonuna başvurduğunuz için teşekkür ederiz. Maalesef bu pozisyon için sürece sizinle devam edemeyeceğiz.\n\nProfilinizi beğendik; izninizle özgeçmişinizi veri tabanımızda saklayacak ve önümüzdeki on iki ay içinde uygun bir pozisyon açıldığında sizinle iletişime geçeceğiz.\n\nİyi dileklerimizle,\nTuna Lojistik İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-16T08:05:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Tuna Lojistik",
+    "role": "Veri Analisti",
+    "date": null
+  }
+}

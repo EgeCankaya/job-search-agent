@@ -1,0 +1,19 @@
+{
+  "id": "syn041",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Bora Otomotiv Yazılım <kariyer@boraotomotiv.example.com>",
+    "subject": "Teknik test - Gömülü Sistemler Mühendisi",
+    "body": "Merhaba,\n\nGömülü Sistemler Mühendisi pozisyonuna yaptığınız başvuru için teşekkür ederiz. Mülakat aşamasına geçmeden önce adaylarımızdan C ve gerçek zamanlı sistemler üzerine çevrim içi bir teknik test çözmelerini istiyoruz.\n\nTesti size uygun bir zamanda, mümkünse en kısa sürede şu bağlantıdan çözebilirsiniz:\n\nhttps://kariyer.boraotomotiv.example.com/test/bo-63\n\nİyi çalışmalar,\nBora Otomotiv Yazılım İşe Alım",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T13:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Bora Otomotiv Yazılım",
+    "role": "Gömülü Sistemler Mühendisi",
+    "date": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn089",
+  "language": "tr",
+  "hard_case": "withdrawal_confirmation",
+  "email": {
+    "sender": "Mira Yapay Zeka İşe Alım <isealim@mirayz.example.com>",
+    "subject": "Başvurunuz geri çekildi",
+    "body": "Merhaba,\n\nMira Yapay Zeka'daki Veri Bilimci pozisyonuna yaptığınız başvuruyu geri çekme talebinizi aldık ve başvurunuzu kapattık.\n\nBilgi verdiğiniz için teşekkür eder, bir sonraki adımınızda başarılar dileriz.\n\nMira Yapay Zeka İşe Alım",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T09:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Mira Yapay Zeka",
+    "role": "Veri Bilimci",
+    "date": null
+  }
+}

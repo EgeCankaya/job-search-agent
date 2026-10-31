@@ -1,0 +1,19 @@
+{
+  "id": "syn046",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Uzay Teknoloji Staj Programı <staj@uzayteknoloji.example.com>",
+    "subject": "Staj başvurunuz hakkında",
+    "body": "Merhaba,\n\nUzay Teknoloji'deki Yapay Zeka Stajyeri pozisyonuna yaptığınız başvuru için teşekkür ederiz. Bu dönem için kontenjanımız doldu ve başvurunuzu kabul edemiyoruz.\n\nİlginiz için teşekkür eder, bir sonraki dönem yeniden başvurmanızı bekleriz.\n\nUzay Teknoloji Staj Programı",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T10:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Uzay Teknoloji",
+    "role": "Yapay Zeka Stajyeri",
+    "date": null
+  }
+}

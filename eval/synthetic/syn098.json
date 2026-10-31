@@ -1,0 +1,23 @@
+{
+  "id": "syn098",
+  "language": "tr",
+  "hard_case": "calendar_only_invite",
+  "email": {
+    "sender": "Zeynep Kaya <zeynep.kaya@defneoyun.example.com>",
+    "subject": "Davet: Defne Oyun Stüdyosu - Unity Geliştirici teknik görüşme @ 12 Kas 2026 Per 15:00 - 16:00 (GMT+3)",
+    "body": "Defne Oyun Stüdyosu - Unity Geliştirici teknik görüşme\n\nGörüntülü görüşmeye katıl: https://meet.example.com/defne-unity\n\nDüzenleyen: zeynep.kaya@defneoyun.example.com\n\nTakvimden gönderilen davet. Bu etkinliğin katılımcısı olduğunuz için bu e-postayı alıyorsunuz.",
+    "html": null,
+    "calendar": {
+      "start": "20261112T150000",
+      "tzid": "Europe/Istanbul",
+      "summary": "Defne Oyun Stüdyosu - Unity Geliştirici teknik görüşme"
+    },
+    "received_at": "2026-10-26T12:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Defne Oyun Stüdyosu",
+    "role": "Unity Geliştirici",
+    "date": "2026-11-12T15:00"
+  }
+}

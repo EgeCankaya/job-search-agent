@@ -1,0 +1,19 @@
+{
+  "id": "syn019",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Hakan Aksoy <hakan.aksoy@cinarperakende.example.com>",
+    "subject": "Çınar Perakende'den güzel haber",
+    "body": "Merhaba,\n\nSon birkaç haftadır bize ayırdığınız zaman için teşekkür ederiz. Ekip olarak size Çınar Perakende'deki Veri Mühendisi pozisyonunu teklif etmek istediğimizi bildirmekten çok mutluyum.\n\nİnsan Kaynakları ekibimiz, ücret ve yan haklarla ilgili tüm ayrıntıları içeren resmi teklif mektubunu iki gün içinde gönderecek. Bu arada sorularınız olursa yanıtlamaktan memnuniyet duyarım.\n\nAramıza katılmanızı umuyoruz!\nHakan Aksoy\nMühendislik Müdürü",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T16:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "offer",
+    "company": "Çınar Perakende",
+    "role": "Veri Mühendisi",
+    "date": null
+  }
+}

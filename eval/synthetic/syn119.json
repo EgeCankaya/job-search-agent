@@ -1,0 +1,19 @@
+{
+  "id": "syn119",
+  "language": "en",
+  "hard_case": "withdrawal_confirmation",
+  "email": {
+    "sender": "Cinderford AI Recruiting <recruiting@cinderford.example.com>",
+    "subject": "Your application has been withdrawn",
+    "body": "Hello,\n\nWe've received your request to withdraw your application for the Data Scientist position at Cinderford AI, and we've closed it.\n\nThank you for letting us know, and good luck with your next step.\n\nCinderford AI Recruiting",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T10:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Cinderford AI",
+    "role": "Data Scientist",
+    "date": null
+  }
+}

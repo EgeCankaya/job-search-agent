@@ -1,0 +1,19 @@
+{
+  "id": "syn079",
+  "language": "en",
+  "hard_case": "test_without_the_word",
+  "email": {
+    "sender": "Kestrel AI Hiring <hiring@kestrel.example.com>",
+    "subject": "Kestrel AI - next step for the AI Engineer role",
+    "body": "Hi,\n\nThanks again for applying for the AI Engineer role at Kestrel AI.\n\nAs a next step, please solve the three problems at the link below. You'll have 90 minutes once you open the first problem, and you can use any language you like. The link stays open until Thursday, 5 November 2026 at 18:00.\n\nhttps://problems.kestrel.example.com/start/q8z1\n\nWe'll get back to you within a week of your submission.\n\nCheers,\nKestrel AI Hiring",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T09:45:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Kestrel AI",
+    "role": "AI Engineer",
+    "date": "2026-11-05T18:00"
+  }
+}

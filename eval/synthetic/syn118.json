@@ -1,0 +1,19 @@
+{
+  "id": "syn118",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Thornbury Systems Talent <talent@thornbury.example.com>",
+    "subject": "Thornbury Systems - Platform Engineer",
+    "body": "Dear applicant,\n\nThank you for taking the time to apply for the Platform Engineer role at Thornbury Systems. We regret to inform you that we will not be progressing your application.\n\nWe encourage you to apply for other roles that match your skills. New openings are posted on our careers page every week.\n\nSincerely,\nThornbury Systems Talent Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-18T10:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Thornbury Systems",
+    "role": "Platform Engineer",
+    "date": null
+  }
+}

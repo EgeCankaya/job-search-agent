@@ -1,0 +1,19 @@
+{
+  "id": "syn051",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Orkide Yazılım Yetenek Ekibi <yetenek@orkideyazilim.example.com>",
+    "subject": "Orkide Yazılım - Mobil Geliştirici",
+    "body": "Sayın aday,\n\nOrkide Yazılım'daki Mobil Geliştirici pozisyonuna başvurmak için zaman ayırdığınız için teşekkür ederiz. Başvurunuzla bir sonraki aşamaya geçmeyeceğimizi üzülerek bildiririz.\n\nYeteneklerinize uygun diğer pozisyonlarımıza da başvurmanızı öneririz; kariyer sayfamızda her hafta yeni ilanlar yayımlıyoruz.\n\nSaygılarımızla,\nOrkide Yazılım Yetenek Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-18T09:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Orkide Yazılım",
+    "role": "Mobil Geliştirici",
+    "date": null
+  }
+}

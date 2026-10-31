@@ -1,0 +1,19 @@
+{
+  "id": "syn027",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Pamuk Enerji Kariyer <kariyer@pamukenerji.example.com>",
+    "subject": "Aday profilinizi tamamlayın",
+    "body": "Merhaba,\n\nPamuk Enerji kariyer portalındaki aday profiliniz %60 oranında tamamlandı. Özgeçmiş ve iş deneyimi eklenmiş profiller açık pozisyonlarımızla daha kolay eşleşiyor.\n\nProfilinizi tamamlayın: https://kariyer.pamukenerji.example.com/profil\n\nPamuk Enerji Kariyer",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-17T08:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Pamuk Enerji",
+    "role": null,
+    "date": null
+  }
+}

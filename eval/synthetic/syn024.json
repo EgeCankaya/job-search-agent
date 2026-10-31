@@ -1,0 +1,19 @@
+{
+  "id": "syn024",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Maya Collins <maya.collins@brightpath.example.com>",
+    "subject": "Brightpath Analytics: interview for the Data Engineer role",
+    "body": "Hi,\n\nThank you for applying for the Data Engineer role at Brightpath Analytics. We enjoyed reading your application and would like to invite you to a first interview with our data platform team.\n\nThe interview is a 45-minute video call on Thursday, 5 November 2026 at 14:00 (Istanbul time). You'll meet Tom, our data platform lead, and we'll talk about your experience with pipelines and the work on our team. A Zoom link will follow in a separate email.\n\nPlease reply to confirm that the time works for you.\n\nBest regards,\nMaya Collins\nTalent Partner",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T09:12:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Brightpath Analytics",
+    "role": "Data Engineer",
+    "date": "2026-11-05T14:00"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn068",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Elmwood Software via HireFlow <no-reply@hireflow.example.com>",
+    "subject": "Action needed: your application is incomplete",
+    "body": "Hi,\n\nYour application for Backend Engineer at Elmwood Software is missing a CV. Applications without a CV can't be reviewed.\n\nUpload your CV: https://hireflow.example.com/app/ews-118\n\nElmwood Software Recruiting",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-24T12:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Elmwood Software",
+    "role": "Backend Engineer",
+    "date": null
+  }
+}

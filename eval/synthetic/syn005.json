@@ -1,0 +1,19 @@
+{
+  "id": "syn005",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Mavi Lojistik İK <ik@mavilojistik.example.com>",
+    "subject": "Ön görüşme daveti - Veri Analisti",
+    "body": "Merhaba,\n\nMavi Lojistik'teki Veri Analisti pozisyonu için başvurunuzu aldık. Sizinle bir ön görüşme yapmak isteriz.\n\nGörüşme 10 Kasım 2026 Salı saat 10:30'da Microsoft Teams üzerinden yapılacak ve 30 dakika sürecek. Bağlantıyı görüşmeden bir gün önce ayrıca ileteceğiz.\n\nBu saat size uygun değilse lütfen bize bildirin.\n\nİyi çalışmalar,\nMavi Lojistik İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T07:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Mavi Lojistik",
+    "role": "Veri Analisti",
+    "date": "2026-11-10T10:30"
+  }
+}

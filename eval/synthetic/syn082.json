@@ -1,0 +1,19 @@
+{
+  "id": "syn082",
+  "language": "tr",
+  "hard_case": "key_date_after_cut",
+  "email": {
+    "sender": "Toros Mobilite Kariyer <kariyer@torosmobilite.example.com>",
+    "subject": "Toros Mobilite - final mülakat daveti",
+    "body": "Merhaba,\n\nTebrikler! Mobil Uygulama Geliştirici pozisyonu için sizi final mülakatına davet etmekten mutluluk duyuyoruz. Bu e-postada hazırlanmanız için gereken her şeyi bulacaksınız; mülakat tarihi ve saati e-postanın sonunda yer alıyor.\n\nGün hakkında\nFinal mülakatı sürecimizin son adımıdır ve öğle yemeği dahil yaklaşık dört saat sürer. Amacımız sizi zor sorularla sınamak değil; nasıl düşündüğünüzü, nasıl iletişim kurduğunuzu ve ekiple nasıl çalıştığınızı görmek. Her oturumda dilediğiniz kadar soru sorabilirsiniz, hatta bunu özellikle teşvik ediyoruz.\n\n1. oturum: mimari tasarım (60 dakika)\nKıdemli mühendislerimizden biriyle birlikte bir mobil uygulamanın mimarisini tasarlayacaksınız. Önemli olan, problemi nasıl kapsamlandırdığınız, seçenekleri nasıl tarttığınız ve tasarımın zamanla nasıl gelişeceğini nasıl düşündüğünüz. Beyaz tahtayı ya da dizüstü bilgisayarı kullanabilirsiniz. Mükemmel bir çizim beklemiyoruz; sohbet, çizimden daha önemli.\n\n2. oturum: eşli programlama (60 dakika)\nKatılacağınız ekipten bir geliştiriciyle birlikte küçük ve gerçekçi bir problem üzerinde çalışacaksınız. Kotlin ya da Swift seçebilirsiniz. Gerekli araçların kurulu olduğu bir bilgisayar sağlıyoruz. Kendi bilgisayarınızı getirmek isterseniz önceden haber verin, misafir ağ erişimini ayarlayalım.\n\n3. oturum: ekiple öğle yemeği (45 dakika)\nBu bir mülakat değil. Birlikte çalışabileceğiniz kişilerle tanışmanız ve Toros Mobilite'deki çalışma düzeni, planlama ve nöbet sistemi hakkında merak ettiklerinizi sormanız için bir fırsat.\n\n4. oturum: işe alım yöneticisiyle görüşme (45 dakika)\nDeneyiminizi, keyif aldığınız işleri ve bir sonraki rolünüzde ne aradığınızı konuşacağız. Ekibin önümüzdeki yıl için hedeflerini sormak için de iyi bir zaman.\n\nUlaşım\nOfisimiz Kozyatağı'ndaki Vadi Plaza'nın beşinci katında. Resepsiyon için lütfen kimliğinizi yanınızda getirin. Bina otoparkında misafir park yeri bulunuyor; görevliye Toros Mobilite'yi ziyaret ettiğinizi söylemeniz yeterli. Toplu taşıma ile gelecekseniz en yakın metro istasyonu beş dakika yürüme mesafesinde.\n\nErişilebilirlik\nEk süre, sessiz bir oda ya da basamaksız erişim gibi bir düzenlemeye ihtiyacınız olursa bu e-postayı yanıtlayın, gerekli ayarlamayı yapalım. Talebiniz yalnızca işe alım ekibi arasında kalır.\n\nMasraflar\nBaşka bir şehirden geliyorsanız makul yol masraflarınızı karşılıyoruz. Lütfen fişlerinizi saklayıp ziyaretten sonra bize iletin.\n\nMülakatınız\nFinal mülakatınız 16 Kasım 2026 Pazartesi günü saat 09:30'da başlayacak. Lütfen on dakika erken gelip resepsiyonda Selin Hanım'ı sorun.\n\nGörüşmek üzere,\nSelin Aydın\nİşe Alım Lideri",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T10:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Toros Mobilite",
+    "role": "Mobil Uygulama Geliştirici",
+    "date": "2026-11-16T09:30"
+  }
+}

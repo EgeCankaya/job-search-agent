@@ -1,0 +1,19 @@
+{
+  "id": "syn109",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Cem Yıldırım <cem.yildirim@adasigorta.example.com>",
+    "subject": "DevOps Mühendisi pozisyonu - Ada Sigorta Teknoloji",
+    "body": "Merhaba,\n\nAda Sigorta Teknoloji olarak gelecek yılın bütçe planlamasındaki değişiklik nedeniyle DevOps Mühendisi pozisyonu için işe alım sürecini durdurduk. Bu nedenle pozisyonu kapatıyor ve aldığımız başvurularla ilerlemiyoruz.\n\nBu haber için üzgünüm; bize katılmaya gösterdiğiniz ilgi için teşekkür ederim.\n\nSaygılarımla,\nCem Yıldırım\nYetenek Kazanımı",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T13:25:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Ada Sigorta Teknoloji",
+    "role": "DevOps Mühendisi",
+    "date": null
+  }
+}

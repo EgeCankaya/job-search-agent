@@ -1,0 +1,19 @@
+{
+  "id": "syn031",
+  "language": "en",
+  "hard_case": "receipt_mentions_interview",
+  "email": {
+    "sender": "Stonebridge Media Careers <careers@stonebridge.example.com>",
+    "subject": "Application received - Product Analyst",
+    "body": "Hello,\n\nThanks for applying for the Product Analyst role at Stonebridge Media. Your application has been received.\n\nWhat happens next: our recruiters review every application within two weeks. If your experience matches the role, we will contact you to arrange interviews with the team. If not, we'll let you know by email.\n\nThank you for your interest,\nStonebridge Media Careers",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-14T15:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Stonebridge Media",
+    "role": "Product Analyst",
+    "date": null
+  }
+}

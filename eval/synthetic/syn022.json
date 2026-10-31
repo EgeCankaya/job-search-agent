@@ -1,0 +1,19 @@
+{
+  "id": "syn022",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Dalga İletişim İK <ik@dalgailetisim.example.com>",
+    "subject": "İngilizce seviye testi - Ağ Mühendisi",
+    "body": "Merhaba,\n\nDalga İletişim'deki Ağ Mühendisi pozisyonu için süreçteki adaylardan çevrim içi bir İngilizce seviye testi tamamlamalarını istiyoruz. Test okuma, dinleme ve yazma bölümlerinden oluşuyor ve yaklaşık 50 dakika sürüyor.\n\nTesti 4 Kasım 2026 Çarşamba tarihine kadar aşağıdaki bağlantıdan tamamlamanızı rica ederiz:\n\nhttps://seviye.dalgailetisim.example.com/t/di-208\n\nTeşekkürler,\nDalga İletişim İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T08:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Dalga İletişim",
+    "role": "Ağ Mühendisi",
+    "date": "2026-11-04"
+  }
+}

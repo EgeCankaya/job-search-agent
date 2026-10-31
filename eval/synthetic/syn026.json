@@ -1,0 +1,19 @@
+{
+  "id": "syn026",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Oliver Grant <oliver.grant@ashgrove.example.com>",
+    "subject": "Phone screen for the Data Engineer role",
+    "body": "Hi,\n\nI'm the hiring manager for the Data Engineer role at Ashgrove Fintech, and your application caught my eye.\n\nWould Thursday, 12 November 2026 at 11:00 work for a 30-minute phone screen? We'd cover your background and the data stack we use. If that time doesn't suit you, suggest another one and I'll do my best to match it.\n\nThanks,\nOliver Grant",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-26T14:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Ashgrove Fintech",
+    "role": "Data Engineer",
+    "date": "2026-11-12T11:00"
+  }
+}

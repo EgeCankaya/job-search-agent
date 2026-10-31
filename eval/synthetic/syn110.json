@@ -1,0 +1,19 @@
+{
+  "id": "syn110",
+  "language": "tr",
+  "hard_case": "survey_mentions_interview",
+  "email": {
+    "sender": "Çiçek Perakende Yetenek <yetenek@cicekperakende.example.com>",
+    "subject": "Mülakat deneyiminizi bizimle paylaşın",
+    "body": "Merhaba,\n\nKısa süre önce Çiçek Perakende ile bir mülakata katıldınız. Sonuç ne olursa olsun deneyiminizi duymak isteriz.\n\nAnket yaklaşık üç dakika sürüyor ve yanıtlarınız anonim: https://anket.cicekperakende.example.com/ad\n\nGelişmemize katkınız için teşekkürler,\nÇiçek Perakende Yetenek Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T07:55:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Çiçek Perakende",
+    "role": null,
+    "date": null
+  }
+}

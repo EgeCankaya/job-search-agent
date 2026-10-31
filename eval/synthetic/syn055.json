@@ -1,0 +1,19 @@
+{
+  "id": "syn055",
+  "language": "tr",
+  "hard_case": "outreach_via_job_board",
+  "email": {
+    "sender": "İşİlanları Mesajlar <mesaj@isilanlari.example.com>",
+    "subject": "Ekin Sigorta'dan bir işe alımcı size mesaj gönderdi",
+    "body": "İşİlanları'nda yeni bir mesajınız var.\n\nGönderen: Gamze Uçar, Ekin Sigorta İşe Alım Uzmanı\n\n\"Merhaba, İşİlanları'ndaki profilinizi gördüm. Ekin Sigorta'daki Test Otomasyon Mühendisi pozisyonunu düşünür müsünüz? Playwright ve Python kullanıyoruz. İlgilenirseniz ayrıntıları paylaşabilirim.\"\n\nİşİlanları'nda yanıtla: https://isilanlari.example.com/mesajlar/e55\n\nBu e-postayı mesaj bildirimleriniz açık olduğu için alıyorsunuz.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T06:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Ekin Sigorta",
+    "role": "Test Otomasyon Mühendisi",
+    "date": null
+  }
+}

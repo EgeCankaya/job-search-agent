@@ -1,0 +1,19 @@
+{
+  "id": "syn081",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Kerem Aydın <kerem.aydin@dorukyz.example.com>",
+    "subject": "GitHub'daki tahminleme projeniz",
+    "body": "Merhaba,\n\nDoruk Yapay Zeka'da makine öğrenmesi ekibini yönetiyorum. GitHub'daki zaman serisi tahminleme projenizi gördüm; değerlendirme kısmını kurgulama şeklinizi çok beğendim.\n\nPazaryerimizin talep tahmini üzerinde çalışacak bir Makine Öğrenmesi Mühendisi arıyoruz. Yeni fırsatlara açıksanız pozisyonu size anlatmak isterim.\n\nTeşekkürler,\nKerem Aydın\nML Ekip Lideri, Doruk Yapay Zeka",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-15T08:50:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Doruk Yapay Zeka",
+    "role": "Makine Öğrenmesi Mühendisi",
+    "date": null
+  }
+}

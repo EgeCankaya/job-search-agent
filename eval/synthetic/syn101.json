@@ -1,0 +1,19 @@
+{
+  "id": "syn101",
+  "language": "tr",
+  "hard_case": "receipt_mentions_interview",
+  "email": {
+    "sender": "Selin Medya Kariyer <kariyer@selinmedya.example.com>",
+    "subject": "Başvurunuz alındı - Ürün Analisti",
+    "body": "Merhaba,\n\nSelin Medya'daki Ürün Analisti pozisyonuna başvurduğunuz için teşekkür ederiz. Başvurunuz bize ulaştı.\n\nSonraki adımlar: işe alım ekibimiz tüm başvuruları iki hafta içinde inceliyor. Deneyiminiz pozisyona uygunsa ekiple mülakat planlamak için sizinle iletişime geçeceğiz; değilse sizi e-postayla bilgilendireceğiz.\n\nİlginiz için teşekkürler,\nSelin Medya Kariyer",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-14T14:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Selin Medya",
+    "role": "Ürün Analisti",
+    "date": null
+  }
+}

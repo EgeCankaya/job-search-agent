@@ -1,0 +1,19 @@
+{
+  "id": "syn036",
+  "language": "tr",
+  "hard_case": "platform_sender",
+  "email": {
+    "sender": "KodSınav <davet@kodsinav.example.com>",
+    "subject": "Ilgaz Siber Güvenlik sizi bir kodlama sınavına davet etti",
+    "body": "Merhaba,\n\nIlgaz Siber Güvenlik, Siber Güvenlik Uzmanı pozisyonu için sizi çevrim içi bir kodlama sınavına davet etti.\n\nSınav: Güvenli Kodlama (Python)\nSüre: başladıktan sonra 75 dakika\nSon tarih: 2 Kasım 2026 Pazartesi, 23:59\n\nSınava başlamak için: https://kodsinav.example.com/s/igs-5520\n\nBaşlamadan önce internet bağlantınızın sabit olduğundan emin olun. Başarılar!\n\nKodSınav ekibi, Ilgaz Siber Güvenlik adına",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-23T07:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Ilgaz Siber Güvenlik",
+    "role": "Siber Güvenlik Uzmanı",
+    "date": "2026-11-02T23:59"
+  }
+}

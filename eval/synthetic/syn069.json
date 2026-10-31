@@ -1,0 +1,19 @@
+{
+  "id": "syn069",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Kayra Analitik <kariyer@kayraanalitik.example.com>",
+    "subject": "Veri Analisti başvurunuz alındı",
+    "body": "Merhaba,\n\nKayra Analitik'teki Veri Analisti pozisyonuna yaptığınız başvuru bize ulaştı. Ekibimiz başvurunuzu inceleyecek.\n\nBaşvurunuzun durumunu aday hesabınızdan istediğiniz zaman takip edebilirsiniz.\n\nKayra Analitik İşe Alım\n\nBu otomatik bir iletidir, lütfen yanıtlamayın.",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-12T18:20:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": "Kayra Analitik",
+    "role": "Veri Analisti",
+    "date": null
+  }
+}

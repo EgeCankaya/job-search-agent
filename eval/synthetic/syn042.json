@@ -1,0 +1,19 @@
+{
+  "id": "syn042",
+  "language": "tr",
+  "hard_case": "invite_in_rejection",
+  "email": {
+    "sender": "Yıldız Enerji İşe Alım <isealim@yildizenerji.example.com>",
+    "subject": "Yıldız Enerji başvurunuz hakkında",
+    "body": "Sayın aday,\n\nKıdemli Veri Bilimci pozisyonumuza gösterdiğiniz ilgi için teşekkür ederiz. Değerlendirmemiz sonucunda bu pozisyon için sürece sizinle devam edemeyeceğimizi üzülerek bildiririz.\n\nBununla birlikte, raporlama ve SQL deneyiminiz ekibimizin dikkatini çekti. Açık olan Veri Analisti pozisyonumuz için sizinle bir mülakat yapmak istiyoruz. Bunun için 9 Kasım 2026 Pazartesi saat 13:00'ü ayırdık; görüşme 45 dakika sürecek ve çevrim içi yapılacak.\n\nBu saatin size uygun olup olmadığını yanıt olarak bildirmenizi rica ederiz.\n\nSaygılarımızla,\nYıldız Enerji İşe Alım Ekibi",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-22T08:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "interview_invite",
+    "company": "Yıldız Enerji",
+    "role": "Veri Analisti",
+    "date": "2026-11-09T13:00"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn077",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Corvid Security Talent <talent@corvid.example.com>",
+    "subject": "An opening that matches your profile",
+    "body": "Hi,\n\nWe have an opening for a Security Engineer at Corvid Security, focused on cloud security and threat detection. Based on your experience, we think you could be a great fit.\n\nIf you'd like to learn more, reply to this message and we'll send over the details.\n\nRegards,\nCorvid Security Talent Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-17T08:40:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Corvid Security",
+    "role": "Security Engineer",
+    "date": null
+  }
+}

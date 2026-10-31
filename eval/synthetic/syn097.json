@@ -1,0 +1,19 @@
+{
+  "id": "syn097",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Fernhill Energy Talent <talent@fernhill.example.com>",
+    "subject": "Fernhill Energy - Cloud Engineer hands-on lab",
+    "body": "Hi,\n\nThanks for your application for the Cloud Engineer role at Fernhill Energy.\n\nBefore we schedule interviews, we ask candidates to complete a hands-on lab: deploy a small web service with infrastructure as code and share the repository with us. The full instructions are in the attached PDF. There is no fixed deadline, but most candidates finish within a week.\n\nBest regards,\nFernhill Energy Talent Team",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-20T11:25:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Fernhill Energy",
+    "role": "Cloud Engineer",
+    "date": null
+  }
+}

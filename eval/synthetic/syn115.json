@@ -1,0 +1,19 @@
+{
+  "id": "syn115",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "JobNest <notifications@jobnest.example.com>",
+    "subject": "3 recruiters viewed your profile this week",
+    "body": "Your profile is getting noticed!\n\n3 recruiters viewed your JobNest profile this week. Upgrade to JobNest Plus to see who they are.\n\nSee your profile stats: https://jobnest.example.com/stats\n\nManage your email preferences: https://jobnest.example.com/preferences",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-25T06:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

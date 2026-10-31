@@ -1,0 +1,19 @@
+{
+  "id": "syn112",
+  "language": "tr",
+  "hard_case": "role_not_named",
+  "email": {
+    "sender": "Ayışığı Medya <ik@ayisigimedya.example.com>",
+    "subject": "Ayışığı Medya'ya gösterdiğiniz ilgi için teşekkürler",
+    "body": "Merhaba,\n\nAyışığı Medya'ya gösterdiğiniz ilgi için teşekkür ederiz. Başvurunuzu inceledik ve süreci sizinle sürdürmeme kararı aldık.\n\nAyırdığınız zaman için teşekkür eder, kariyerinizde başarılar dileriz.\n\nAyışığı Medya İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-24T07:10:00+00:00"
+  },
+  "labels": {
+    "email_class": "rejection",
+    "company": "Ayışığı Medya",
+    "role": null,
+    "date": null
+  }
+}

@@ -1,0 +1,62 @@
+{
+ "what": "The blind second labeling of EV-1s (OQ-47 (d'')): an independent labeler, given eval/synthetic/LABELING.md and the 120 emails without their labels or hard-case tags, labeled each one. Company and role compared after TRK-1 normalization.",
+ "date": "2026-10-29",
+ "first_pass": {
+  "cases": 120,
+  "agree": {
+   "email_class": 120,
+   "company": 118,
+   "role": 120,
+   "date": 120,
+   "language": 120
+  },
+  "all_fields": 118
+ },
+ "first_pass_agreement_pct": {
+  "email_class": 100.0,
+  "all_fields": 98.3
+ },
+ "disagreements": [
+  {
+   "id": "syn034",
+   "field": "company",
+   "drafted": "Elmstead Robotics",
+   "blind": null,
+   "why": "the new message named no company; only the sender's domain and the quoted thread did"
+  },
+  {
+   "id": "syn104",
+   "field": "company",
+   "drafted": "Selvi Robotik",
+   "blind": null,
+   "why": "the same, in Turkish"
+  }
+ ],
+ "resolution": "both rewritten so the new message names the company; a fresh blind labeler then agreed on every field of both",
+ "dropped": [],
+ "final": {
+  "cases": 124,
+  "all_fields_agree": 124
+ },
+ "blind_labels": "eval/synthetic/blind_labels.jsonl (the final blind labels, the two relabeled ones included)",
+ "marked_unsure_but_agreeing": [
+  "syn015",
+  "syn059",
+  "syn040",
+  "syn116",
+  "syn089",
+  "syn119"
+ ],
+ "added_after_freeze": {
+  "date": "2026-10-29",
+  "ids": [
+   "syn121",
+   "syn122",
+   "syn123",
+   "syn124"
+  ],
+  "why": "four more invites inside a rejection, two per language, written after the freeze so the prompt can be tuned on dev for that case; both such emails in the frozen set fell in the test split",
+  "split": "dev",
+  "blind_agreement": "4/4 on every field, none unsure"
+ }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "syn095",
+  "language": "en",
+  "hard_case": "job_digest_html",
+  "email": {
+    "sender": "JobNest Alerts <alerts@jobnest.example.com>",
+    "subject": "10 new jobs for \"Data Engineer\"",
+    "body": null,
+    "html": "<html><body>\n<h2>New jobs matching your search: Data Engineer</h2>\n<table>\n<tr><td><b>Data Engineer</b> - Fairhaven Bank - Istanbul (hybrid)</td></tr>\n<tr><td><b>Senior Data Engineer</b> - Northgate Retail - Remote</td></tr>\n<tr><td><b>Data Engineer, Streaming</b> - Kiteline - Ankara</td></tr>\n<tr><td><b>Big Data Engineer</b> - Seabright Telecom - Istanbul</td></tr>\n<tr><td><a href=\"https://jobnest.example.com/search/de\">See all 10 jobs</a></td></tr>\n</table>\n<p style=\"font-size:11px\">You are receiving this because you created a job alert. <a href=\"https://jobnest.example.com/unsubscribe\">Unsubscribe</a></p>\n</body></html>",
+    "calendar": null,
+    "received_at": "2026-10-13T06:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "other",
+    "company": null,
+    "role": null,
+    "date": null
+  }
+}

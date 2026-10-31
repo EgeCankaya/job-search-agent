@@ -1,0 +1,19 @@
+{
+  "id": "syn008",
+  "language": "tr",
+  "hard_case": null,
+  "email": {
+    "sender": "Kule Sigorta Teknoloji İK <ik@kulesigorta.example.com>",
+    "subject": "Çevrim içi yetenek testi - Test Mühendisi başvurusu",
+    "body": "Sayın aday,\n\nKule Sigorta Teknoloji'deki Test Mühendisi pozisyonuna yaptığınız başvuru için teşekkür ederiz. Bu aşamadaki tüm adaylarımızdan mantıksal ve sayısal akıl yürütmeyi ölçen çevrim içi bir yetenek testi tamamlamalarını istiyoruz.\n\nTest yaklaşık 40 dakika sürüyor ve dilediğiniz zaman çözebilirsiniz. Lütfen size özel bağlantıyı kullanın:\n\nhttps://testler.kulesigorta.example.com/yt/41m8\n\nSaygılarımızla,\nKule Sigorta Teknoloji İnsan Kaynakları",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-21T09:00:00+00:00"
+  },
+  "labels": {
+    "email_class": "assessment",
+    "company": "Kule Sigorta Teknoloji",
+    "role": "Test Mühendisi",
+    "date": null
+  }
+}

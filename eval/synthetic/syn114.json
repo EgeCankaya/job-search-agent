@@ -1,0 +1,19 @@
+{
+  "id": "syn114",
+  "language": "en",
+  "hard_case": null,
+  "email": {
+    "sender": "Sofia Lindqvist <sofia.lindqvist@brightmoor.example.com>",
+    "subject": "Data Platform Engineer at Brightmoor Tech",
+    "body": "Hi,\n\nI'm Sofia, a technical recruiter at Brightmoor Tech. I came across your profile and thought you might be interested in our Data Platform Engineer opening. You'd be working on our streaming data platform with a team of six engineers.\n\nIs this something you'd like to explore? I'd be happy to share the job description and salary range.\n\nKind regards,\nSofia Lindqvist",
+    "html": null,
+    "calendar": null,
+    "received_at": "2026-10-14T13:30:00+00:00"
+  },
+  "labels": {
+    "email_class": "recruiter_outreach",
+    "company": "Brightmoor Tech",
+    "role": "Data Platform Engineer",
+    "date": null
+  }
+}
