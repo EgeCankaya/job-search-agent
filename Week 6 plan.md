@@ -204,6 +204,13 @@ Each step ends with `uv run pytest` green. A step that touches a workflow also e
   5. delete the branch.
 - I record the run links.
 
+- **Run 2026-10-31 (my "ok"), branch deleted afterward:**
+  - Weak change 1 (the prompt before `ac98e12`, replies re-recorded): before the re-recording Tier 1 failed as stale; after it, [run 41194127147](https://github.com/EgeCankaya/job-search-agent/actions/runs/41194127147) failed Tier 1 on M4, 22/24 (inj05, inj09). No deploy.
+  - Weak change 2 (no invite definition, replies re-recorded, `INVITE_GATE_BLOCKS` on): [run 41195082257](https://github.com/EgeCankaya/job-search-agent/actions/runs/41195082257) failed Tier 1 on invite recall, 0 of 14, with M4 24/24. No deploy.
+  - Tier 2 by hand on weak change 2: [run 41195089255](https://github.com/EgeCankaya/job-search-agent/actions/runs/41195089255) failed on invite recall, 0 of 14, 13 new misses against the saved main run, which it didn't replace (hash unchanged).
+  - Main: [run 41189897837](https://github.com/EgeCankaya/job-search-agent/actions/runs/41189897837) passed both tiers. **Limit:** main passes the invite rule only while it is reported (OQ-47 (b')). With the switch on, main fails the floor too (13 of 14), so that half shows the gate fires, not that it separates a weak prompt from main at the floor; its 13 new misses do separate them. Tier 2's M4 failure wasn't run live: the one Tier 2 run used weak change 2.
+  - A lead, one sample: weak change 1, without the manipulation rule, caught all 14 test invites and 8 of 10 on dev (the committed prompt: 13 of 14, 7 of 10), and let two planted emails through.
+
 ### 13. Week 7: measure, baseline, write
 - EV-6 (step 5's runner with `--mode local`, and `run_chat.py --mode local`), with Ollama on.
 - `ops_report.py` for M5 and M6 (the month to date); M7 from my week of time log.
