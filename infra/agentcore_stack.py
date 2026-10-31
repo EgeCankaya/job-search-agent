@@ -144,7 +144,7 @@ class AgentCoreStack(Stack):
             assumed_by=iam.ServicePrincipal(
                 AGENTCORE_SERVICE, conditions={"StringEquals": {"aws:SourceAccount": self.account}}
             ),
-            description="AgentCore Gateway: invoke the agent's four tool functions only",
+            description="AgentCore Gateway: invoke the six tool functions only",
         )
         self.gateway = agentcore.Gateway(
             self,
