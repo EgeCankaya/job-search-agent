@@ -1,6 +1,7 @@
-# The check (OQ-42 m): unit tests and cdk synth in both modes, on GitHub's
-# runners, with no secrets. Tier 1 joins it in week 6. It runs on pull
-# requests and as the first job of every deploy.
+# The check (OQ-42 m, OQ-47 b): unit tests, Tier 1 and cdk synth in both
+# modes, on GitHub's runners, with no secrets. Tier 1 replays Nova's replies
+# recorded on the Mac (OQ-47 a): no AWS, no model. It runs on pull requests
+# and as the first job of every deploy.
 name: check
 
 on:
@@ -24,6 +25,8 @@ jobs:
           python-version: "3.13"
       - run: uv sync --frozen --all-groups
       - run: uv run pytest -q
+      - name: Tier 1, replayed model replies (EV-1s, EV-3, EV-4)
+        run: uv run python eval/tier1.py
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"

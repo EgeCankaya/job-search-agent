@@ -1,0 +1,72 @@
+# Tier 2 (OQ-47 (c)): the evaluation sets against the live models, on the
+# self-hosted runner on the owner's Mac, with the owner's `aws login`
+# session. EV-1s's test split (M1, M2, no new miss), EV-4 with live Nova
+# (M4) and EV-3 (M3), each paced at 12 model calls a minute per model,
+# because live mail shares the account's Nova quota.
+#
+# Runs after a deploy from main that touched src/, eval/ or policies/ (called
+# by deploy.yml), every Monday at 07:00 UTC, and by hand. Never add a
+# pull_request trigger: the self-hosted runner must not run code from pull
+# requests (§12). Only scores leave the Mac: metrics and eval-set IDs. Only a
+# run on main replaces the saved main run that "no new miss" compares with.
+name: tier2
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tier2
+  cancel-in-progress: false
+
+jobs:
+  tier2:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: AWS session
+        run: |
+          if ! account=$(aws sts get-caller-identity --query Account --output text 2>/dev/null); then
+            echo "::error::No AWS session on the runner: run 'aws login' on the Mac, then re-run this workflow. Nothing was scored."
+            exit 1
+          fi
+          echo "::add-mask::$account"
+          # The saved main run lives outside the checkout, which each job wipes.
+          echo "EVAL_STATE=${EVAL_DATA_DIR:-$HOME/inbox-agent-eval}/runs" >> "$GITHUB_ENV"
+      - run: uv sync --frozen --all-groups
+      - name: EV-1s test split, live Nova (M1, M2, no new miss)
+        id: ev1s
+        env:
+          JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
+        run: |
+          mkdir -p "$EVAL_STATE"
+          uv run python eval/run_labeled.py --split test --pace 12 \
+            --baseline "$EVAL_STATE/main-latest.json" --out scores/ev1s-test.json
+      - name: EV-4, live Nova (M4)
+        if: ${{ !cancelled() && steps.ev1s.outcome != 'skipped' }}
+        env:
+          JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
+        run: uv run python eval/run_injection.py --mode cloud --out scores/ev4.json
+      - name: EV-3, live Nova (M3), with AgentCore Evaluations
+        if: ${{ !cancelled() && steps.ev1s.outcome != 'skipped' }}
+        env:
+          JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION: "1"
+        run: uv run python eval/run_chat.py --pace 12 --evaluate --out scores/ev3.json
+      - name: Save the main run for "no new miss"
+        if: ${{ github.ref == 'refs/heads/main' && steps.ev1s.outcome == 'success' }}
+        run: cp scores/ev1s-test.json "$EVAL_STATE/main-latest.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: tier2-scores
+          path: scores/
+          if-no-files-found: ignore
+          retention-days: 30

@@ -55,3 +55,32 @@ jobs:
           echo "::add-mask::$ALERT_EMAIL"
           export ALERT_EMAIL
           cdk deploy InboxAgentAlwaysFree InboxAgentAgentCore --require-approval never --progress events
+
+  # Tier 2 after the deploy (OQ-47 (c)), when the push touched agent, eval or
+  # policy code. A manual deploy runs it too.
+  changes:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    outputs:
+      eval: ${{ steps.diff.outputs.eval }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "eval=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qE '^(src|eval|policies)/'; then
+            echo "eval=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "eval=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  tier2:
+    needs: [deploy, changes]
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.eval == 'true'
+    uses: ./.github/workflows/tier2.yml
