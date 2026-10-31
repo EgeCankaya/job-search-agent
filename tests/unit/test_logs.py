@@ -195,3 +195,13 @@ def test_no_module_logs_a_raw_json_line():
     source = Path(logs.__file__).parent
     for path in source.glob("*.py"):
         assert "logger.info(json.dumps" not in path.read_text() and "logger.error(json.dumps" not in path.read_text(), path.name
+
+
+def test_the_agentcore_app_logger_is_quiet_even_after_the_sdk_sets_it():
+    import logging
+
+    from inbox_agent import logs
+
+    logging.getLogger("bedrock_agentcore.app").setLevel(logging.INFO)  # what the SDK does
+    logs.setup()
+    assert logging.getLogger("bedrock_agentcore.app").level == logging.WARNING

@@ -87,6 +87,9 @@ QUIET_LOGGERS = (
     "langchain_mcp_adapters",
     "langgraph",
     "bedrock_agentcore",
+    # The SDK sets this one's level itself (INFO) when the app is made, so
+    # it is named: setup() runs after the app (runtime.main).
+    "bedrock_agentcore.app",
     "aws_durable_execution_sdk_python",
     "uvicorn",
 )
