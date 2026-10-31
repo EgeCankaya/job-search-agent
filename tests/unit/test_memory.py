@@ -102,6 +102,8 @@ def test_the_local_store_answers_from_exported_records(tmp_path):
     assert held == 2
     assert memory.preferences() == ["Prefers short, formal follow-ups"]
     assert memory.company_summary("kuzey yazilim") == "Waiting since 3 October."
+    # Exactly the company's own namespace: not a longer key that starts with it.
+    assert memory.company_summary("kuzey") is None
     # A later export replaces the earlier one.
     assert memory.import_records([]) == 0
 

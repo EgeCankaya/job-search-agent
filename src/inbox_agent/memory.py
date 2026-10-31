@@ -194,9 +194,13 @@ class SqliteMemory:
         return [text for (text,) in rows]
 
     def company_summary(self, company_key: str) -> str | None:
+        # Exactly this company's namespace, as AgentCore matches it (a
+        # trailing slash tolerated): a prefix would also find "kuzey yazilim"
+        # under "kuzey".
+        namespace = summary_namespace(company_key)
         row = self._db.execute(
-            "SELECT text FROM records WHERE namespace LIKE ? ORDER BY created_at DESC LIMIT 1",
-            (summary_namespace(company_key) + "%",),
+            "SELECT text FROM records WHERE namespace IN (?, ?) ORDER BY created_at DESC LIMIT 1",
+            (namespace, namespace + "/"),
         ).fetchone()
         return row[0] if row else None
 
