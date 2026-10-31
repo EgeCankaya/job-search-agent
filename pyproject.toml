@@ -28,6 +28,10 @@ dev = [
     "cedarpy==4.12.1",
     "pytest>=9.1.1",
 ]
+eval = [
+    "openinference-instrumentation-langchain==0.1.79",
+    "opentelemetry-sdk==1.45.1",
+]
 local = [
     "cedarpy==4.12.1",
     "langchain-ollama>=1.1.0",
@@ -36,3 +40,12 @@ local = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "src", "src/budgets"]
+
+[tool.uv]
+# The eval group's packages are at least two weeks old (OQ-47 (o)); these
+# transitive ones had newer releases than that when they were added (2026-10-31).
+constraint-dependencies = [
+    "openinference-instrumentation<=0.1.71",
+    "openinference-semantic-conventions<=0.1.41",
+    "wrapt<=2.5.1",
+]
