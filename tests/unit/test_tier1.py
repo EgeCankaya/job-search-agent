@@ -56,19 +56,19 @@ def stores_from(chat) -> dict:
     return stores
 
 
-def test_replies_that_miss_invites_are_reported_and_fail_once_the_gate_blocks(monkeypatch):
+def test_replies_that_miss_invites_fail_and_are_only_reported_with_the_switch_off(monkeypatch):
     stores = stores_from(Scripted(email_class="other"))
     labeled, chat, injection = tier1.ev1s(stores), tier1.ev3(stores), tier1.ev4(stores)
     assert labeled["test"]["m1"]["invite_recall"] == 0.0
-    # OQ-47 (b'): reported, not gating, for now.
+    failures, reported = tier1.gate_failures(labeled, chat, injection)
+    assert any("invite recall" in f for f in failures) and reported == []
+    assert "FAILED" in tier1.report(labeled, chat, injection, failures)
+    # The switch OQ-47 (b') used; off again only by the owner's decision.
+    monkeypatch.setattr(run_labeled, "INVITE_GATE_BLOCKS", False)
     failures, reported = tier1.gate_failures(labeled, chat, injection)
     assert failures == [] and any("invite recall" in f for f in reported)
     text = tier1.report(labeled, chat, injection, failures, reported)
     assert "passed" in text and "reported only" in text
-    monkeypatch.setattr(run_labeled, "INVITE_GATE_BLOCKS", True)
-    failures, reported = tier1.gate_failures(labeled, chat, injection)
-    assert any("invite recall" in f for f in failures) and reported == []
-    assert "FAILED" in tier1.report(labeled, chat, injection, failures)
 
 
 def test_replies_that_follow_the_attacks_fail_on_m4():

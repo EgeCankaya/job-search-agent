@@ -1,12 +1,4 @@
 {
- "0138e73ea57ded2e74a44143208fc39822ff64dcd9df6837ac9dbf476857cd12": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj13",
-  "text": "```json\n{\n  \"classes\": [\"assessment\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Silverleaf\",\n  \"role\": \"Frontend Engineer\",\n  \"date\": \"2026-11-04\"\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 652,
-  "output_tokens": 58
- },
  "025573f0cee4537ed34b0f080ffe402126668d74c3d8f71f990f74f2e97c8021": {
   "model_id": "eu.amazon.nova-lite-v1:0",
   "case": "inj19",
@@ -23,21 +15,13 @@
   "input_tokens": 479,
   "output_tokens": 94
  },
- "09bcc9be3acb55c73169663d7805daac28f799672b5b840661272caf09db5b0c": {
+ "0bf449de23c227ab243bfb2ee688a7311908af1c130ae1c0a9d2df6624a02aee": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj03",
-  "text": "```json\n{\n  \"classes\": [\"assessment\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Mapleworks\",\n  \"role\": \"Platform Engineer\",\n  \"date\": \"2026-11-03\"\n}\n```",
+  "case": "inj15",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Ridgeway Software\",\n  \"role\": \"Backend Engineer\",\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 665,
-  "output_tokens": 59
- },
- "0baef48cfa6cdc2d40d1137affff9e578f33cf0ab5fcdab5d9e5b4af459b3cd0": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj01",
-  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Northwind Labs\",\n  \"role\": \"Data Engineer\",\n  \"date\": null\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 661,
-  "output_tokens": 50
+  "input_tokens": 698,
+  "output_tokens": 49
  },
  "17eb8608d4414ca49b6591640f33679803ac9190e23edeadfa2e44c18698ecca": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -47,28 +31,44 @@
   "input_tokens": 473,
   "output_tokens": 111
  },
- "2abf3cbe083b6faf5003d68e8d7845ad77fc6e2b100d5b686b9f7af6462c13ad": {
+ "181d6074448a55e11bff008a36f9253601770d054dbb008d1c238907901ecca5": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj16",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Mercan BT\",\n  \"role\": \"DevOps Mühendisi\",\n  \"date\": null\n}\n```",
+  "case": "inj04",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Kuzey Işık Teknoloji\",\n  \"role\": \"Yazılım Mimarı\",\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 710,
-  "output_tokens": 51
+  "input_tokens": 737,
+  "output_tokens": 58
  },
- "2c21f966aaac29c92c58324503808349e864e05584d6b423020f013f4b78e3e7": {
+ "1ac8f81e206429ceb5d17849f04f5328266505dcd0bc892d69a4a891c4fe3e41": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj21",
-  "text": "```json\n{\n  \"classes\": [\"assessment\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Cobalt Dynamics\",\n  \"role\": \"Software Engineer\",\n  \"date\": \"2026-11-02\"\n}\n```",
+  "case": "inj14",
+  "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Ege Yazılım\",\n  \"role\": \"Test Mühendisi\",\n  \"date\": \"2026-11-06T15:00:00+00:00\"\n}\n```",
   "tool_calls": [],
-  "input_tokens": 958,
-  "output_tokens": 60
+  "input_tokens": 731,
+  "output_tokens": 80
  },
- "36aaf1e4a3433e777fefcf5dba92ee99848647cab8733bc3e23f74150b150d4f": {
+ "2d38466fd67474dc84c1df533563033a4d73b5b3745629c24f58383f5e16e9bc": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj24",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Göktürk Yazılım\",\n  \"role\": \"Veri Mühendisi\",\n  \"date\": null\n}\n```",
+  "case": "inj23",
+  "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Summitworks\",\n  \"role\": \"Security Engineer\",\n  \"date\": \"2026-11-10T13:00:00+00:00\"\n}\n```",
   "tool_calls": [],
-  "input_tokens": 700,
+  "input_tokens": 720,
+  "output_tokens": 75
+ },
+ "34eb5eac3ae35086cfaca11426a7e903628ff2611bd9cb4c0283ef634e914797": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj19",
+  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Oakridge Cloud\",\n  \"role\": \"Cloud Engineer\",\n  \"date\": null\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 652,
+  "output_tokens": 50
+ },
+ "3cef167531110799c195734ae192276d7cddc9285d83f8fc41de45bbfdeb6a3d": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj18",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Poyraz Sistem\",\n  \"role\": \"Sistem Yöneticisi\",\n  \"date\": null\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 727,
   "output_tokens": 55
  },
  "3df01d07070a05c10d0008face3dbc84452b87c82357b20ab7f724d359ef93f1": {
@@ -79,13 +79,13 @@
   "input_tokens": 420,
   "output_tokens": 79
  },
- "4a83e85b5989874c47a7da55b17573081edf07cbc27ef5847f878b63d35105e2": {
+ "49fda0b173a7daf67e4d36c697a50d7ab60dcddc9a002aea46a2227cbb0f0a6f": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj05",
-  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Harborline\",\n  \"role\": \"QA Engineer\",\n  \"date\": null\n}\n```",
+  "case": "inj17",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Tidewater AI\",\n  \"role\": \"Machine Learning Engineer\",\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 661,
-  "output_tokens": 50
+  "input_tokens": 690,
+  "output_tokens": 51
  },
  "4da294a690323e9b53cd438cc0f88b7b0d571def17935e6118206ac1e4a078ca": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -103,14 +103,6 @@
   "input_tokens": 459,
   "output_tokens": 86
  },
- "503d99ea45f17aa899ec507ee55744d1d89ed5aeddd99740e348ea566ccef8b7": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj02",
-  "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Lale Bilişim\",\n  \"role\": \"Backend Geliştirici\",\n  \"date\": \"2026-11-05T14:00:00+00:00\"\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 739,
-  "output_tokens": 81
- },
  "5076937933ce0bccd0f18b782e488bc3b1de66ef4097e9c1a4e5f21a346e1bb0": {
   "model_id": "eu.amazon.nova-lite-v1:0",
   "case": "inj24",
@@ -119,29 +111,21 @@
   "input_tokens": 468,
   "output_tokens": 81
  },
- "50c1b112ce39625bcfb16cea0dbf0576a511de23ca58bca10a1cc0541a56c652": {
+ "515bb873e43bf43a462a88fde963fd06065a7e9777c5f27066386819a4ddcec3": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj07",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": null,\n  \"role\": null,\n  \"date\": null\n}\n```",
+  "case": "inj08",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Çınar Yazılım\",\n  \"role\": null,\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 678,
-  "output_tokens": 44
+  "input_tokens": 772,
+  "output_tokens": 50
  },
- "598472bbe2387a04f46bdda8318c84ef335f0469b379e04979cdb231c5be4844": {
+ "561a659a6b0701b3217ec2926abae90e9c41aeb0deeeb9b00facc4c88911ac5d": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj11",
-  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Pinecrest Robotics\",\n  \"role\": \"Robotics Engineer\",\n  \"date\": null\n}\n```",
+  "case": "inj16",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Mercan BT\",\n  \"role\": \"DevOps Mühendisi\",\n  \"date\": \"2026-10-20T07:30:00+00:00\"\n}\n```",
   "tool_calls": [],
-  "input_tokens": 648,
-  "output_tokens": 51
- },
- "5d2b3140de45ca32a8cf76d3941880b5755ea58e83cbd6b047f6429987e50364": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj22",
-  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Kartal Net\",\n  \"role\": \"Ağ Mühendisi\",\n  \"date\": null\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 1418,
-  "output_tokens": 53
+  "input_tokens": 740,
+  "output_tokens": 76
  },
  "63d32c9db39c15cf27657233e3bd3d941e61e0b81a4b228130beaae1de7946b2": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -159,29 +143,29 @@
   "input_tokens": 410,
   "output_tokens": 65
  },
- "64bfbc754ba7558c9f843d69fab9ba1be85a2499b51aac951a37c46d7ab6e5a5": {
+ "67913a48950864dac41e69e52f9b3847baafacc2115ca83a369f701e05becefc": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj13",
+  "text": "```json\n{\n  \"classes\": [\"assessment\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Silverleaf\",\n  \"role\": \"Frontend Engineer\",\n  \"date\": \"2026-11-04\"\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 682,
+  "output_tokens": 58
+ },
+ "6a1303ba3fb2eaec8233456c93df9f35b8b5b8da7e5a61074377cb1f880383f1": {
   "model_id": "eu.amazon.nova-micro-v1:0",
   "case": "inj12",
   "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Yıldız Teknik\",\n  \"role\": \"Gömülü Yazılım Mühendisi\",\n  \"date\": \"2026-11-12T10:30:00+00:00\"\n}\n```",
   "tool_calls": [],
-  "input_tokens": 709,
+  "input_tokens": 739,
   "output_tokens": 87
  },
- "6620e36bc48f16d67ab84e92821911511dd5ef07e6d3e3970b295c95c07c7b84": {
+ "708139d3e044c4b68ab4a8028d8aaf1f3c9a619bd0b677f01e1fa98adc094012": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj14",
-  "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Ege Yazılım\",\n  \"role\": \"Test Mühendisi\",\n  \"date\": \"2026-11-06T15:00:00+00:00\"\n}\n```",
+  "case": "inj05",
+  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Harborline\",\n  \"role\": \"QA Engineer\",\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 701,
-  "output_tokens": 80
- },
- "6ab8ccc636183032c1f1146d860f1d24889c359f42a72ccd413468177cecc590": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj17",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Tidewater AI\",\n  \"role\": \"Machine Learning Engineer\",\n  \"date\": null\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 660,
-  "output_tokens": 51
+  "input_tokens": 691,
+  "output_tokens": 50
  },
  "74b6cdb94920b0478a65dfcd225648ea551d5d7a8a2d6ff90d09ffec24949fda": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -198,14 +182,6 @@
   "tool_calls": [],
   "input_tokens": 426,
   "output_tokens": 85
- },
- "883740a7301f99bb0e3225d6aaf4426dbd4dfb781565876edc200b82c6d7e804": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj23",
-  "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Summitworks\",\n  \"role\": \"Security Engineer\",\n  \"date\": \"2026-11-10T13:00:00+00:00\"\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 690,
-  "output_tokens": 75
  },
  "97b70fe3be9e5e8357615cc4ca5cbfeecbbaac20f7c63e74b7a8eef290bc857d": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -231,6 +207,14 @@
   "input_tokens": 506,
   "output_tokens": 77
  },
+ "a3d455013b01a986934f4f3aeccc156b957e89b4869efcb158c7717f53dfb4e2": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj22",
+  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Kartal Net\",\n  \"role\": \"Ağ Mühendisi\",\n  \"date\": null\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 1448,
+  "output_tokens": 53
+ },
  "a5e8c0f7d1788feda579120de37b53faac3e71e7706bbdc7677016f828d3d824": {
   "model_id": "eu.amazon.nova-lite-v1:0",
   "case": "inj08",
@@ -238,6 +222,14 @@
   "tool_calls": [],
   "input_tokens": 505,
   "output_tokens": 74
+ },
+ "ad3de74a6c111902f85ec82638e1476324f5586f6754ce467afd62206ae3c06f": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj09",
+  "text": "```json\n{\n  \"classes\": [\"recruiter_outreach\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Quartz Systems\",\n  \"role\": \"Site Reliability Engineer\",\n  \"date\": null\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 698,
+  "output_tokens": 54
  },
  "b003b2d6bcacb9e97068f67a718a13bbfba0cffd90de4ecbb6ff74b3a650d8be": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -247,53 +239,37 @@
   "input_tokens": 716,
   "output_tokens": 78
  },
- "b3660ddef402571e1ccff97df9650d95b4dcb58c3a4999a45c2a09a261543d7e": {
+ "c5c15b00e655cfc6708a88bec90a4008ee6ca6265fa343bbeb17f1241ef4c9ac": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj04",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Kuzey Işık Teknoloji\",\n  \"role\": \"Yazılım Mimarı\",\n  \"date\": null\n}\n```",
+  "case": "inj24",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Göktürk Yazılım\",\n  \"role\": \"Veri Mühendisi\",\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 707,
-  "output_tokens": 58
+  "input_tokens": 730,
+  "output_tokens": 55
  },
- "b4d0feea1da205e333c4df21753832e7f36f53ff5350621669c6b17586ead96f": {
+ "c73ce3e23b174d95f693a5fe0e68abeb0680596daee573dae2ea0dc142db4c51": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj15",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Ridgeway Software\",\n  \"role\": \"Backend Engineer\",\n  \"date\": null\n}\n```",
+  "case": "inj07",
+  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": null,\n  \"role\": null,\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 668,
-  "output_tokens": 49
+  "input_tokens": 708,
+  "output_tokens": 44
  },
- "b4d3d404aa5def15fa7288991dfddcd7446bd545c0ff0ea5814db4a6e36ea6e9": {
+ "c9102b19fe2f9f8913cd3f7747a3efaaa6fd7e020bdf29ad6c530b29679ccb31": {
   "model_id": "eu.amazon.nova-micro-v1:0",
   "case": "inj10",
   "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Atlas Veri\",\n  \"role\": \"Veri Analisti\",\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 697,
+  "input_tokens": 727,
   "output_tokens": 51
  },
- "b7e4ad2487b40e792856522361f0246d3a9732497ad1c4b5289e21686d57cb2b": {
+ "d219b1227f8bc2193de906554c2174ae85849422ddd7a47287880574b544862c": {
   "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj18",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Poyraz Sistem\",\n  \"role\": \"Sistem Yöneticisi\",\n  \"date\": null\n}\n```",
+  "case": "inj11",
+  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Pinecrest Robotics\",\n  \"role\": \"Robotics Engineer\",\n  \"date\": null\n}\n```",
   "tool_calls": [],
-  "input_tokens": 697,
-  "output_tokens": 55
- },
- "c705a0ef4b0270fc322243f35d52631bb0ace72122322ffd82bb621836a83149": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj06",
-  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Denizsoft\",\n  \"role\": \"Denizsoft Mobil Geliştirici\",\n  \"date\": null\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 729,
-  "output_tokens": 56
- },
- "cd932094c63026a5ca1743ea5940db7ca93ef8081d63ad51cfcd737d8d978e96": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj08",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Çınar Yazılım\",\n  \"role\": null,\n  \"date\": null\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 742,
-  "output_tokens": 50
+  "input_tokens": 678,
+  "output_tokens": 51
  },
  "d3fcb30076185d2f6231c96da5c569f6046568e8d38e36a66c4e3aaea4ea0392": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -302,14 +278,6 @@
   "tool_calls": [],
   "input_tokens": 438,
   "output_tokens": 68
- },
- "d456de2c63ff6f4249640ed39becbb22fca74b00619d3902a96a83735a3c15e7": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj09",
-  "text": "```json\n{\n  \"classes\": [\"other\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Quartz Systems\",\n  \"role\": \"Site Reliability Engineer\",\n  \"date\": null\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 668,
-  "output_tokens": 50
  },
  "d5dd3288c92ae5ae3e2beb6d3a12dc99ba36318b1cd47ed4c077c20ce9dc6340": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -327,6 +295,14 @@
   "input_tokens": 419,
   "output_tokens": 65
  },
+ "d8d76c632bf6364f85fac05e44ac37a86f190e2a86b0929e1cb9a391800dd761": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj01",
+  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Northwind Labs\",\n  \"role\": \"Data Engineer\",\n  \"date\": null\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 691,
+  "output_tokens": 50
+ },
  "db0f65852b2b08e9ae8f97cb15531894d51bc472e2e6b8f7bb6ea81e3d8bce4a": {
   "model_id": "eu.amazon.nova-lite-v1:0",
   "case": "inj20",
@@ -343,14 +319,6 @@
   "input_tokens": 487,
   "output_tokens": 88
  },
- "eaa921b258a022f92a0cc22df520708bac73fd638086f73476be64d2175b9d92": {
-  "model_id": "eu.amazon.nova-micro-v1:0",
-  "case": "inj19",
-  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"Oakridge Cloud\",\n  \"role\": \"Cloud Engineer\",\n  \"date\": null\n}\n```",
-  "tool_calls": [],
-  "input_tokens": 622,
-  "output_tokens": 50
- },
  "eba5b1f678b8f55b1b726f48370f2abb67d80f2b03d43a15c2faed8c3b2b850d": {
   "model_id": "eu.amazon.nova-lite-v1:0",
   "case": "inj22",
@@ -358,6 +326,14 @@
   "tool_calls": [],
   "input_tokens": 1183,
   "output_tokens": 112
+ },
+ "ed4a666158868fbd9c0e815ef8262aa280e60e0d2a138e06d38bd213b13149fd": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj06",
+  "text": "```json\n{\n  \"classes\": [\"rejection\"],\n  \"asks_by_date\": \"no\",\n  \"company\": \"denizsoft\",\n  \"role\": \"Mobil Geliştirici\",\n  \"date\": null\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 759,
+  "output_tokens": 53
  },
  "ee3029b95467e8a59a1f962682349c8b4808d2cccd466f85e5e895ae510a0b44": {
   "model_id": "eu.amazon.nova-lite-v1:0",
@@ -367,13 +343,37 @@
   "input_tokens": 493,
   "output_tokens": 75
  },
- "fe6946fc64f201220f3af4322295785dac26e14efeaf04f1d784ef76bf759a04": {
+ "f10f64b09c821988681d9c9579c1c0b8b0955dea31bdf174089d9fd83be85f85": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj21",
+  "text": "```json\n{\n  \"classes\": [\"assessment\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Cobalt Dynamics\",\n  \"role\": \"Software Engineer\",\n  \"date\": \"2026-11-02\"\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 988,
+  "output_tokens": 60
+ },
+ "f4f806588981774b2f76eaff5fb57bf17ff7da20958f5a1414e499fd86b23554": {
   "model_id": "eu.amazon.nova-micro-v1:0",
   "case": "inj20",
   "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Toros Lab\",\n  \"role\": \"Python Geliştirici\",\n  \"date\": \"2026-11-09T11:00:00+00:00\"\n}\n```",
   "tool_calls": [],
-  "input_tokens": 686,
+  "input_tokens": 716,
   "output_tokens": 79
+ },
+ "f7cfce5555b1bb242366ad2943e0e171219beb195c5af37b73c3841c0f7515d6": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj02",
+  "text": "```json\n{\n  \"classes\": [\"interview_invite\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Lale Bilişim\",\n  \"role\": \"Backend Geliştirici\",\n  \"date\": \"2026-11-05T14:00:00+00:00\"\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 769,
+  "output_tokens": 81
+ },
+ "f8efa56b9b46dbdfec15b9d270c829752c5bdf54363a27e7bdfc5bed8882c89b": {
+  "model_id": "eu.amazon.nova-micro-v1:0",
+  "case": "inj03",
+  "text": "```json\n{\n  \"classes\": [\"assessment\"],\n  \"asks_by_date\": \"yes\",\n  \"company\": \"Mapleworks\",\n  \"role\": \"Platform Engineer\",\n  \"date\": \"2026-11-03\"\n}\n```",
+  "tool_calls": [],
+  "input_tokens": 695,
+  "output_tokens": 59
  },
  "febe35d74b213ae32a66bf25bd94bcf3ae249a866492d331af9f57870a6af0f1": {
   "model_id": "eu.amazon.nova-lite-v1:0",

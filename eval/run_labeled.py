@@ -23,7 +23,6 @@ Scores:
   is right only if the prediction is empty too.
 - **No new miss:** invites caught by the saved main run and missed now
   (`--baseline`).
-Both invite rules are reported, not gating, for now (OQ-47 (b')).
 - **OQ-24:** the share of labeled interview times and deadlines that fall
   after the 2,000-character cut, so the model never sees them.
 
@@ -53,10 +52,10 @@ MESSAGE_ID = "19a5yn7e71c"
 NOW = datetime(2026, 10, 28, 8, 0, tzinfo=UTC)
 INVITE = "interview_invite"
 INVITE_FLOOR = 96.0
-# OQ-47 (b'): the invite floor and "no new miss" are reported, not gating, in
-# both tiers, until Nova catches "not this role, but an interview for that
-# one" (syn014 and the dev invites syn121 to syn124). The one switch.
-INVITE_GATE_BLOCKS = False
+# OQ-47 (b'): the one switch for the invite floor and "no new miss" in both
+# tiers. Back on since 2026-11-01, when Nova caught "not this role, but an
+# interview for that one" (syn014 and the dev invites syn121 to syn124).
+INVITE_GATE_BLOCKS = True
 # Failures the code refuses on purpose: the email is left unclassified, which
 # scores as a miss, but the run goes on.
 FAILS_CLOSED = ("ClassifierOutputError", "ToolInputError")

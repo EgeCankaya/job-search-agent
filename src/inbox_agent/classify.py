@@ -37,8 +37,8 @@ UNCERTAINTY_QUESTION = "Does this email ask me to schedule, attend, complete or 
 
 CLASS_DEFINITIONS = {
     EmailClass.INTERVIEW_INVITE: (
-        "sets or changes an interview of any kind (screen, technical, HR): invitations, scheduling "
-        "requests, confirmations, reschedules"
+        "sets or changes an interview of any kind (screen, technical, HR), for the role I applied to or "
+        "another one: invitations, scheduling requests, confirmations, reschedules"
     ),
     EmailClass.ASSESSMENT: "an online test, coding challenge or take-home task, with or without a deadline",
     EmailClass.OFFER: "a job offer or offer details",
@@ -56,7 +56,7 @@ PROMPT_TEMPLATE = """Classify the email quoted below. "Me" is the owner of the i
 Classes:
 {classes}
 
-List every class that fits.
+List every class that fits. An email that declines one role and proposes an interview for another fits both rejection and interview_invite.
 
 Also answer yes or no: {question}
 

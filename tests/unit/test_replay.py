@@ -248,17 +248,18 @@ def test_the_scores_hold_no_email_text():
     assert "example.com" not in text and "Brightpath" not in text
 
 
-def test_the_runner_reports_the_invite_gate_and_fails_once_it_blocks(monkeypatch, tmp_path, capsys):
-    """OQ-47 (b'): both tiers read the same switch, and a run with no replies is still stale."""
+def test_the_runner_fails_on_the_invite_gate_and_only_reports_with_the_switch_off(monkeypatch, tmp_path, capsys):
+    """Both tiers read the same switch, and a run with no replies is still stale."""
     store = replay.ReplyStore("ev1s")
     models = recording(store, ("classify",), ScriptedChat())
     run_labeled.run(CASES, {p: run_injection.Metered(c, c.model_id) for p, c in models.items()})
     monkeypatch.setattr(replay.ReplyStore, "load", classmethod(lambda cls, name, directory=None: store))
     arguments = ["--replay", "--split", "test", "--out", str(tmp_path / "scores.json")]
+    assert run_labeled.main(arguments) == 1
+    assert "GATE:" in capsys.readouterr().out
+    monkeypatch.setattr(run_labeled, "INVITE_GATE_BLOCKS", False)
     assert run_labeled.main(arguments) == 0
     assert "REPORTED ONLY" in capsys.readouterr().out
-    monkeypatch.setattr(run_labeled, "INVITE_GATE_BLOCKS", True)
-    assert run_labeled.main(arguments) == 1
     monkeypatch.setattr(replay.ReplyStore, "load", classmethod(lambda cls, name, directory=None: cls(name)))
     assert run_labeled.main(arguments) == 3
 

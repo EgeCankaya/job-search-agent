@@ -3,12 +3,10 @@ Nova's recorded replies, on GitHub's runners (no AWS, no model).
 
     uv run --all-groups python eval/tier1.py
 
-Gates (PRD §12): M4 below 100%, or any stale reply (the code or a prompt
-changed since the replies were recorded: re-record on the Mac with
-eval/record.py). Interview-invite recall on EV-1s's test split below 96% is
-reported, not gating, until the classifier catches invites inside a
-rejection (OQ-47 (b'), 2026-10-31); `run_labeled.INVITE_GATE_BLOCKS` turns it
-back on.
+Gates (PRD §12): interview-invite recall on EV-1s's test split below 96%,
+M4 below 100%, or any stale reply (the code or a prompt changed since the
+replies were recorded: re-record on the Mac with eval/record.py).
+`run_labeled.INVITE_GATE_BLOCKS` is the invite gate's switch (OQ-47 (b')).
 M2 and M3 are reported and gate later, under EVAL-2. The job summary holds
 metrics and eval-set IDs only.
 """
