@@ -67,7 +67,7 @@ Design doc: no change.
 
 ## (b') Amendment: Tier 1's invite gate reports until the classifier catches invites inside a rejection (decided 2026-10-31)
 
-The first recording with Nova (2026-10-29, the classifier prompt of `ac98e12`) scored EV-1s's frozen test split at invite recall 92.9% (13 of 14). The miss, syn014, turns down one role and invites me to interview for another; Nova Micro listed rejection and recruiter outreach, not interview_invite. Three of the four dev emails of the same kind, added after the freeze, were missed too. A prompt revision tuned on dev didn't beat the original on dev, and on the test split it lowered M2 and let inj09 through (M4 23/24), so it was reverted. As (b) reads, Tier 1 would then fail on main, and no push would deploy.
+The first recording with Nova (2026-10-29, the classifier prompt of `b584c61`) scored EV-1s's frozen test split at invite recall 92.9% (13 of 14). The miss, syn014, turns down one role and invites me to interview for another; Nova Micro listed rejection and recruiter outreach, not interview_invite. Three of the four dev emails of the same kind, added after the freeze, were missed too. A prompt revision tuned on dev didn't beat the original on dev, and on the test split it lowered M2 and let inj09 through (M4 23/24), so it was reverted. As (b) reads, Tier 1 would then fail on main, and no push would deploy.
 
 **Decision:**
 - Tier 1's invite-recall floor (96% on EV-1s's test split) is **reported, not gating**, until the classifier catches invites inside a rejection. The job summary shows it under "reported only".
@@ -359,7 +359,7 @@ The exit says: "Both tiers fail on a deliberately weakened change and pass on ma
 
 **Recommendation:**
 - **Two known weak changes:**
-  - (1) the classifier prompt before `ac98e12` (without the manipulation rule), which scored M4 18/24 with Nova Micro in week 5;
+  - (1) the classifier prompt before `b584c61` (without the manipulation rule), which scored M4 18/24 with Nova Micro in week 5;
   - (2) a prompt with the interview-invite definition removed, for invite recall.
 - **Tier 1:** a branch `gate-check` with change (1) and replies re-recorded for it fails Tier 1 on M4. The same with (2) fails on invite recall. Without the re-recording, it fails as stale; that's noted, but it isn't the proof.
 - **Tier 2:** a manual run of `tier2.yml` on `gate-check` stands in for the "throwaway main": the deploy job runs only for `refs/heads/main`, so nothing deploys. Its scores are compared against the saved main state, which the run never replaces.

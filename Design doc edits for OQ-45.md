@@ -246,7 +246,7 @@ PRD and design doc: no change. CLAUDE.md's guardrail line names it.
 
 ## (j) Old approval-workflow versions are kept
 
-On 2026-10-21 a deploy's cleanup tried to delete approval version 2 while a draft's wait was running on it. Lambda refused, the stack hung in cleanup for 37 minutes, and the deploy job was cancelled at its 30-minute limit. Fix `5ed1aed` makes the version resource `Retain`. That realizes week 4's assumption that "executions already waiting resume on their own version". But old versions now pile up, about 58 MB each, against Lambda's 75 GB code storage.
+On 2026-10-21 a deploy's cleanup tried to delete approval version 2 while a draft's wait was running on it. Lambda refused, the stack hung in cleanup for 37 minutes, and the deploy job was cancelled at its 30-minute limit. Fix `e80eaae` makes the version resource `Retain`. That realizes week 4's assumption that "executions already waiting resume on their own version". But old versions now pile up, about 58 MB each, against Lambda's 75 GB code storage.
 
 **Recommendation:** keep `Retain`. Once a month, with the stack healthy, I delete approval versions older than 8 days that have no running execution (`list-durable-executions-by-function` shows none). The runbook gets the commands.
 

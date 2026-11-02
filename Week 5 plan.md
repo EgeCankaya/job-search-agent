@@ -6,7 +6,7 @@
 - PRD v0.4.4: §9 TOOL-2, TOOL-4, ALR-3, MODE-4; §10 NFR-PRIV-3, NFR-SEC-1, NFR-SEC-2; §11 M4; §12 EV-4 and the integration tests; §14 week 5; §16a; US-07.
 - The design doc (Claude Doc, revision 113).
 - `Week 4 plan.md` and CLAUDE.md's week 4 gotchas.
-- The code as deployed (`01bd36f`).
+- The code as deployed (`99adf90`).
 
 ## Checked before planning (2026-10-21, read-only, my `aws login` session)
 
@@ -142,7 +142,7 @@ Each step ends with `uv run pytest` green; steps that touch `infra/` also end wi
    - Check: 5 policies ACTIVE, the Gateway in ENFORCE.
    - If AgentCore refuses `NeverSend` or `NoRecipientKeys`, read the finding; apply OQ-45 (c) only for a "matches nothing" finding.
    - Then one Ask-page question, and the next poll with mail, prove the agent still passes.
-2. Probe on (`POLICY_PROBE_ON = True` and the two pinned tests, like `fbe0fd9`):
+2. Probe on (`POLICY_PROBE_ON = True` and the two pinned tests, like `b0a03e8`):
    - invoke `{"type": "policy_probe"}`: three refusals, each naming its policy or the unknown tool;
    - my session repeats case 3;
    - `git revert` the probe commit.
