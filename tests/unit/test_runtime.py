@@ -73,7 +73,7 @@ def test_a_chat_question_is_answered_and_not_logged(caplog):
             return {"messages": [*value["messages"], AIMessage(content="Software Engineer: interviewing.")]}
 
     with caplog.at_level(logging.INFO, logger="inbox_agent.runtime"):
-        assert runtime.handle({"type": "chat", "question": "Brightpath'da ne açık?"}, chat=Graph()) == {
+        assert runtime.handle({"type": "chat", "question": "Brightpath'te ne açık?"}, chat=Graph()) == {
             "answer": "Software Engineer: interviewing."
         }
     assert "Brightpath" not in caplog.text and "interviewing" not in caplog.text

@@ -408,6 +408,7 @@ def test_the_demo_renders_all_three_pages_from_fictional_data(monkeypatch):
     assert not demo.exception
     metrics = {m.label: m.value for m in demo.metric}
     assert metrics["Applications"] == "17" and metrics["Open"] == "13"
+    assert metrics["Alerts this week"] == "2" and metrics['"Possible:" alerts this week'] == "1"
     demo.switch_page("ask_page.py")
     demo.run()
     demo.chat_input[0].set_value("Something not in the suite?").run()

@@ -85,6 +85,12 @@ The first recording with Nova (2026-10-29, the classifier prompt of `ac98e12`) s
 
 Design doc: no change.
 
+## (b'') The gates block again (2026-11-01)
+
+The owner said to try a narrower classifier fix on dev ("ok", 2026-11-01). The prompt's invite definition now covers another role, and one line says that an email declining one role and proposing an interview for another fits both rejection and interview_invite. Nova Micro on dev, two runs: invite recall 100% of 10 each (70% before), M2 95.5% each (86.4% before). One run on test: invite recall 100% (14 of 14), class accuracy 95.0%, M2 93.8%, and EV-4 M4 24 of 24. `qwen3.8:27b` on the same prompt: invite recall 100%, class accuracy 98.8%, M2 97.5%, M4 24 of 24. The replies are re-recorded, and (b')'s condition is met, so `INVITE_GATE_BLOCKS` is True and both tiers' invite rules block again. The test split isn't blind to this fix, because syn014's miss exposed the pattern; the README's evaluation page says so.
+
+Design doc: no change.
+
 ## (c) Tier 2: when it runs, how it paces, and what leaves the Mac
 
 **Recommendation:**
@@ -446,6 +452,7 @@ The steps in `Week 6 plan.md`: the labeling tools (1), the synthetic set and the
 | (j') M7 is my estimate (about 2 hours a week), not a measurement | Accept | 2026-10-29 | in chat |
 | (b') Tier 1's invite-recall floor reported only until the classifier catches invites inside a rejection; stale replies and M4 still fail Tier 1 | Accept | 2026-10-31 | in the head session's chat: "yes to A–C, commit" |
 | (b'), Tier 2: its invite floor and "no new miss" reported only too; M4 still fails | Accept | 2026-10-31 | in chat: "make Tier 2's invite gate report-only too, then push" |
+| (b'') The classifier fix tried on dev, kept after test and EV-4; (b')'s condition met, the invite gates block again | Accept | 2026-11-01 | in chat: "ok" to trying it |
 | (e) Split by class × language; the freeze; M1, M2, M8 scoring rules | Accept | 2026-10-26 | in chat |
 | (f) EV-1s drafted by a session from definitions and my notes, reviewed by me | Accept | 2026-10-26 | in chat |
 | (g) EV-3 in-process; M3 scored in code; AgentCore Evaluations on the eval run's spans (spike first) | Accept | 2026-10-26 | the spike picks (g), (g2) or (g3) |

@@ -88,7 +88,7 @@ def test_content_blocks_are_reduced_to_their_text():
 def test_cloud_without_a_memory_id_remembers_nothing():
     memory = memory_for({"AGENT_MODE": "cloud"})
     assert isinstance(memory, NoMemory)
-    memory.record("session-1", "user", "Brightpath'da ne açık?")
+    memory.record("session-1", "user", "Brightpath'te ne açık?")
     assert memory.context("session-1") == []
 
 

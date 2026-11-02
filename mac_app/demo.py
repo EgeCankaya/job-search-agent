@@ -64,7 +64,8 @@ class DemoBackend:
     def dashboard(self):
         from inbox_agent.dashboard import build_dashboard
 
-        claims = [(NOW - timedelta(days=1, hours=3), "urgent"), (NOW - timedelta(days=2), "urgent"), (NOW - timedelta(days=3), "possible")]
+        # NOW is a Monday, and the page counts from Monday 00:00.
+        claims = [(NOW - timedelta(hours=1), "urgent"), (NOW - timedelta(hours=3), "urgent"), (NOW - timedelta(hours=5), "possible")]
         return build_dashboard(self.rows, claims, now=NOW)
 
     def ask(self, session_id: str, question: str) -> str:
