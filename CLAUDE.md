@@ -11,18 +11,18 @@ repo is **public**.
 
 1. **Design doc** owns architecture: services, models, modes, data flow. The
    live version is the Claude Doc https://claude.ai/artifact/T8g4UsfvBmdx7e8yhGbWz9
-   (revision 116). `Job search inbox agent design.pdf` is still the export of revision 90;
+   (revision 131). `docs/Job search inbox agent design.pdf` is still the export of revision 90;
    the owner re-exports it.
-2. **`Job search inbox agent PRD.md`** (v0.4.6) owns requirements and targets:
+2. **`docs/Job search inbox agent PRD.md`** (v0.5.1) owns requirements and targets:
    FRs §9, NFRs §10, metrics §11, CI gates §12, milestones §14, dependencies §16a.
 3. **The code follows both.** Never add tools, tool inputs, endpoints or
    capabilities beyond PRD §9, or architecture beyond the design doc.
 4. **Changes to the design doc go through an OQ-style item** that the owner
-   accepts or rejects one by one. Examples: `Design doc edits for OQ-32.md`,
+   accepts or rejects one by one. The records live in `docs/decisions/`, for example `Design doc edits for OQ-32.md`,
    `Design doc edits for OQ-39.md`, `Design doc edits for OQ-40.md`,
    `Design doc edits for OQ-41.md`, `Design doc edits for OQ-42.md`,
    `Design doc edits for OQ-43.md`, `Design doc edits for OQ-44.md`, `Design doc edits for OQ-45.md` and `Design doc edits for OQ-46.md`, all accepted and applied to the PRD and
-   the design doc (OQ-46 to the PRD only).
+   the design doc (OQ-46 to the PRD only). The week plans (`Week 3 plan.md` to `Week 6 plan.md`) live in `docs/plans/`.
 
 **If the PRD and the code would disagree, stop and ask the owner. Don't invent
 scope.**
@@ -101,6 +101,8 @@ mac_app/                     the Streamlit Mac app: app.py (navigation), dashboa
 tests/fakes.py               in-memory DynamoDB table, SQS queue and SNS topic
 tests/unit/                  handler, import, query, poll, reader, trim and classifier tests
 tests/infra/                 CDK assertion tests
+docs/                        the PRD, the design PDF, evaluation.md, screenshots/; decisions/ (the OQ records), plans/ (the week plans)
+LICENSE                      MIT (owner's choice, 2026-11-03)
 ```
 
 ### Commands

@@ -39,25 +39,27 @@ These are the app's pages from `mac_app/demo.py`, on a fictional tracker:
 
 | Metric | Nova (cloud) | `qwen3.8:27b` (local) | Target | Met in cloud? |
 |---|---|---|---|---|
-| Interview-invite recall | **100%** (14 of 14) | 100% (14 of 14) | ≥ 96% | Yes, in one run |
-| Company, role and date all right | **93.8%** (75 of 80) | 97.5% (78 of 80) | ≥ 90% | Yes |
-| Right tool and parameters, chat | **82.5%** (of 40) | 100% (of 40) | ≥ 95% | **No** |
+| Interview-invite recall | **100%** (14 of 14) | 100% (14 of 14) | ≥ 96% | Yes, in two runs |
+| Company, role and date all right | **95.0%** (76 of 80) | 97.5% (78 of 80) | ≥ 90% | Yes |
+| Right tool and parameters, chat | **87.5%** (of 40) | 100% (of 40) | ≥ 95% | **No** |
 | Injection emails with no unsafe action | **100%** (24 of 24) | 100% (24 of 24) | 100% | Yes |
 | Alert latency, end to end | 1.9 and 18.7 min (**n = 2**) | not run | p95 ≤ 35 min | On n = 2 only |
 | Model cost per real email | about $0.00008 (n = 10) | no model charge | ≤ $0.002 | Yes |
 | All AWS usage ÷ emails | **about $0.0065** ($0.26 ÷ 40) | not run | ≤ $0.002 | **No** |
 
-Measured 2026-10-31 and 2026-11-01, one run each. The first four rows use synthetic email and
-questions: 80 frozen test emails, 40 chat questions and 24 planted attacks. Latency
+The cloud figures in the first four rows are from the live-model run on main on 2026-11-03;
+the local ones are from 2026-10-31 and 2026-11-01, one run each. Those rows use synthetic
+email and questions: 80 frozen test emails, 40 chat questions and 24 planted attacks. Latency
 and cost come from real use. **[Every metric, per-class scores and the method are in
 docs/evaluation.md.](docs/evaluation.md)**
 
 **What isn't working:**
 
-- **Chat tool choice is below target,** and it varies between runs at temperature 0.
-- **Invite recall rests on 14 invites and one run on the current prompt.** That prompt
-  now names the case an earlier run missed: a rejection that also invites. The same
-  run raised one false invite alert, from a recruiter email that mentions an interview.
+- **Chat tool choice is below target:** 80.0% to 87.5% over four runs of the same code,
+  at temperature 0.
+- **Invite recall rests on 14 invites and two runs on the current prompt.** That prompt
+  now names the case an earlier run missed: a rejection that also invites. It also
+  reads one recruiter email that mentions an interview as an invite, a false alert.
 - **All-in cost is over target** because October's bill includes this evaluation work
   and only 40 emails. The month came to $0.26 against a target of $8.
 - **Two things aren't measured:** minutes saved (no baseline from before the agent) and
@@ -168,13 +170,33 @@ out of the repo:
 uv run python import_applications.py data/applications.csv --table <ApplicationsTableName> --aliases data/aliases.csv
 ```
 
+## Repository layout
+
+| Path | What's there |
+|---|---|
+| `infra/` | The CDK app: the always-free stack, the AgentCore stack, Cedar rendering, Runtime bundling |
+| `src/inbox_agent/` | The poller, classifier, tools and their Lambdas, the LangGraph paths, the approval workflow, the Mac app's backend |
+| `policies/` | The Cedar policies, shared by the Gateway and the local cedarpy check |
+| `mac_app/` | The Streamlit app (Dashboard, Ask, Follow-ups) and its fictional demo |
+| `eval/` | The evaluation sets, recorded model replies, the harnesses and Tier 1 |
+| `tests/` | Unit tests and CDK assertion tests |
+| `.github/workflows/` | The check, the deploy and Tier 2 |
+| `docs/` | The PRD, the design doc, decision records, week plans and the evaluation page |
+
 ## Project documents
 
-- [PRD](Job%20search%20inbox%20agent%20PRD.md): requirements, targets and CI gates.
-- [Design doc](Job%20search%20inbox%20agent%20design.pdf): the architecture, exported at
-  an earlier revision than the build.
-- `Design doc edits for OQ-*.md`: each design change, and the decision behind it.
-- `Week * plan.md`: the build's plans and what happened.
+- [Evaluation](docs/evaluation.md): every metric, per-class scores, what's wrong and how
+  it was measured.
+- [PRD](docs/Job%20search%20inbox%20agent%20PRD.md): requirements, targets and CI gates.
+- [Design doc](docs/Job%20search%20inbox%20agent%20design.pdf): the architecture, exported
+  at an earlier revision than the build.
+- [Decision records](docs/decisions/): each design change as an open question (OQ), with
+  the options and my decision.
+- [Week plans](docs/plans/): each week's plan, and what happened.
 - [Privacy policy](PRIVACY.md): what it reads and stores.
 - [CLAUDE.md](CLAUDE.md): the build log and working rules for Claude Code, which I built
   this with.
+
+## License
+
+[MIT](LICENSE).

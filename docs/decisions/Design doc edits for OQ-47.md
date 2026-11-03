@@ -91,6 +91,12 @@ The owner said to try a narrower classifier fix on dev ("ok", 2026-11-01). The p
 
 Design doc: no change.
 
+## (b''') M2 stays reported (decided 2026-11-03)
+
+EVAL-2 made M2 a failing gate at 90% after 2 Tier 2 runs on main in a row at or above it. Main reached that on 2026-11-03: M2 93.8% (75 of 80, run 41483706794, 2026-11-02) and 95.0% (76 of 80, run 41611586445, 2026-11-03). I chose to keep M2 reported, not gating ("leave it reported", in chat). Nova varies between runs by a few emails on this set, and M2's floor is 2 to 4 emails below its recent scores, so a gate would mostly flag run-to-run noise. A drop still shows in every Tier 1 summary and Tier 2 scores file. M3 is unchanged: it has never reached its 95% floor, so EVAL-2's two-run rule still applies to it.
+
+Design doc: no change.
+
 ## (c) Tier 2: when it runs, how it paces, and what leaves the Mac
 
 **Recommendation:**
@@ -453,6 +459,7 @@ The steps in `Week 6 plan.md`: the labeling tools (1), the synthetic set and the
 | (b') Tier 1's invite-recall floor reported only until the classifier catches invites inside a rejection; stale replies and M4 still fail Tier 1 | Accept | 2026-10-31 | in the head session's chat: "yes to A–C, commit" |
 | (b'), Tier 2: its invite floor and "no new miss" reported only too; M4 still fails | Accept | 2026-10-31 | in chat: "make Tier 2's invite gate report-only too, then push" |
 | (b'') The classifier fix tried on dev, kept after test and EV-4; (b')'s condition met, the invite gates block again | Accept | 2026-11-01 | in chat: "ok" to trying it |
+| (b''') M2 stays reported after its 2 qualifying runs; M3 keeps EVAL-2's rule | Accept | 2026-11-03 | in chat: "leave it reported" |
 | (e) Split by class × language; the freeze; M1, M2, M8 scoring rules | Accept | 2026-10-26 | in chat |
 | (f) EV-1s drafted by a session from definitions and my notes, reviewed by me | Accept | 2026-10-26 | in chat |
 | (g) EV-3 in-process; M3 scored in code; AgentCore Evaluations on the eval run's spans (spike first) | Accept | 2026-10-26 | the spike picks (g), (g2) or (g3) |
@@ -463,5 +470,6 @@ The steps in `Week 6 plan.md`: the labeling tools (1), the synthetic set and the
 | (l) The gate check on a `gate-check` branch with two known weak prompts | Accept | 2026-10-26 | in chat |
 | (m) README: measured numbers only, Mermaid diagram, screenshots from fictional data | Accept | 2026-10-26 | in chat |
 | (n) Before going public: noreply now, a history scan, then (n1) rewrite or (n2) keep | Accept, part 1 | 2026-10-26 | (n1) or (n2) when going public |
+| (n1) Rewrite the authors (and the old sample company names) with `git filter-repo`, then update the quoted SHAs | Accept | 2026-11-01 | in chat: "go with n1"; force-pushed 2026-11-03 (new tip `031c48a`) |
 | (o) Dependencies: `eval` group (OpenTelemetry SDK + one LangChain instrumentation) | Accept, on condition | 2026-10-26 | source check before `uv add` |
 | (p) PRD v0.4.7 now, v0.5.0 after the first full run; design doc rows read back | Accept | 2026-10-26 | in chat |

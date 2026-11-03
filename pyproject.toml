@@ -1,6 +1,8 @@
 [project]
 name = "inbox-agent"
 version = "0.1.0"
+description = "A personal job-search inbox agent on AWS Bedrock AgentCore: tracks applications, alerts on invites, drafts follow-ups only on approval"
+license = "MIT"
 requires-python = ">=3.13"
 dependencies = [
     "aws-cdk-lib>=2.273.0",

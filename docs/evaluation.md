@@ -2,21 +2,24 @@
 
 The full numbers behind the [README's summary](../README.md#results), and how each
 was measured. Requirements and targets are in the
-[PRD](../Job%20search%20inbox%20agent%20PRD.md), sections 11 and 12.
+[PRD](Job%20search%20inbox%20agent%20PRD.md), sections 11 and 12.
 
 **Read these with this in mind:** classification and extraction were measured on
 synthetic email, not on my real mail, which is likely messier.
 
 ## All metrics
 
-Set version `ev1s-v1`. Each number has its date and n.
+Set version `ev1s-v1`. Each number has its date and n. The latest cloud figures for M1 to M4
+are from Tier 2 on main on 2026-11-03
+([run 41611586445](https://github.com/EgeCankaya/job-search-agent/actions/runs/41611586445)),
+after the deploy of the current prompt.
 
 | # | Metric | Nova (cloud) | `qwen3.8:27b` (local) | Target | Met in cloud? |
 |---|---|---|---|---|---|
-| M1 | Interview-invite recall, synthetic test split | **100%** (14 of 14), 2026-11-01 | **100%** (14 of 14), 2026-11-01 | ≥ 96% and no new miss | Yes, in one run |
-| M2 | Company, role and date all right, synthetic test split | **93.8%** (75 of 80), 2026-11-01 | **97.5%** (78 of 80), 2026-11-01 | ≥ 90% | Yes |
-| M3 | Right tool and parameters, 40 chat questions | **82.5%**, 2026-10-31 | **100%**, 2026-10-31 | ≥ 95% | **No** |
-| M4 | Planted injection emails with no unsafe action | **100%** (24 of 24), 2026-11-01 | **100%** (24 of 24), 2026-11-01 | 100% | Yes |
+| M1 | Interview-invite recall, synthetic test split | **100%** (14 of 14), 2026-11-03; also 2026-11-01 | **100%** (14 of 14), 2026-11-01 | ≥ 96% and no new miss | Yes, in two runs |
+| M2 | Company, role and date all right, synthetic test split | **95.0%** (76 of 80), 2026-11-03; 93.8% on 2026-11-01 | **97.5%** (78 of 80), 2026-11-01 | ≥ 90% | Yes |
+| M3 | Right tool and parameters, 40 chat questions | **87.5%**, 2026-11-03; 80.0% to 87.5% over four runs | **100%**, 2026-10-31 | ≥ 95% | **No** |
+| M4 | Planted injection emails with no unsafe action | **100%** (24 of 24), 2026-11-03 | **100%** (24 of 24), 2026-11-01 | 100% | Yes |
 | M5 | Alert latency, end to end (Gmail receipt to publish) | 1.9 and 18.7 min (**n = 2**), 2026-10-22 to 10-31 | not run | p95 ≤ 35 min | On n = 2 only |
 | M5 | Alert latency, pipeline (detection to publish) | 0.32 and 0.33 min (**n = 2**), same window | not run | p95 < 5 min | On n = 2 only |
 | M6 | Model cost per real email | about **$0.00008** (n = 10), 2026-10-26 to 10-30 | no model charge | ≤ $0.002 | Yes |
@@ -47,17 +50,22 @@ Invite recall by language: 7 of 7 Turkish and 7 of 7 English, for both models.
   read "not this role, but an interview for that one" as a rejection plus outreach, and
   missed 1 of 14 test invites (92.9%) and 3 of 10 dev invites. The classifier's prompt
   now says that such an email fits both classes. I tuned that on the dev split: two
-  runs, 100% of 10 invites each, against 70% before. Then one run on test gave 14 of 14,
-  with M2 up from 92.5% to 93.8% and M4 still 24 of 24.
+  runs, 100% of 10 invites each, against 70% before. On test, two runs since (one by
+  hand, one in Tier 2 after the deploy) both gave 14 of 14, with M4 still 24 of 24.
 - **The test split isn't blind to this fix.** The test miss (syn014) is what first showed
   the pattern, and it led to the harder dev emails the fix was tuned on. So 100% on test
   says less than the number suggests, and real invites of this kind are untested.
 - **One false invite alert.** A recruiter email that mentions an interview (syn060) now
-  reads as an invite. Recruiter outreach recall is 78.6%, also through emails read as
+  reads as an invite. Both test runs on this prompt misclassified the same four emails
+  (syn045, syn053, syn060, syn119). Recruiter outreach recall is 78.6%, also through emails read as
   "other".
-- **M3 is 82.5%.** It stays a reported number, not a gate. In the same run, 80% of
-  the answers held every expected fact. AgentCore Evaluations scored tool selection
-  0.94 (33 tool calls) and correctness 0.75 (40 questions).
+- **M3 is below target,** between 80.0% and 87.5% over four runs on the same code. It
+  stays a reported number, not a gate. In the latest run, 80% of the answers held every
+  expected fact. AgentCore Evaluations scored tool selection 0.917 (36 tool calls) and
+  correctness 0.75 (40 questions).
+- **M2 is reported, not gating.** It passed its floor in two Tier 2 runs in a row, which
+  would have made it a gate, but its scores move by a few emails between runs, close to
+  the 90% floor. I kept it reported.
 - **The local model scored at least as well as Nova on every set,** one run each, and
   higher on class accuracy, M2 and M3. It's a far larger model: about 4 s an email and
   9 s a question on my Mac, against Nova's fractions of a cent in the cloud. It can't
@@ -116,7 +124,8 @@ Invite recall by language: 7 of 7 Turkish and 7 of 7 English, for both models.
 
 ## Run it
 
-The first two call Nova or Ollama; replay calls nothing.
+Tier 1 replays recorded replies and calls no model. The next three call Nova or Ollama.
+The ops report reads CloudWatch and Cost Explorer.
 
 ```bash
 uv run --all-groups python eval/tier1.py
